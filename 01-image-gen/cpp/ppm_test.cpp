@@ -23,7 +23,7 @@ static void test_parse_args_no_args() {
     check(!r.has_value(), "no args");
     if (r.has_value())
         return;
-    check(r.error() == ParseError::kNoArg, "no args - kNoArg");
+    check(r.error() == ParseError::kNoArg, "no args kNoArg");
 }
 
 static void test_parse_args_bad_number() {
@@ -31,10 +31,10 @@ static void test_parse_args_bad_number() {
     char arg1[] = "abc";
     char* argv[] = {arg0, arg1};
     auto r = parse_args(2, argv);
-    check(!r.has_value(), "abc - error");
+    check(!r.has_value(), "abc → error");
     if (r.has_value())
         return;
-    check(r.error() == ParseError::kBadNumber, "abc - kBadNumber");
+    check(r.error() == ParseError::kBadNumber, "abc kBadNumber");
 }
 
 static void test_parse_args_trailing_garbage() {
@@ -45,7 +45,7 @@ static void test_parse_args_trailing_garbage() {
     check(!r.has_value(), "4abc - error");
     if (r.has_value())
         return;
-    check(r.error() == ParseError::kBadNumber, "4abc - kBadNumber");
+    check(r.error() == ParseError::kBadNumber, "4abc kBadNumber");
 }
 
 static void test_parse_args_negative_number() {
@@ -56,8 +56,8 @@ static void test_parse_args_negative_number() {
     check(r.has_value(), "-5 - accepted (parse_args only)");
     if (!r.has_value())
         return;
-    check(r->size == -5, "-5 - size == -5");
-    check(r->pattern == Pattern::Gradient, "-5 - default Gradient");
+    check(r->size == -5, "-5 → size == -5");
+    check(r->pattern == Pattern::Gradient, "-5 default Gradient");
 }
 
 static void test_parse_args_bad_pattern() {
@@ -66,10 +66,10 @@ static void test_parse_args_bad_pattern() {
     char arg2[] = "invalid";
     char* argv[] = {arg0, arg1, arg2};
     auto r = parse_args(3, argv);
-    check(!r.has_value(), "invalid pattern - error");
+    check(!r.has_value(), "invalid pattern error");
     if (r.has_value())
         return;
-    check(r.error() == ParseError::kBadPattern, "invalid - kBadPattern");
+    check(r.error() == ParseError::kBadPattern, "invalid kBadPattern");
 }
 
 static void test_parse_args_default_pattern() {
@@ -77,11 +77,11 @@ static void test_parse_args_default_pattern() {
     char arg1[] = "5";
     char* argv[] = {arg0, arg1};
     auto r = parse_args(2, argv);
-    check(r.has_value(), "5 - ok");
+    check(r.has_value(), "5 → ok");
     if (!r.has_value())
         return;
-    check(r->size == 5, "5 - size == 5");
-    check(r->pattern == Pattern::Gradient, "5 - default Gradient");
+    check(r->size == 5, "5 → size == 5");
+    check(r->pattern == Pattern::Gradient, "5 default Gradient");
 }
 
 static void test_parse_args_checker() {
@@ -90,11 +90,11 @@ static void test_parse_args_checker() {
     char arg2[] = "checker";
     char* argv[] = {arg0, arg1, arg2};
     auto r = parse_args(3, argv);
-    check(r.has_value(), "10 checker - ok");
+    check(r.has_value(), "10 checker ok");
     if (!r.has_value())
         return;
     check(r->size == 10, "10 checker - size == 10");
-    check(r->pattern == Pattern::Checker, "10 checker - Checker");
+    check(r->pattern == Pattern::Checker, "10 checker Checker");
 }
 
 static void test_parse_args_radial() {
@@ -103,11 +103,11 @@ static void test_parse_args_radial() {
     char arg2[] = "radial";
     char* argv[] = {arg0, arg1, arg2};
     auto r = parse_args(3, argv);
-    check(r.has_value(), "7 radial - ok");
+    check(r.has_value(), "7 radial ok");
     if (!r.has_value())
         return;
-    check(r->size == 7, "7 radial - size == 7");
-    check(r->pattern == Pattern::Radial, "7 radial - Radial");
+    check(r->size == 7, "7 radial size == 7");
+    check(r->pattern == Pattern::Radial, "7 radial Radial");
 }
 
 // ---- hsv_to_rgb tests ----
