@@ -72,30 +72,24 @@ static void generate_ppm(const struct ParseResult* args) {
 
 int main(int argc, char** argv) {
     struct ParseResult args = parse_args(argc, argv);
-    if (args.error != EXIT_OK) {
+    if (args.error != PE_OK) {
         switch (args.error) {
-        case EXIT_NOINPUT:
-            fprintf(stderr, "N не указано. Использование: gen_image <N> [pattern]\n");
+        case PE_NOARG:
+            fprintf(stderr, "N РЅРµ СѓРєР°Р·Р°РЅРѕ. РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: gen_image <N> [pattern]\n");
             return 66;
-        case EXIT_USAGE:
-            if (argc >= 2) {
-                char* end;
-                long dummy = strtol(argv[1], &end, 10);
-                (void)dummy;
-                if (end == argv[1] || *end != '\0')
-                    fprintf(stderr, "N должно быть целым числом в [1; 512]; получено: %s\n",
-                            argv[1]);
-                else
-                    fprintf(stderr,
-                            "Неизвестный паттерн: %s. Допустимые: gradient, checker, radial\n",
-                            argc >= 3 ? argv[2] : "");
-            }
+        case PE_BADNUMBER:
+            fprintf(stderr, "N РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С†РµР»С‹Рј С‡РёСЃР»РѕРј РІ [1; 512]; РїРѕР»СѓС‡РµРЅРѕ: %s\n",
+                    argc >= 2 ? argv[1] : "");
+            return 64;
+        case PE_BADPATTERN:
+            fprintf(stderr, "РќРµРёР·РІРµСЃС‚РЅС‹Р№ РїР°С‚С‚РµСЂРЅ: %s. Р”РѕРїСѓСЃС‚РёРјС‹Рµ: gradient, checker, radial\n",
+                    argc >= 3 ? argv[2] : "");
             return 64;
         }
     }
 
     if (args.size < 1 || args.size > 512) {
-        fprintf(stderr, "N должен быть в [1; 512]; получено: %d\n", args.size);
+        fprintf(stderr, "N РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІ [1; 512]; РїРѕР»СѓС‡РµРЅРѕ: {}", args.size);
         return 64;
     }
 

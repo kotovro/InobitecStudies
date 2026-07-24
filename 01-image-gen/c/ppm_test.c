@@ -20,26 +20,26 @@ static void check(int cond, const char* name) {
 static void test_no_args(void) {
     char* argv[] = {"prog"};
     struct ParseResult r = parse_args(1, argv);
-    check(r.error == EXIT_NOINPUT, "no args -> EXIT_NOINPUT");
+    check(r.error == PE_NOARG, "no args -> PE_NOARG");
 }
 
 static void test_bad_number(void) {
     char* argv[] = {"prog", "abc"};
     struct ParseResult r = parse_args(2, argv);
-    check(r.error == EXIT_USAGE, "abc -> EXIT_USAGE");
+    check(r.error == PE_BADNUMBER, "abc -> PE_BADNUMBER");
 }
 
 static void test_trailing_garbage(void) {
     char* argv[] = {"prog", "4abc"};
     struct ParseResult r = parse_args(2, argv);
-    check(r.error == EXIT_USAGE, "4abc -> EXIT_USAGE");
+    check(r.error == PE_BADNUMBER, "4abc -> PE_BADNUMBER");
 }
 
 static void test_negative_number(void) {
     char* argv[] = {"prog", "-5"};
     struct ParseResult r = parse_args(2, argv);
-    check(r.error == EXIT_OK, "-5 -> accepted (parse_args only)");
-    if (r.error == EXIT_OK) {
+    check(r.error == PE_OK, "-5 -> accepted (parse_args only)");
+    if (r.error == PE_OK) {
         check(r.size == -5, "-5 -> size == -5");
         check(r.pattern == PATTERN_GRADIENT, "-5 -> default Gradient");
     }
@@ -48,14 +48,14 @@ static void test_negative_number(void) {
 static void test_bad_pattern(void) {
     char* argv[] = {"prog", "5", "invalid"};
     struct ParseResult r = parse_args(3, argv);
-    check(r.error == EXIT_USAGE, "invalid pattern -> EXIT_USAGE");
+    check(r.error == PE_BADPATTERN, "invalid pattern -> PE_BADPATTERN");
 }
 
 static void test_default_pattern(void) {
     char* argv[] = {"prog", "5"};
     struct ParseResult r = parse_args(2, argv);
-    check(r.error == EXIT_OK, "5 -> ok");
-    if (r.error == EXIT_OK) {
+    check(r.error == PE_OK, "5 -> ok");
+    if (r.error == PE_OK) {
         check(r.size == 5, "5 -> size == 5");
         check(r.pattern == PATTERN_GRADIENT, "5 -> default Gradient");
     }
@@ -64,8 +64,8 @@ static void test_default_pattern(void) {
 static void test_checker_pattern(void) {
     char* argv[] = {"prog", "10", "checker"};
     struct ParseResult r = parse_args(3, argv);
-    check(r.error == EXIT_OK, "10 checker -> ok");
-    if (r.error == EXIT_OK) {
+    check(r.error == PE_OK, "10 checker -> ok");
+    if (r.error == PE_OK) {
         check(r.size == 10, "10 checker -> size == 10");
         check(r.pattern == PATTERN_CHECKER, "10 checker -> Checker");
     }
@@ -74,8 +74,8 @@ static void test_checker_pattern(void) {
 static void test_radial_pattern(void) {
     char* argv[] = {"prog", "7", "radial"};
     struct ParseResult r = parse_args(3, argv);
-    check(r.error == EXIT_OK, "7 radial -> ok");
-    if (r.error == EXIT_OK) {
+    check(r.error == PE_OK, "7 radial -> ok");
+    if (r.error == PE_OK) {
         check(r.size == 7, "7 radial -> size == 7");
         check(r.pattern == PATTERN_RADIAL, "7 radial -> Radial");
     }
