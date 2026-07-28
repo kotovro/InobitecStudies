@@ -1,8 +1,8 @@
-#include "pixel_word.h"
-
 #include <locale.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "pixel_word.h"
 
 static int failed = 0;
 
