@@ -8,6 +8,8 @@
 #include <print>
 #include <system_error>
 
+#include "../../common/exit_codes.hpp"
+
 int main() {
     std::setlocale(LC_ALL, "Russian_Russia.1251");
 
@@ -15,27 +17,27 @@ int main() {
     if (!result) [[unlikely]] {
         switch (result.error().kind) {
         case PassportErrorKind::kNoInput:
-            std::println(stderr, "нет входных данных");
-            return 66;
+            std::println(stderr, "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ");
+            return (int)ExitCode::kNoInput;
         case PassportErrorKind::kEmptyName:
-            std::println(stderr, "название не может быть пустым");
-            return 65;
+            std::println(stderr, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ");
+            return (int)ExitCode::kData;
         case PassportErrorKind::kBadCount:
-            std::println(stderr, "количество пикселей должно быть целым числом; получено: {}",
+            std::println(stderr, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ; пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {}",
                          result.error().bad_value);
-            return 65;
+            return (int)ExitCode::kData;
         case PassportErrorKind::kNegativeCount:
-            std::println(stderr, "количество пикселей должно быть положительным; получено: {}",
+            std::println(stderr, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: {}",
                          result.error().bad_value);
-            return 65;
+            return (int)ExitCode::kData;
         case PassportErrorKind::kIOError:
-            std::println(stderr, "сбой ввода: {} (errno {})",
+            std::println(stderr, "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: {} (errno {})",
                          std::generic_category().message(errno), errno);
-            return 74;
+            return (int)ExitCode::kIOErr;
         }
     }
 
-    std::println("Изображение «{}»: {} {}.", result->name, result->count,
+    std::println("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ{}пїЅ: {} {}.", result->name, result->count,
                  pixel_word(result->count));
-    return 0;
+    return (int)ExitCode::kOk;
 }

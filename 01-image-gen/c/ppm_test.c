@@ -81,6 +81,49 @@ static void test_radial_pattern(void) {
     }
 }
 
+// ---- new CLI (--size N [--seed S]) tests ----
+
+static void test_new_no_args(void) {
+    char* argv[] = {"prog", "--size"};
+    struct ParseResult r = parse_args(2, argv);
+    check(r.error == PE_NOARG, "--size alone -> PE_NOARG");
+}
+
+static void test_new_bad_size(void) {
+    char* argv[] = {"prog", "--size", "abc"};
+    struct ParseResult r = parse_args(3, argv);
+    check(r.error == PE_BADNUMBER, "--size abc -> PE_BADNUMBER");
+}
+
+static void test_new_ok_no_seed(void) {
+    char* argv[] = {"prog", "--size", "10"};
+    struct ParseResult r = parse_args(3, argv);
+    check(r.error == PE_OK, "--size 10 -> PE_OK");
+    if (r.error == PE_OK) {
+        check(r.size == 10, "--size 10 -> size == 10");
+        check(r.pattern == PATTERN_RANDOM, "--size 10 -> random");
+        check(r.seed_provided == 0, "--size 10 -> seed not provided");
+    }
+}
+
+static void test_new_with_seed(void) {
+    char* argv[] = {"prog", "--size", "5", "--seed", "42"};
+    struct ParseResult r = parse_args(5, argv);
+    check(r.error == PE_OK, "--size 5 --seed 42 -> PE_OK");
+    if (r.error == PE_OK) {
+        check(r.size == 5, "--size 5 --seed 42 -> size == 5");
+        check(r.pattern == PATTERN_RANDOM, "--size 5 --seed 42 -> random");
+        check(r.seed_provided == 1, "--size 5 --seed 42 -> seed provided");
+        check(r.seed == 42, "--size 5 --seed 42 -> seed == 42");
+    }
+}
+
+static void test_new_bad_seed(void) {
+    char* argv[] = {"prog", "--size", "5", "--seed", "abc"};
+    struct ParseResult r = parse_args(5, argv);
+    check(r.error == PE_BADSEED, "--seed abc -> PE_BADSEED");
+}
+
 // ---- hsv_to_rgb tests ----
 
 static void check_rgb(struct RGB actual, int er, int eg, int eb, const char* name) {
@@ -145,6 +188,13 @@ int main(void) {
     test_default_pattern();
     test_checker_pattern();
     test_radial_pattern();
+
+    printf("--- new CLI tests ---\n");
+    test_new_no_args();
+    test_new_bad_size();
+    test_new_ok_no_seed();
+    test_new_with_seed();
+    test_new_bad_seed();
 
     printf("--- hsv_to_rgb tests ---\n");
     test_hsv_red();

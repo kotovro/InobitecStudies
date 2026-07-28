@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../../common/exit_codes.h"
+
 int main(void) {
     setlocale(LC_ALL, "Russian_Russia.1251");
 
@@ -12,13 +14,13 @@ int main(void) {
     if (result.error != PE_OK) {
         switch (result.error) {
         case PE_NO_INPUT:
-            return 66;
+            return EC_NOINPUT;
         case PE_EMPTY_NAME:
         case PE_BAD_COUNT:
         case PE_NEGATIVE_COUNT:
-            return 65;
+            return EC_DATA;
         case PE_IO_ERROR:
-            return 74;
+            return EC_IOERR;
         default:
             return 1;
         }
@@ -26,5 +28,5 @@ int main(void) {
 
     printf("Изображение «%s»: %d %s.\n", result.name, result.count, pixel_word(result.count));
     free(result.name);
-    return 0;
+    return EC_OK;
 }

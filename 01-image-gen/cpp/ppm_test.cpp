@@ -1,5 +1,5 @@
-#include "hsv_to_rgb.h"
-#include "parse_args.h"
+#include "hsv_to_rgb.hpp"
+#include "parse_args.hpp"
 
 #include <print>
 
@@ -110,6 +110,76 @@ static void test_parse_args_radial() {
     check(r->pattern == Pattern::Radial, "7 radial Radial");
 }
 
+// ---- new CLI (--size N [--seed S]) tests ----
+
+static void test_new_no_args() {
+    char arg0[] = "prog";
+    char arg1[] = "--size";
+    char* argv[] = {arg0, arg1};
+    auto r = parse_args(2, argv);
+    check(!r.has_value(), "--size alone -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kNoArg, "--size alone kNoArg");
+}
+
+static void test_new_bad_size() {
+    char arg0[] = "prog";
+    char arg1[] = "--size";
+    char arg2[] = "abc";
+    char* argv[] = {arg0, arg1, arg2};
+    auto r = parse_args(3, argv);
+    check(!r.has_value(), "--size abc -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadNumber, "--size abc kBadNumber");
+}
+
+static void test_new_ok_no_seed() {
+    char arg0[] = "prog";
+    char arg1[] = "--size";
+    char arg2[] = "10";
+    char* argv[] = {arg0, arg1, arg2};
+    auto r = parse_args(3, argv);
+    check(r.has_value(), "--size 10 ok");
+    if (!r.has_value())
+        return;
+    check(r->size == 10, "--size 10 size == 10");
+    check(r->pattern == Pattern::Random, "--size 10 Random");
+    check(!r->seed_provided, "--size 10 seed not provided");
+}
+
+static void test_new_with_seed() {
+    char arg0[] = "prog";
+    char arg1[] = "--size";
+    char arg2[] = "5";
+    char arg3[] = "--seed";
+    char arg4[] = "42";
+    char* argv[] = {arg0, arg1, arg2, arg3, arg4};
+    auto r = parse_args(5, argv);
+    check(r.has_value(), "--size 5 --seed 42 ok");
+    if (!r.has_value())
+        return;
+    check(r->size == 5, "--size 5 size == 5");
+    check(r->pattern == Pattern::Random, "--size 5 Random");
+    check(r->seed_provided, "--size 5 seed provided");
+    check(r->seed == 42, "--size 5 seed == 42");
+}
+
+static void test_new_bad_seed() {
+    char arg0[] = "prog";
+    char arg1[] = "--size";
+    char arg2[] = "5";
+    char arg3[] = "--seed";
+    char arg4[] = "abc";
+    char* argv[] = {arg0, arg1, arg2, arg3, arg4};
+    auto r = parse_args(5, argv);
+    check(!r.has_value(), "--size 5 --seed abc -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadSeed, "--seed abc kBadSeed");
+}
+
 // ---- hsv_to_rgb tests ----
 
 static void check_rgb(RGB actual, int er, int eg, int eb, std::string_view name) {
@@ -185,6 +255,13 @@ int main() {
     test_parse_args_default_pattern();
     test_parse_args_checker();
     test_parse_args_radial();
+
+    std::println("--- new CLI tests ---");
+    test_new_no_args();
+    test_new_bad_size();
+    test_new_ok_no_seed();
+    test_new_with_seed();
+    test_new_bad_seed();
 
     std::println("--- hsv_to_rgb tests ---");
     test_hsv_red();

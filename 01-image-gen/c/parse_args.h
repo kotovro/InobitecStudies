@@ -3,18 +3,18 @@
 
 #include <stdint.h>
 
-enum ParseError { PE_OK, PE_NOARG, PE_BADNUMBER, PE_BADPATTERN };
+#include "../../common/exit_codes.h"
 
-#define EXIT_OK      0
-#define EXIT_USAGE   64
-#define EXIT_NOINPUT 66
+enum ParseError { PE_OK, PE_NOARG, PE_BADNUMBER, PE_BADPATTERN, PE_BADSEED };
 
-enum Pattern { PATTERN_GRADIENT, PATTERN_CHECKER, PATTERN_RADIAL };
+enum Pattern { PATTERN_GRADIENT, PATTERN_CHECKER, PATTERN_RADIAL, PATTERN_RANDOM };
 
 struct ParseResult {
     int32_t size;
     enum Pattern pattern;
     enum ParseError error;
+    uint32_t seed;
+    int seed_provided;
 };
 
 struct ParseResult parse_args(int argc, char** argv);

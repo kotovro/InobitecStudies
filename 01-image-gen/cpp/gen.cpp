@@ -1,14 +1,31 @@
+#include "hsv_to_rgb.hpp"
+#include "parse_args.hpp"
+
 #include <cmath>
 #include <expected>
 #include <print>
-
-#include "hsv_to_rgb.h"
-#include "parse_args.h"
+#include <random>
 
 void write_ppm_header(int width, int height) {
     std::println("P3");
     std::println("{} {}", width, height);
     std::println("255");
+}
+
+void draw_random(int size, unsigned seed) {
+    std::mt19937 rng(seed ? seed : 42);
+    std::uniform_int_distribution dist(0, 255);
+    for (int y = 0; y < size; ++y) {
+        for (int x = 0; x < size; ++x) {
+            int r = dist(rng);
+            int g = dist(rng);
+            int b = dist(rng);
+            std::print("{:3d} {:3d} {:3d}", r, g, b);
+            if (x + 1 < size)
+                std::print(" ");
+        }
+        std::println();
+    }
 }
 
 void draw_gradient(int size) {
@@ -71,6 +88,9 @@ void generate_ppm(const Args& args) {
     case Radial:
         draw_radial(args.size);
         break;
+    case Random:
+        draw_random(args.size, args.seed);
+        break;
     }
 }
 
@@ -80,23 +100,32 @@ int main(int argc, char** argv) {
         switch (args.error()) {
         case ParseError::kNoArg:
             std::println(stderr, "N не указано. Использование: gen_image <N> [pattern]");
-            return 66;
+            return (int)ExitCode::kNoInput;
         case ParseError::kBadNumber:
-            std::println(stderr, "N должно быть целым числом в [1; 512]; получено: {}",
+            std::println(stderr, "N должно быть целым числом; получено: {}",
                          argc >= 2 ? argv[1] : "");
-            return 64;
+            return (int)ExitCode::kUsage;
         case ParseError::kBadPattern:
             std::println(stderr, "Неизвестный паттерн: {}. Допустимые: gradient, checker, radial",
                          argc >= 3 ? argv[2] : "");
-            return 64;
+            return (int)ExitCode::kUsage;
+        case ParseError::kBadSeed:
+            std::println(stderr, "seed должно быть целым числом; получено: {}",
+                         argc >= 5 ? argv[4] : "");
+            return (int)ExitCode::kUsage;
         }
     }
 
-    if (args->size < 1 || args->size > 512) [[unlikely]] {
-        std::println(stderr, "N должен быть в [1; 512]; получено: {}", args->size);
-        return 64;
+    if (args->size < 1) [[unlikely]] {
+        std::println(stderr, "размер должен быть положительным; получено: {}", args->size);
+        return (int)ExitCode::kUsage;
+    }
+
+    if (args->pattern != Pattern::Random && args->size > 512) [[unlikely]] {
+        std::println(stderr, "N должно быть в [1; 512]; получено: {}", args->size);
+        return (int)ExitCode::kUsage;
     }
 
     generate_ppm(*args);
-    return 0;
+    return (int)ExitCode::kOk;
 }

@@ -1,5 +1,5 @@
-#ifndef KV_HSV_TO_RGB_H
-#define KV_HSV_TO_RGB_H
+#ifndef KV_HSV_TO_RGB_HPP
+#define KV_HSV_TO_RGB_HPP
 
 struct RGB {
     int r;
@@ -9,4 +9,4 @@ struct RGB {
 
 RGB hsv_to_rgb(double hue, double saturation, double value);
 
-#endif // KV_HSV_TO_RGB_H
+#endif // KV_HSV_TO_RGB_HPP

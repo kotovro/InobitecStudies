@@ -1,4 +1,4 @@
-#include "hsv_to_rgb.h"
+#include "hsv_to_rgb.hpp"
 
 #include <algorithm>
 #include <cmath>
