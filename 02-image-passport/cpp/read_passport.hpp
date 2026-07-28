@@ -1,5 +1,4 @@
-#ifndef KV_READ_PASSPORT_H
-#define KV_READ_PASSPORT_H
+#pragma once
 
 #include <expected>
 #include <iosfwd>
@@ -18,5 +17,3 @@ struct PassportData {
 };
 
 std::expected<PassportData, PassportError> read_passport(std::istream& is);
-
-#endif

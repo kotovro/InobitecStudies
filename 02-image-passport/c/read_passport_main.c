@@ -1,10 +1,9 @@
-#include "pixel_word.h"
-#include "read_passport.h"
-
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "pixel_word.h"
+#include "read_passport.h"
 #include "../../common/exit_codes.h"
 
 int main(void) {
@@ -26,7 +25,7 @@ int main(void) {
         }
     }
 
-    printf("Изображение «%s»: %d %s.\n", result.name, result.count, pixel_word(result.count));
+    printf("Изображение \xAB%s\xBB: %d %s.\n", result.name, result.count, pixel_word(result.count));
     free(result.name);
     return EC_OK;
 }

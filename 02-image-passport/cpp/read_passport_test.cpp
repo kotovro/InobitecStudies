@@ -1,9 +1,9 @@
-#include "pixel_word.h"
-
 #include <cstdlib>
 #include <locale>
 #include <print>
 #include <string_view>
+
+#include "pixel_word.hpp"
 
 static int failed = 0;
 

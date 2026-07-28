@@ -1,4 +1,4 @@
-#include "pixel_word.h"
+#include "pixel_word.hpp"
 
 std::string_view pixel_word(int n) {
     int mod100 = n % 100;
