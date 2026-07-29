@@ -1,6 +1,7 @@
 #include "ppm_stats.hpp"
 
 #include <cmath>
+#include <cstdint>
 #include <expected>
 #include <iostream>
 #include <limits>
@@ -11,7 +12,7 @@
 // Вспомогательные функции
 // -------------------------------------------------------------------
 
-double luma(int r, int g, int b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
+double luma(int32_t r, int32_t g, int32_t b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
 
 // -------------------------------------------------------------------
 // Публичные функции
@@ -19,7 +20,7 @@ double luma(int r, int g, int b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
 
 StatsResult ppm_read_stats(std::istream& is) {
     Stats stats{};
-    int line_num = 1;
+    int32_t line_num = 1;
     enum class Phase { kHeader, kData } phase = Phase::kHeader;
 
     auto err = [&](StatsError e, std::string msg) -> StatsResult {
@@ -59,7 +60,7 @@ StatsResult ppm_read_stats(std::istream& is) {
                    std::format("строка {}: ожидалось 'P3', получено: '{}'", line_num, magic));
 
     // ---- 2. Width, Height, Maxval ----
-    auto read_header_int = [&](long long& out, std::string_view /*label*/) -> bool {
+    auto read_header_int = [&](int32_t& out, std::string_view /*label*/) -> bool {
         if (!skip_ws())
             return false;
         is >> out;
@@ -71,7 +72,7 @@ StatsResult ppm_read_stats(std::istream& is) {
     };
 
     {
-        long long w, h, m;
+        int32_t w, h, m;
         if (!read_header_int(w, "width"))
             return err(StatsError::kBadNumber,
                        std::format("строка {}: не удалось прочитать ширину", line_num));
@@ -98,17 +99,17 @@ StatsResult ppm_read_stats(std::istream& is) {
                                    "получено: {}",
                                    line_num, m));
 
-        stats.width = (int)w;
-        stats.height = (int)h;
-        stats.max_val = (int)m;
+        stats.width = w;
+        stats.height = h;
+        stats.max_val = m;
     }
 
     // ---- 3. Попиксельные данные (PH_DATA) ----
     phase = Phase::kData;
-    long long total_pixels = (long long)stats.width * stats.height;
+    int64_t total_pixels = (int64_t)stats.width * stats.height;
     bool first_pixel = true;
 
-    for (long long i = 0; i < total_pixels; ++i) {
+    for (int64_t i = 0; i < total_pixels; ++i) {
         skip_ws();
         if (is.eof())
             return err(StatsError::kTooFewPixels,
@@ -120,7 +121,7 @@ StatsResult ppm_read_stats(std::istream& is) {
             return err(StatsError::kBadNumber,
                        std::format("строка {}: символ '#' не допускается в данных", line_num));
 
-        int r, g, b;
+        int32_t r, g, b;
         is >> r >> g >> b;
         if (is.fail())
             return err(StatsError::kBadNumber, std::format("строка {}: ожидалось число", line_num));
@@ -148,7 +149,7 @@ StatsResult ppm_read_stats(std::istream& is) {
                 stats.y_max = y;
         }
 
-        int bin = (int)(y * 8.0 / (stats.max_val + 1));
+        int32_t bin = (int32_t)(y * 8.0 / (stats.max_val + 1));
         if (bin >= 8)
             bin = 7;
         ++stats.histogram[bin];
@@ -178,9 +179,9 @@ StatsResult ppm_read_stats(std::istream& is) {
 }
 
 void ppm_print_stats(const Stats& s, std::ostream& os) {
-    int avg_r = (int)((double)s.total_r / s.pixel_count + 0.5);
-    int avg_g = (int)((double)s.total_g / s.pixel_count + 0.5);
-    int avg_b = (int)((double)s.total_b / s.pixel_count + 0.5);
+    int32_t avg_r = (int32_t)((double)s.total_r / s.pixel_count + 0.5);
+    int32_t avg_g = (int32_t)((double)s.total_g / s.pixel_count + 0.5);
+    int32_t avg_b = (int32_t)((double)s.total_b / s.pixel_count + 0.5);
 
     std::println(os, "{}x{}", s.width, s.height);
     std::println(os, "пикселей: {}", s.pixel_count);
@@ -189,10 +190,10 @@ void ppm_print_stats(const Stats& s, std::ostream& os) {
     std::println(os, "макс. яркость: {:.1f}", s.y_max);
     std::println(os, "гистограмма яркости:");
 
-    for (int i = 0; i < 8; ++i) {
+    for (int32_t i = 0; i < 8; ++i) {
         double bin_width = (double)(s.max_val + 1) / 8.0;
-        int lo = (int)(i * bin_width);
-        int hi = (i == 7) ? s.max_val : (int)((i + 1) * bin_width) - 1;
+        int32_t lo = (int32_t)(i * bin_width);
+        int32_t hi = (i == 7) ? s.max_val : (int32_t)((i + 1) * bin_width) - 1;
         std::println(os, "  [{:3d},{:3d}]: {}", lo, hi, s.histogram[i]);
     }
 }

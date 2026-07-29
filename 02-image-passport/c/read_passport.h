@@ -1,6 +1,8 @@
 #ifndef KV_READ_PASSPORT_H
 #define KV_READ_PASSPORT_H
 
+#include <stdint.h>
+
 enum PassportError {
     PE_OK,
     PE_NO_INPUT,
@@ -13,7 +15,7 @@ enum PassportError {
 struct PassportResult {
     enum PassportError error;
     char* name;
-    int count;
+    int32_t count;
 };
 
 struct PassportResult read_passport(void);

@@ -42,7 +42,7 @@ RGB hsv_to_rgb(double h, double s, double v) {
         b1 = x;
         break;
     }
-    return {std::clamp(static_cast<int>((r1 + m) * 255), 0, 255),
-            std::clamp(static_cast<int>((g1 + m) * 255), 0, 255),
-            std::clamp(static_cast<int>((b1 + m) * 255), 0, 255)};
+    return {static_cast<uint8_t>(std::clamp(static_cast<int>((r1 + m) * 255), 0, 255)),
+            static_cast<uint8_t>(std::clamp(static_cast<int>((g1 + m) * 255), 0, 255)),
+            static_cast<uint8_t>(std::clamp(static_cast<int>((b1 + m) * 255), 0, 255))};
 }

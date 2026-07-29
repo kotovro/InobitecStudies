@@ -5,7 +5,7 @@
 #include <print>
 #include <system_error>
 
-#include "../../common/exit_codes.hpp"
+#include "../../common/cpp/exit_codes.hpp"
 #include "pixel_word.hpp"
 #include "read_passport.hpp"
 

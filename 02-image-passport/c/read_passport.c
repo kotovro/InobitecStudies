@@ -84,5 +84,5 @@ struct PassportResult read_passport(void) {
         return (struct PassportResult){PE_NEGATIVE_COUNT, NULL, 0};
     }
 
-    return (struct PassportResult){PE_OK, name, (int)count};
+    return (struct PassportResult){PE_OK, name, (int32_t)count};
 }

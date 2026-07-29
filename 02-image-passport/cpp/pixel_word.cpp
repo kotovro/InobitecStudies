@@ -1,7 +1,9 @@
 #include "pixel_word.hpp"
 
-std::string_view pixel_word(int n) {
-    int mod100 = n % 100;
+#include <cstdint>
+
+std::string_view pixel_word(int32_t n) {
+    int32_t mod100 = n % 100;
     if (mod100 >= 11 && mod100 <= 14)
         return "пикселей";
 

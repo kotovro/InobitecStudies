@@ -1,11 +1,12 @@
 #include "ppm_stats.h"
 
 #include <locale.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-// luma ΠΎΠΏΡ€ΠµΠ΄ΠµΠ»ΠµΠ½Π° Ρ external linkage Π² ppm_stats.c
-double luma(int r, int g, int b);
+// luma ξοπεδελενΰ ρ external linkage β ppm_stats.c
+double luma(int32_t r, int32_t g, int32_t b);
 
 static int failed = 0;
 

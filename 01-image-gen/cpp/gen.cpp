@@ -2,24 +2,25 @@
 #include "parse_args.hpp"
 
 #include <cmath>
+#include <cstdint>
 #include <expected>
 #include <print>
 #include <random>
 
-void write_ppm_header(int width, int height) {
+void write_ppm_header(int32_t width, int32_t height) {
     std::println("P3");
     std::println("{} {}", width, height);
     std::println("255");
 }
 
-void draw_random(int size, unsigned seed) {
+void draw_random(int32_t size, uint32_t seed) {
     std::mt19937 rng(seed ? seed : 42);
     std::uniform_int_distribution dist(0, 255);
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
-            int r = dist(rng);
-            int g = dist(rng);
-            int b = dist(rng);
+    for (int32_t y = 0; y < size; ++y) {
+        for (int32_t x = 0; x < size; ++x) {
+            int32_t r = dist(rng);
+            int32_t g = dist(rng);
+            int32_t b = dist(rng);
             std::print("{:3d} {:3d} {:3d}", r, g, b);
             if (x + 1 < size)
                 std::print(" ");
@@ -28,13 +29,13 @@ void draw_random(int size, unsigned seed) {
     }
 }
 
-void draw_gradient(int size) {
-    int max_coord = (size == 1) ? 1 : (size - 1);
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
-            int r = x * 255 / max_coord;
-            int g = (max_coord - y) * 255 / max_coord;
-            int b = 0;
+void draw_gradient(int32_t size) {
+    int32_t max_coord = (size == 1) ? 1 : (size - 1);
+    for (int32_t y = 0; y < size; ++y) {
+        for (int32_t x = 0; x < size; ++x) {
+            int32_t r = x * 255 / max_coord;
+            int32_t g = (max_coord - y) * 255 / max_coord;
+            int32_t b = 0;
             std::print("{:3d} {:3d} {:3d}", r, g, b);
             if (x + 1 < size)
                 std::print(" ");
@@ -43,10 +44,10 @@ void draw_gradient(int size) {
     }
 }
 
-void draw_checker(int size) {
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
-            int v = ((x + y) % 2 == 0) ? 255 : 0;
+void draw_checker(int32_t size) {
+    for (int32_t y = 0; y < size; ++y) {
+        for (int32_t x = 0; x < size; ++x) {
+            int32_t v = ((x + y) % 2 == 0) ? 255 : 0;
             std::print("{:3d} {:3d} {:3d}", v, v, v);
             if (x + 1 < size)
                 std::print(" ");
@@ -55,12 +56,12 @@ void draw_checker(int size) {
     }
 }
 
-void draw_radial(int size) {
+void draw_radial(int32_t size) {
     double cx = (size - 1) / 2.0;
     double cy = (size - 1) / 2.0;
     double max_dist = std::sqrt(cx * cx + cy * cy);
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
+    for (int32_t y = 0; y < size; ++y) {
+        for (int32_t x = 0; x < size; ++x) {
             double dx = x - cx;
             double dy = y - cy;
             double dist = std::sqrt(dx * dx + dy * dy);

@@ -41,7 +41,7 @@ std::expected<PassportData, PassportError> read_passport(std::istream& is) {
     if (is.fail() && !is.eof()) [[unlikely]]
         return std::unexpected(PassportError{PassportErrorKind::kIOError, {}});
 
-    int count{};
+    int32_t count{};
     auto [ptr, ec] = std::from_chars(count_str.data(), count_str.data() + count_str.size(), count);
     if (ec != std::errc{} || ptr != count_str.data() + count_str.size()) [[unlikely]]
         return std::unexpected(PassportError{PassportErrorKind::kBadCount, count_str});

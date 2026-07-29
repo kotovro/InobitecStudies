@@ -1,12 +1,13 @@
 #include "ppm_stats.hpp"
 
+#include <cstdint>
 #include <cstdlib>
 #include <locale>
 #include <print>
 #include <sstream>
 #include <string_view>
 
-double luma(int r, int g, int b);
+double luma(int32_t r, int32_t g, int32_t b);
 
 static int failed = 0;
 
@@ -19,8 +20,8 @@ static void check(bool cond, std::string_view name) {
     }
 }
 
-static void check_stats(const Stats& s, int w, int h, long long px, long long tr, long long tg,
-                        long long tb) {
+static void check_stats(const Stats& s, int32_t w, int32_t h, int64_t px, int64_t tr, int64_t tg,
+                        int64_t tb) {
     check(s.width == w, "width");
     check(s.height == h, "height");
     check(s.pixel_count == px, "pixel_count");

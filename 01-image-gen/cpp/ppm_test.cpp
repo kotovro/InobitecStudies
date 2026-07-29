@@ -31,7 +31,7 @@ static void test_parse_args_bad_number() {
     char arg1[] = "abc";
     char* argv[] = {arg0, arg1};
     auto r = parse_args(2, argv);
-    check(!r.has_value(), "abc → error");
+    check(!r.has_value(), "abc в†’ error");
     if (r.has_value())
         return;
     check(r.error() == ParseError::kBadNumber, "abc kBadNumber");
@@ -56,7 +56,7 @@ static void test_parse_args_negative_number() {
     check(r.has_value(), "-5 - accepted (parse_args only)");
     if (!r.has_value())
         return;
-    check(r->size == -5, "-5 → size == -5");
+    check(r->size == -5, "-5 в†’ size == -5");
     check(r->pattern == Pattern::Gradient, "-5 default Gradient");
 }
 
@@ -77,10 +77,10 @@ static void test_parse_args_default_pattern() {
     char arg1[] = "5";
     char* argv[] = {arg0, arg1};
     auto r = parse_args(2, argv);
-    check(r.has_value(), "5 → ok");
+    check(r.has_value(), "5 в†’ ok");
     if (!r.has_value())
         return;
-    check(r->size == 5, "5 → size == 5");
+    check(r->size == 5, "5 в†’ size == 5");
     check(r->pattern == Pattern::Gradient, "5 default Gradient");
 }
 

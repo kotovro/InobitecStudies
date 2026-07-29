@@ -8,7 +8,7 @@ static std::expected<Args, ParseError> parse_args_old(int argc, char** argv) {
     if (argc < 2) [[unlikely]]
         return std::unexpected(ParseError::kNoArg);
 
-    int size{};
+    int32_t size{};
     auto [ptr, ec] = std::from_chars(argv[1], argv[1] + std::strlen(argv[1]), size);
     if (ec != std::errc{} || *ptr != '\0') [[unlikely]]
         return std::unexpected(ParseError::kBadNumber);
@@ -31,7 +31,7 @@ static std::expected<Args, ParseError> parse_args_new(int argc, char** argv) {
     if (argc < 3) [[unlikely]]
         return std::unexpected(ParseError::kNoArg);
 
-    int size{};
+    int32_t size{};
     auto [ptr, ec] = std::from_chars(argv[2], argv[2] + std::strlen(argv[2]), size);
     if (ec != std::errc{} || *ptr != '\0') [[unlikely]]
         return std::unexpected(ParseError::kBadNumber);

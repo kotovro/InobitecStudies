@@ -6,7 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void write_ppm_header(int width, int height) { printf("P3\n%d %d\n255\n", width, height); }
+static void write_ppm_header(int32_t width, int32_t height) {
+    printf("P3\n%d %d\n255\n", width, height);
+}
 
 static uint32_t xorshift32(uint32_t* state) {
     uint32_t x = *state;
@@ -17,14 +19,14 @@ static uint32_t xorshift32(uint32_t* state) {
     return x;
 }
 
-static void draw_random(int size, uint32_t seed) {
+static void draw_random(int32_t size, uint32_t seed) {
     uint32_t state = seed ? seed : 42;
-    int max_val = 255;
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
-            int r = (int)(xorshift32(&state) % (max_val + 1));
-            int g = (int)(xorshift32(&state) % (max_val + 1));
-            int b = (int)(xorshift32(&state) % (max_val + 1));
+    int32_t max_val = 255;
+    for (int32_t y = 0; y < size; ++y) {
+        for (int32_t x = 0; x < size; ++x) {
+            int32_t r = (int32_t)(xorshift32(&state) % (max_val + 1));
+            int32_t g = (int32_t)(xorshift32(&state) % (max_val + 1));
+            int32_t b = (int32_t)(xorshift32(&state) % (max_val + 1));
             printf("%3d %3d %3d", r, g, b);
             if (x + 1 < size)
                 printf(" ");
@@ -33,13 +35,13 @@ static void draw_random(int size, uint32_t seed) {
     }
 }
 
-static void draw_gradient(int size) {
-    int max_coord = (size == 1) ? 1 : (size - 1);
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
-            int r = x * 255 / max_coord;
-            int g = (max_coord - y) * 255 / max_coord;
-            int b = 0;
+static void draw_gradient(int32_t size) {
+    int32_t max_coord = (size == 1) ? 1 : (size - 1);
+    for (int32_t y = 0; y < size; ++y) {
+        for (int32_t x = 0; x < size; ++x) {
+            int32_t r = x * 255 / max_coord;
+            int32_t g = (max_coord - y) * 255 / max_coord;
+            int32_t b = 0;
             printf("%3d %3d %3d", r, g, b);
             if (x + 1 < size)
                 printf(" ");
@@ -48,10 +50,10 @@ static void draw_gradient(int size) {
     }
 }
 
-static void draw_checker(int size) {
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
-            int v = ((x + y) % 2 == 0) ? 255 : 0;
+static void draw_checker(int32_t size) {
+    for (int32_t y = 0; y < size; ++y) {
+        for (int32_t x = 0; x < size; ++x) {
+            int32_t v = ((x + y) % 2 == 0) ? 255 : 0;
             printf("%3d %3d %3d", v, v, v);
             if (x + 1 < size)
                 printf(" ");
@@ -60,13 +62,13 @@ static void draw_checker(int size) {
     }
 }
 
-static void draw_radial(int size) {
+static void draw_radial(int32_t size) {
     double cx = (size - 1) / 2.0;
     double cy = (size - 1) / 2.0;
     double max_dist = sqrt(cx * cx + cy * cy);
 
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
+    for (int32_t y = 0; y < size; ++y) {
+        for (int32_t x = 0; x < size; ++x) {
             double dx = x - cx;
             double dy = y - cy;
             double dist = sqrt(dx * dx + dy * dy);

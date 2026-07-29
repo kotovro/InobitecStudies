@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "../../common/exit_codes.h"
+#include "../../common/c/exit_codes.h"
 
 enum ParseError { PE_OK, PE_NOARG, PE_BADNUMBER, PE_BADPATTERN, PE_BADSEED };
 

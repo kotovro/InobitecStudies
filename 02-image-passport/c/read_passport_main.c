@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../../common/c/exit_codes.h"
 #include "pixel_word.h"
 #include "read_passport.h"
-#include "../../common/exit_codes.h"
 
 int main(void) {
     setlocale(LC_ALL, "Russian_Russia.1251");
