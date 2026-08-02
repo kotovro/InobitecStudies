@@ -6,6 +6,16 @@
 
 #define PPM_DIAG_SIZE 256
 
+#if defined(_WIN32)
+#if defined(KV_DYNAMIC_LINK)
+#define KV_API __declspec(dllexport)
+#else
+#define KV_API
+#endif
+#else
+#define KV_API
+#endif
+
 struct Pixel {
     uint8_t r, g, b;
 };
@@ -35,8 +45,8 @@ struct PpmResult {
     struct Image image;
 };
 
-struct PpmResult ppm_read(FILE* f);
-void ppm_image_free(struct Image* img);
+struct PpmResult KV_API ppm_read(FILE* f);
+void KV_API ppm_image_free(struct Image* img);
 
 struct PpmWriter {
     FILE* f;
@@ -44,7 +54,7 @@ struct PpmWriter {
     int32_t col;
 };
 
-void ppm_writer_init(struct PpmWriter* w, FILE* f, int32_t width, int32_t height);
-void ppm_writer_put(struct PpmWriter* w, uint8_t r, uint8_t g, uint8_t b);
+void KV_API ppm_writer_init(struct PpmWriter* w, FILE* f, int32_t width, int32_t height);
+void KV_API ppm_writer_put(struct PpmWriter* w, uint8_t r, uint8_t g, uint8_t b);
 
 #endif

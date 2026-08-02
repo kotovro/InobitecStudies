@@ -19,8 +19,8 @@ static void check(int cond, const char* name) {
 
 static void check_pixel(const struct Pixel* p, int er, int eg, int eb, const char* name) {
     if (p->r != er || p->g != eg || p->b != eb) {
-        fprintf(stderr, "FAIL: %s -- got (%d,%d,%d) expected (%d,%d,%d)\n",
-                name, p->r, p->g, p->b, er, eg, eb);
+        fprintf(stderr, "FAIL: %s -- got (%d,%d,%d) expected (%d,%d,%d)\n", name, p->r, p->g, p->b,
+                er, eg, eb);
         ++failed;
     } else {
         printf("PASS: %s\n", name);
@@ -177,7 +177,8 @@ static void test_too_few_pixels(void) {
 static void test_writer_basic(void) {
     FILE* f = tmpfile();
     check(f != NULL, "writer: tmpfile created");
-    if (!f) return;
+    if (!f)
+        return;
 
     struct PpmWriter pw;
     ppm_writer_init(&pw, f, 2, 2);
