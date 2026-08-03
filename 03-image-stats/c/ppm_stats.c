@@ -300,7 +300,7 @@ void ppm_print_stats(const struct Stats* s, FILE* out) {
 
     fprintf(out, "%dx%d\n", s->width, s->height);
     fprintf(out, "пикселей: %lld\n", s->pixel_count);
-    fprintf(out, "средний цвет: %d %d %d\n", avg_r, avg_g, avg_b);
+    fprintf(out, "средний цвет: %3d %3d %3d\n", avg_r, avg_g, avg_b);
     fprintf(out, "мин. €ркость: %.1f\n", s->y_min);
     fprintf(out, "макс. €ркость: %.1f\n", s->y_max);
     fprintf(out, "гистограмма €ркости:\n");

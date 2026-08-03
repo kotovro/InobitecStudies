@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define PPM_DIAG_SIZE 256
+enum {
+    PPM_DIAG_SIZE = 256
+};
 
 #if defined(_WIN32)
 #if defined(KV_DYNAMIC_LINK)

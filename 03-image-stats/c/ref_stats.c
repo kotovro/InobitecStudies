@@ -67,7 +67,7 @@ int main(void) {
     int avg_b = (int)((double)total_b / pixel_count + 0.5);
     printf("%dx%d\n", width, height);
     printf("пикселей: %lld\n", pixel_count);
-    printf("средний цвет: %d %d %d\n", avg_r, avg_g, avg_b);
+    printf("средний цвет: %3d %3d %3d\n", avg_r, avg_g, avg_b);
     printf("мин. €ркость: %.1f\n", y_min);
     printf("макс. €ркость: %.1f\n", y_max);
     printf("гистограмма €ркости:\n");

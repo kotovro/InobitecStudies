@@ -185,7 +185,7 @@ void ppm_print_stats(const Stats& s, std::ostream& os) {
 
     std::println(os, "{}x{}", s.width, s.height);
     std::println(os, "пикселей: {}", s.pixel_count);
-    std::println(os, "средний цвет: {} {} {}", avg_r, avg_g, avg_b);
+    std::println(os, "средний цвет: {:3d} {:3d} {:3d}", avg_r, avg_g, avg_b);
     std::println(os, "мин. €ркость: {:.1f}", s.y_min);
     std::println(os, "макс. €ркость: {:.1f}", s.y_max);
     std::println(os, "гистограмма €ркости:");

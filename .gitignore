@@ -2,9 +2,14 @@
 *.exe
 *.obj
 *.pdb
+*.dll
+*.lib
+*.exp 
+*.ilk
 
 # Артефакты, производимые в ходе работы программ
 *.xml
 *.png
 *.ppm
+*.txt
 build/
