@@ -1,346 +1,373 @@
-# Программа подготовки к стажировке в Inobitec — трек C/C++
+# РџСЂРѕРіСЂР°РјРјР° РїРѕРґРіРѕС‚РѕРІРєРё Рє СЃС‚Р°Р¶РёСЂРѕРІРєРµ РІ Inobitec вЂ” С‚СЂРµРє C/C++
 
-Репозиторий с задачами оценочного периода. Домен задачника — растровые
-изображения в текстовом формате PPM (`P3` — RGB, тройки ASCII).
+Р РµРїРѕР·РёС‚РѕСЂРёР№ СЃ Р·Р°РґР°С‡Р°РјРё РѕС†РµРЅРѕС‡РЅРѕРіРѕ РїРµСЂРёРѕРґР°. Р”РѕРјРµРЅ Р·Р°РґР°С‡РЅРёРєР° вЂ” СЂР°СЃС‚СЂРѕРІС‹Рµ
+РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РІ С‚РµРєСЃС‚РѕРІРѕРј С„РѕСЂРјР°С‚Рµ PPM (`P3` вЂ” RGB, С‚СЂРѕР№РєРё ASCII).
 
-## Структура проекта
+## РЎС‚СЂСѓРєС‚СѓСЂР° РїСЂРѕРµРєС‚Р°
 
 ```
-AGENTS.md          — журнал работы и память агента
+AGENTS.md          вЂ” Р¶СѓСЂРЅР°Р» СЂР°Р±РѕС‚С‹ Рё РїР°РјСЏС‚СЊ Р°РіРµРЅС‚Р°
 common/
-  c/               — общие модули (C)
-    exit_codes.h   — именованные exit-коды
-    ppm_io.h(.c)   — модуль ввода-вывода PPM (парсинг/запись, экспорт в DLL)
-  cpp/             — общие модули (C++)
-    exit_codes.hpp — именованные exit-коды
-    ppm_io.hpp(.cpp) — модуль ввода-вывода PPM (PIMPL, экспорт в DLL)
+  c/               вЂ” РѕР±С‰РёРµ РјРѕРґСѓР»Рё (C)
+    exit_codes.h   вЂ” РёРјРµРЅРѕРІР°РЅРЅС‹Рµ exit-РєРѕРґС‹
+    version.h      вЂ” РІРµСЂСЃРёСЏ РїСЂРѕРіСЂР°РјРј (`KV_VERSION`)
+    ppm_io.h(.c)   вЂ” РјРѕРґСѓР»СЊ РІРІРѕРґР°-РІС‹РІРѕРґР° PPM (РїР°СЂСЃРёРЅРі/Р·Р°РїРёСЃСЊ, СЌРєСЃРїРѕСЂС‚ РІ DLL)
+  cpp/             вЂ” РѕР±С‰РёРµ РјРѕРґСѓР»Рё (C++)
+    exit_codes.hpp вЂ” РёРјРµРЅРѕРІР°РЅРЅС‹Рµ exit-РєРѕРґС‹
+    version.hpp    вЂ” РІРµСЂСЃРёСЏ РїСЂРѕРіСЂР°РјРј (`kVersion`)
+    ppm_io.hpp(.cpp) вЂ” РјРѕРґСѓР»СЊ РІРІРѕРґР°-РІС‹РІРѕРґР° PPM (PIMPL, СЌРєСЃРїРѕСЂС‚ РІ DLL)
 build/
-  test_data/       — сгенерированные тестовые PPM (в .gitignore)
-dialog_logs/       — сырые логи диалогов с DeepSeek
-00-intro-hello/    — hello world
- 01-image-gen/      — задача 1: генератор PPM
-   c/               — реализация на C (включая ref_*.c — эталоны)
-   cpp/             — реализация на C++
- 02-image-passport/ — задача 2: паспорт изображения
-   c/               — реализация на C
-   cpp/             — реализация на C++
-   ref_passport.c   — эталон для acceptance-тестов
- 03-image-stats/    — задача 3: статистика изображения
+  test_data/       вЂ” СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅРЅС‹Рµ С‚РµСЃС‚РѕРІС‹Рµ PPM (РІ .gitignore)
+dialog_logs/       вЂ” СЃС‹СЂС‹Рµ Р»РѕРіРё РґРёР°Р»РѕРіРѕРІ СЃ DeepSeek
+00-intro-hello/    вЂ” hello world
+ 01-image-gen/      вЂ” Р·Р°РґР°С‡Р° 1: РіРµРЅРµСЂР°С‚РѕСЂ PPM
+   c/               вЂ” СЂРµР°Р»РёР·Р°С†РёСЏ РЅР° C (РІРєР»СЋС‡Р°СЏ ref_*.c вЂ” СЌС‚Р°Р»РѕРЅС‹)
+   cpp/             вЂ” СЂРµР°Р»РёР·Р°С†РёСЏ РЅР° C++
+ 02-image-passport/ вЂ” Р·Р°РґР°С‡Р° 2: РїР°СЃРїРѕСЂС‚ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
+   c/               вЂ” СЂРµР°Р»РёР·Р°С†РёСЏ РЅР° C
+   cpp/             вЂ” СЂРµР°Р»РёР·Р°С†РёСЏ РЅР° C++
+   ref_passport.c   вЂ” СЌС‚Р°Р»РѕРЅ РґР»СЏ acceptance-С‚РµСЃС‚РѕРІ
+ 03-image-stats/    вЂ” Р·Р°РґР°С‡Р° 3: СЃС‚Р°С‚РёСЃС‚РёРєР° РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
    c/
    cpp/
- 04-image-filter/   — задача 4: фильтр изображения
-   c/               — реализация на C
-   cpp/             — реализация на C++
-gen_mass_test_data.ps1 — генератор массовых тестовых данных
+ 04-image-filter/   вЂ” Р·Р°РґР°С‡Р° 4: С„РёР»СЊС‚СЂ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
+   c/               вЂ” СЂРµР°Р»РёР·Р°С†РёСЏ РЅР° C
+   cpp/             вЂ” СЂРµР°Р»РёР·Р°С†РёСЏ РЅР° C++
 ```
 
-Все задачи решаются дважды: C (C17) и C++ (C++23).
+Р’СЃРµ Р·Р°РґР°С‡Рё СЂРµС€Р°СЋС‚СЃСЏ РґРІР°Р¶РґС‹: C (C17) Рё C++ (C++23).
 
 ---
 
-## Требования к окружению
+## РўСЂРµР±РѕРІР°РЅРёСЏ Рє РѕРєСЂСѓР¶РµРЅРёСЋ
 
 - **OS:** Windows
 - **Toolchain:** MSVC (Visual Studio Build Tools, `vcvars64.bat`)
-- **Сборка:** из консоли, `cl /c` + `link`, без IDE
-- **Консоль:** PowerShell / FAR Manager
-- **Просмотр PPM:** IrfanView, GIMP, ImageMagick (`magick out.ppm out.png`)
+- **РЎР±РѕСЂРєР°:** РёР· РєРѕРЅСЃРѕР»Рё, `cl /c` + `link`, Р±РµР· IDE
+- **РљРѕРЅСЃРѕР»СЊ:** PowerShell / FAR Manager
+- **РџСЂРѕСЃРјРѕС‚СЂ PPM:** IrfanView, GIMP, ImageMagick (`magick out.ppm out.png`)
 
 ---
 
-## Сборка
+## РЎР±РѕСЂРєР°
 
-Установить окружение:
+РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РѕРєСЂСѓР¶РµРЅРёРµ:
 ```
 vcvars64.bat
 ```
 
-Раздельные этапы (пример для задачи 1, C):
+Р Р°Р·РґРµР»СЊРЅС‹Рµ СЌС‚Р°РїС‹ (РїСЂРёРјРµСЂ РґР»СЏ Р·Р°РґР°С‡Рё 1, C):
 ```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /c parse_args.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /c gen.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c parse_args.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c gen.c
 link /DEBUG parse_args.obj hsv_to_rgb.obj gen.obj /OUT:gen_image.exe
 ```
 
-Для C++:
+Р”Р»СЏ C++:
 ```
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /c gen.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c gen.cpp
 link /DEBUG parse_args.obj hsv_to_rgb.obj gen.obj /OUT:gen_image.exe
 ```
 
-Флаги: `Debug + ASan` (`/Od /Zi /MDd /fsanitize=address`).
+Р¤Р»Р°РіРё: `Debug + ASan` (`/Od /Zi /MDd /fsanitize=address`).
 
-> Исходники на русском языке сохранены в CP1251 — флаг `/utf-8` не требуется.
-> MSVC по умолчанию интерпретирует файлы в кодировке системной локали, что
-> соответствует CP1251 на русской Windows.
+> РСЃС…РѕРґРЅРёРєРё СЃ СЂСѓСЃСЃРєРёРј С‚РµРєСЃС‚РѕРј СЃРѕС…СЂР°РЅРµРЅС‹ РІ UTF-8 вЂ” РєРѕРјРїРёР»РёСЂСѓСЋС‚СЃСЏ СЃ
+> `/source-charset:utf-8`. РСЃРїРѕР»РЅРµРЅРёРµ РѕСЃС‚Р°С‘С‚СЃСЏ СЃРёСЃС‚РµРјРЅРѕР№ РєРѕРґРѕРІРѕР№ СЃС‚СЂР°РЅРёС†РµР№
+> (CP1251 РЅР° СЂСѓСЃСЃРєРѕР№ Windows): `setlocale` Рё `chcp 1251` СЂР°Р±РѕС‚Р°СЋС‚ РєР°Рє СЂР°РЅСЊС€Рµ.
+> Р¤Р°Р№Р»С‹, РµС‰С‘ РЅРµ РїРµСЂРµРІРµРґС‘РЅРЅС‹Рµ РІ UTF-8 (`common/ppm_io.c`, Р·Р°РґР°С‡Рё 2вЂ“3),
+> СЃРѕР±РёСЂР°СЋС‚СЃСЏ Р±РµР· СЌС‚РѕРіРѕ С„Р»Р°РіР°.
 
-### Эталонные программы
+### Р­С‚Р°Р»РѕРЅРЅС‹Рµ РїСЂРѕРіСЂР°РјРјС‹
 
-Независимые реализации для acceptance-тестов. Собираются одними командами:
+РќРµР·Р°РІРёСЃРёРјС‹Рµ СЂРµР°Р»РёР·Р°С†РёРё РґР»СЏ acceptance-С‚РµСЃС‚РѕРІ. РЎРѕР±РёСЂР°СЋС‚СЃСЏ РѕРґРЅРёРјРё РєРѕРјР°РЅРґР°РјРё:
 
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd ref_gradient.c
 link /DEBUG ref_gradient.obj /OUT:ref_gradient.exe
 ```
 
-| Программа | Файл | Назначение |
+| РџСЂРѕРіСЂР°РјРјР° | Р¤Р°Р№Р» | РќР°Р·РЅР°С‡РµРЅРёРµ |
 |---|---|---|
-| `ref_gradient N` | `01-image-gen/c/ref_gradient.c` | ППМ gradient N x N |
-| `ref_checker N` | `01-image-gen/c/ref_checker.c` | ППМ checker N x N |
-| `ref_radial N` | `01-image-gen/c/ref_radial.c` | ППМ radial N x N |
-| `ref_stats` | `03-image-stats/c/ref_stats.c` | Статистика ППМ из stdin |
-| `ref_passport <case>` | `02-image-passport/ref_passport.c` | Паспорт: эталонный вывод по кейсу |
+| `ref_gradient N` | `01-image-gen/c/ref_gradient.c` | РџРџРњ gradient N x N |
+| `ref_checker N` | `01-image-gen/c/ref_checker.c` | РџРџРњ checker N x N |
+| `ref_radial N` | `01-image-gen/c/ref_radial.c` | РџРџРњ radial N x N |
+| `ref_stats` | `03-image-stats/c/ref_stats.c` | РЎС‚Р°С‚РёСЃС‚РёРєР° РџРџРњ РёР· stdin |
+| `ref_passport <case>` | `02-image-passport/ref_passport.c` | РџР°СЃРїРѕСЂС‚: СЌС‚Р°Р»РѕРЅРЅС‹Р№ РІС‹РІРѕРґ РїРѕ РєРµР№СЃСѓ |
 
-Все бинарники — в `build/`.
+Р’СЃРµ Р±РёРЅР°СЂРЅРёРєРё вЂ” РІ `build/`.
 
 ---
 
-## Задача 1 — Генератор изображений
+## Р—Р°РґР°С‡Р° 1 вЂ” Р“РµРЅРµСЂР°С‚РѕСЂ РёР·РѕР±СЂР°Р¶РµРЅРёР№
 
-Генерирует квадратное PPM `P3` `N * N` с паттерном.
+Р“РµРЅРµСЂРёСЂСѓРµС‚ РєРІР°РґСЂР°С‚РЅРѕРµ PPM `P3` `N * N` СЃ РїР°С‚С‚РµСЂРЅРѕРј.
 
-### Старый режим (позиционные аргументы)
+### РЎС‚Р°СЂС‹Р№ СЂРµР¶РёРј (РїРѕР·РёС†РёРѕРЅРЅС‹Рµ Р°СЂРіСѓРјРµРЅС‚С‹)
 ```
 gen_image <N> [pattern]
 ```
-`N` — сторона (1–512). `pattern`: `gradient` (по умолчанию), `checker`, `radial`.
+`N` вЂ” СЃС‚РѕСЂРѕРЅР° (1вЂ“512). `pattern`: `gradient` (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ), `checker`, `radial`.
 
 ```
 gen_image 5 gradient        -> stdout
-gen_image 3 radial > out.ppm -> в файл
+gen_image 3 radial > out.ppm -> РІ С„Р°Р№Р»
 ```
 
-### Режим массовой генерации
+### Р РµР¶РёРј РјР°СЃСЃРѕРІРѕР№ РіРµРЅРµСЂР°С†РёРё
 ```
 gen_image --size N [--seed S]
 ```
-`N` — сторона (без ограничения 512). `--seed` — seed ГПСЧ (по умолчанию 42).
-Паттерн — `random` (детерминированная случайная заливка).
+`N` вЂ” СЃС‚РѕСЂРѕРЅР° (Р±РµР· РѕРіСЂР°РЅРёС‡РµРЅРёСЏ 512). `--seed` вЂ” seed Р“РџРЎР§ (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 42).
+РџР°С‚С‚РµСЂРЅ вЂ” `random` (РґРµС‚РµСЂРјРёРЅРёСЂРѕРІР°РЅРЅР°СЏ СЃР»СѓС‡Р°Р№РЅР°СЏ Р·Р°Р»РёРІРєР°).
 
 ```
 gen_image --size 1024 --seed 42 > big_random.ppm
 ```
 
-### Поведение при ошибках
-- Нет аргументов -> exit 66, stderr
-- `N` не число / вне диапазона -> exit 64, stderr
-- Неизвестный паттерн -> exit 64, stderr
-- Успех -> exit 0, PPM в stdout
-
-### Тесты
+### РЎРїСЂР°РІРєР° Рё РІРµСЂСЃРёСЏ
 ```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /c ppm_test.c
+gen_image --help       -> usage РІ stdout, exit 0
+gen_image --version    -> "gen_image 0.1.0", exit 0
+```
+
+### РџРѕРІРµРґРµРЅРёРµ РїСЂРё РѕС€РёР±РєР°С…
+- РќРµС‚ Р°СЂРіСѓРјРµРЅС‚РѕРІ -> exit 64, stderr
+- `N` РЅРµ С‡РёСЃР»Рѕ / РІРЅРµ РґРёР°РїР°Р·РѕРЅР° -> exit 64, stderr
+- РќРµРёР·РІРµСЃС‚РЅС‹Р№ РїР°С‚С‚РµСЂРЅ -> exit 64, stderr
+- `--help` / `--version` -> exit 0, С‚РµРєСЃС‚ РІ stdout
+- РЈСЃРїРµС… -> exit 0, PPM РІ stdout
+
+### РўРµСЃС‚С‹
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c ppm_test.c
 link /DEBUG parse_args.obj hsv_to_rgb.obj ppm_test.obj /OUT:ppm_test.exe
 ppm_test.exe
 ```
 
-Acceptance — ручной прогон с эталоном через `fc`:
+Acceptance вЂ” СЂСѓС‡РЅРѕР№ РїСЂРѕРіРѕРЅ СЃ СЌС‚Р°Р»РѕРЅРѕРј С‡РµСЂРµР· `fc`:
 ```powershell
 # gradient 3x3
 ref_gradient 3 > build\etalons\gradient_3x3.ppm
 gen_image 3 gradient > build\actual.ppm
 fc build\actual.ppm build\etalons\gradient_3x3.ppm
 
-# error-кейсы (только exit-код; stderr — для человека)
-gen_image; $LASTEXITCODE        # -> 66
+# error-РєРµР№СЃС‹ (С‚РѕР»СЊРєРѕ exit-РєРѕРґ; stderr вЂ” РґР»СЏ С‡РµР»РѕРІРµРєР°)
+gen_image; $LASTEXITCODE        # -> 64
 gen_image abc; $LASTEXITCODE    # -> 64
 gen_image 0; $LASTEXITCODE      # -> 64
+
+# СЃРїСЂР°РІРєР° Рё РІРµСЂСЃРёСЏ
+gen_image --help; $LASTEXITCODE     # -> 0, usage РІ stdout
+gen_image --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.0"
 ```
 
 ---
 
-## Задача 2 — Паспорт изображения
+## Р—Р°РґР°С‡Р° 2 вЂ” РџР°СЃРїРѕСЂС‚ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 
-Запрашивает название и число пикселей, выводит фразу с правильным склонением
-«пиксель/пикселя/пикселей».
+Р—Р°РїСЂР°С€РёРІР°РµС‚ РЅР°Р·РІР°РЅРёРµ Рё С‡РёСЃР»Рѕ РїРёРєСЃРµР»РµР№, РІС‹РІРѕРґРёС‚ С„СЂР°Р·Сѓ СЃ РїСЂР°РІРёР»СЊРЅС‹Рј СЃРєР»РѕРЅРµРЅРёРµРј
+В«РїРёРєСЃРµР»СЊ/РїРёРєСЃРµР»СЏ/РїРёРєСЃРµР»РµР№В».
 
 ```
 read_passport
-  -> Введите название изображения: морской закат
-  -> Введите количество пикселей: 1920
-  -> Изображение «морской закат»: 1920 пикселей.
+  -> Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ: РјРѕСЂСЃРєРѕР№ Р·Р°РєР°С‚
+  -> Р’РІРµРґРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№: 1920
+  -> РР·РѕР±СЂР°Р¶РµРЅРёРµ В«РјРѕСЂСЃРєРѕР№ Р·Р°РєР°С‚В»: 1920 РїРёРєСЃРµР»РµР№.
 ```
 
-### Классы ошибок
-- Пустой ввод / EOF -> exit 66
-- Пустое имя / не-число / отрицательное -> exit 65
-- IO-сбой -> exit 74
+### РљР»Р°СЃСЃС‹ РѕС€РёР±РѕРє
+- РџСѓСЃС‚РѕР№ РІРІРѕРґ / EOF -> exit 66
+- РџСѓСЃС‚РѕРµ РёРјСЏ / РЅРµ-С‡РёСЃР»Рѕ / РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРµ -> exit 65
+- IO-СЃР±РѕР№ -> exit 74
 
-### Тесты
+### РўРµСЃС‚С‹
 
-Юнит-тесты (склонение «пиксель/пикселя/пикселей»):
+Р®РЅРёС‚-С‚РµСЃС‚С‹ (СЃРєР»РѕРЅРµРЅРёРµ В«РїРёРєСЃРµР»СЊ/РїРёРєСЃРµР»СЏ/РїРёРєСЃРµР»РµР№В»):
 ```
-read_passport_test.exe   (C и C++)
+read_passport_test.exe   (C Рё C++)
 ```
 
-Acceptance — эталон `ref_passport.exe` в `build/`, ручное сравнение через `fc`:
+Acceptance вЂ” СЌС‚Р°Р»РѕРЅ `ref_passport.exe` РІ `build/`, СЂСѓС‡РЅРѕРµ СЃСЂР°РІРЅРµРЅРёРµ С‡РµСЂРµР· `fc`:
 ```powershell
-# сборка эталона
+# СЃР±РѕСЂРєР° СЌС‚Р°Р»РѕРЅР°
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd 02-image-passport/ref_passport.c
 link /DEBUG ref_passport.obj /OUT:build/ref_passport.exe
 
-# success-кейс: два слова + 1920
-"морской закат`n1920" | .\02-image-passport\cpp\read_passport.exe > build\actual.txt
+# success-РєРµР№СЃ: РґРІР° СЃР»РѕРІР° + 1920
+"РјРѕСЂСЃРєРѕР№ Р·Р°РєР°С‚`n1920" | .\02-image-passport\cpp\read_passport.exe > build\actual.txt
 .\build\ref_passport.exe basic > build\expected.txt
 fc build\actual.txt build\expected.txt
 echo $LASTEXITCODE              # -> 0
 
-# error: пустое имя
+# error: РїСѓСЃС‚РѕРµ РёРјСЏ
 "`n1920" | .\02-image-passport\c\read_passport.exe 2> build\actual_stderr.txt
 $LASTEXITCODE                   # -> 65
 ```
 
-Доступные кейсы: `basic`, `single_1`, `plural_2`–`101`–`111`, `empty_name`, `no_input`, `bad_count`, `negative`, `zero`.
+Р”РѕСЃС‚СѓРїРЅС‹Рµ РєРµР№СЃС‹: `basic`, `single_1`, `plural_2`вЂ“`101`вЂ“`111`, `empty_name`, `no_input`, `bad_count`, `negative`, `zero`.
 
 ---
 
-## Задача 3 — Статистика изображения
+## Р—Р°РґР°С‡Р° 3 вЂ” РЎС‚Р°С‚РёСЃС‚РёРєР° РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 
-Читает PPM `P3` из stdin до EOF, выводит:
-- размеры (`W*H`)
-- число пикселей
-- средний цвет (округлённый)
-- мин./макс. яркость (luma)
-- гистограмму яркости (8 корзин)
+Р§РёС‚Р°РµС‚ PPM `P3` РёР· stdin РґРѕ EOF, РІС‹РІРѕРґРёС‚:
+- СЂР°Р·РјРµСЂС‹ (`W*H`)
+- С‡РёСЃР»Рѕ РїРёРєСЃРµР»РµР№
+- СЃСЂРµРґРЅРёР№ С†РІРµС‚ (РѕРєСЂСѓРіР»С‘РЅРЅС‹Р№)
+- РјРёРЅ./РјР°РєСЃ. СЏСЂРєРѕСЃС‚СЊ (luma)
+- РіРёСЃС‚РѕРіСЂР°РјРјСѓ СЏСЂРєРѕСЃС‚Рё (8 РєРѕСЂР·РёРЅ)
 
-Работает в конвейере:
+Р Р°Р±РѕС‚Р°РµС‚ РІ РєРѕРЅРІРµР№РµСЂРµ:
 ```
 gen_image 64 gradient | image_stats
 gen_image --size 1024 --seed 42 | image_stats > report.txt
 ```
 
-### Классы ошибок
-- Пустой ввод -> exit 66
-- IO-сбой -> exit 74
-- Битый формат, не-число, `#` в данных, лишние/недостающие пиксели -> exit 65
+### РљР»Р°СЃСЃС‹ РѕС€РёР±РѕРє
+- РџСѓСЃС‚РѕР№ РІРІРѕРґ -> exit 66
+- IO-СЃР±РѕР№ -> exit 74
+- Р‘РёС‚С‹Р№ С„РѕСЂРјР°С‚, РЅРµ-С‡РёСЃР»Рѕ, `#` РІ РґР°РЅРЅС‹С…, Р»РёС€РЅРёРµ/РЅРµРґРѕСЃС‚Р°СЋС‰РёРµ РїРёРєСЃРµР»Рё -> exit 65
 
-### Тесты
+### РўРµСЃС‚С‹
 
-Юнит-тесты:
+Р®РЅРёС‚-С‚РµСЃС‚С‹:
 ```
-ppm_stats_test.exe   # luma, парсинг, статистики
+ppm_stats_test.exe   # luma, РїР°СЂСЃРёРЅРі, СЃС‚Р°С‚РёСЃС‚РёРєРё
 ```
 
-Acceptance — ручной прогон (конвейер + `fc`):
+Acceptance вЂ” СЂСѓС‡РЅРѕР№ РїСЂРѕРіРѕРЅ (РєРѕРЅРІРµР№РµСЂ + `fc`):
 ```powershell
-# эталон: ref_gradient | ref_stats
+# СЌС‚Р°Р»РѕРЅ: ref_gradient | ref_stats
 ref_gradient 2 | ref_stats > build\etalons\stats_gradient_2x2.txt
 
-# прогон: gen_image | image_stats
+# РїСЂРѕРіРѕРЅ: gen_image | image_stats
 gen_image 2 gradient | image_stats > build\actual.txt
 
-# сравнение
+# СЃСЂР°РІРЅРµРЅРёРµ
 fc build\actual.txt build\etalons\stats_gradient_2x2.txt
 
-# error-кейсы (только exit-код)
+# error-РєРµР№СЃС‹ (С‚РѕР»СЊРєРѕ exit-РєРѕРґ)
 echo "" | image_stats; $LASTEXITCODE           # -> 66
 echo P5 | image_stats; $LASTEXITCODE           # -> 65
 ```
 
 ---
 
-## Задача 4 — Фильтр изображения
+## Р—Р°РґР°С‡Р° 4 вЂ” Р¤РёР»СЊС‚СЂ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 
-Применяет преобразование к PPM `P3`, читает из stdin, пишет валидный PPM
-в stdout. Использует общий модуль `common/ppm_io` (парсинг заголовка,
-буфер пикселей, потоковую запись через `PpmWriter`).
+РџСЂРёРјРµРЅСЏРµС‚ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ Рє PPM `P3`, С‡РёС‚Р°РµС‚ РёР· stdin, РїРёС€РµС‚ РІР°Р»РёРґРЅС‹Р№ PPM
+РІ stdout. РСЃРїРѕР»СЊР·СѓРµС‚ РѕР±С‰РёР№ РјРѕРґСѓР»СЊ `common/ppm_io` (РїР°СЂСЃРёРЅРі Р·Р°РіРѕР»РѕРІРєР°,
+Р±СѓС„РµСЂ РїРёРєСЃРµР»РµР№, РїРѕС‚РѕРєРѕРІСѓСЋ Р·Р°РїРёСЃСЊ С‡РµСЂРµР· `PpmWriter`).
 
-Работает в конвейере:
+Р Р°Р±РѕС‚Р°РµС‚ РІ РєРѕРЅРІРµР№РµСЂРµ:
 ```
 gen_image 64 gradient | image_filter --grayscale
 gen_image 4 gradient | image_filter --threshold 128 | image_stats
 ```
 
-### Режимы
+### Р РµР¶РёРјС‹
 
 ```
-image_filter --grayscale      -> конверсия в оттенки серого по luma
-image_filter --threshold T    -> бинаризация по порогу яркости (0 <= T <= 255)
+image_filter --grayscale      -> РєРѕРЅРІРµСЂСЃРёСЏ РІ РѕС‚С‚РµРЅРєРё СЃРµСЂРѕРіРѕ РїРѕ luma
+image_filter --threshold T    -> Р±РёРЅР°СЂРёР·Р°С†РёСЏ РїРѕ РїРѕСЂРѕРіСѓ СЏСЂРєРѕСЃС‚Рё (0 <= T <= 255)
 ```
 
-- `--grayscale`: `y = round(0.299·R + 0.587·G + 0.114·B)`, пиксель -> `(y, y, y)`
-- `--threshold T`: пиксель с `luma > T` -> белый `(255,255,255)`, иначе чёрный `(0,0,0)`
+- `--grayscale`: `y = round(0.299В·R + 0.587В·G + 0.114В·B)`, РїРёРєСЃРµР»СЊ -> `(y, y, y)`
+- `--threshold T`: РїРёРєСЃРµР»СЊ СЃ `luma > T` -> Р±РµР»С‹Р№ `(255,255,255)`, РёРЅР°С‡Рµ С‡С‘СЂРЅС‹Р№ `(0,0,0)`
 
-### Классы ошибок
-- Без аргументов / неизвестный режим / `--threshold` без T / T не число или вне `[0; 255]` -> exit 64, stderr
-- Пустой ввод -> exit 66
-- Битый формат PPM (из `ppm_io`) -> exit 65
-- IO-сбой -> exit 74
+### РЎРїСЂР°РІРєР° Рё РІРµСЂСЃРёСЏ
+```
+image_filter --help       -> usage РІ stdout, exit 0 (stdin РЅРµ С‡РёС‚Р°РµС‚СЃСЏ)
+image_filter --version    -> "image_filter 0.1.0", exit 0
+```
 
-### Тесты
+### РљР»Р°СЃСЃС‹ РѕС€РёР±РѕРє
+- Р‘РµР· Р°СЂРіСѓРјРµРЅС‚РѕРІ / РЅРµРёР·РІРµСЃС‚РЅС‹Р№ СЂРµР¶РёРј / `--threshold` Р±РµР· T / T РЅРµ С‡РёСЃР»Рѕ РёР»Рё РІРЅРµ `[0; 255]` -> exit 64, stderr
+- `--help` / `--version` -> exit 0, С‚РµРєСЃС‚ РІ stdout
+- РџСѓСЃС‚РѕР№ РІРІРѕРґ -> exit 66
+- Р‘РёС‚С‹Р№ С„РѕСЂРјР°С‚ PPM (РёР· `ppm_io`) -> exit 65
+- IO-СЃР±РѕР№ -> exit 74
 
-Юнит-тесты (luma, grayscale, threshold, парсинг аргументов) и integration
-(полный конвейер `argv -> stdin -> stdout` через `run_filter`):
+### РўРµСЃС‚С‹
+
+Р®РЅРёС‚-С‚РµСЃС‚С‹ (luma, grayscale, threshold, РїР°СЂСЃРёРЅРі Р°СЂРіСѓРјРµРЅС‚РѕРІ) Рё integration
+(РїРѕР»РЅС‹Р№ РєРѕРЅРІРµР№РµСЂ `argv -> stdin -> stdout` С‡РµСЂРµР· `run_filter`):
 ```
 build/filter_test.exe      # C++
 build/filter_test_c.exe    # C
 ```
 
-Сборка (пример C++):
+РЎР±РѕСЂРєР° (РїСЂРёРјРµСЂ C++):
 ```
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /c common/cpp/ppm_io.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /c 04-image-filter/cpFp/filter.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /c 04-image-filter/cpp/filter_test.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c 04-image-filter/cpp/filter.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c 04-image-filter/cpp/filter_test.cpp
 link /DEBUG ppm_io.obj filter.obj filter_test.obj /OUT:build/filter_test.exe
 ```
 
-### Модуль `common/ppm_io` и сборка DLL
+РџСЂРёРјРµС‡Р°РЅРёРµ: `ppm_io.cpp` РµС‰С‘ РІ CP1251 вЂ” Р±РµР· `/source-charset:utf-8`;
+`filter.cpp`/`filter_test.cpp` РІ UTF-8 вЂ” СЃ С„Р»Р°РіРѕРј. РђРЅР°Р»РѕРіРёС‡РЅРѕ РґР»СЏ C-РІРµСЂСЃРёРё.
 
-Задачи 1/3/4 используют общий модуль ввода-вывода PPM. Он собирается тремя
-способами (слой 9 лестницы):
+### РњРѕРґСѓР»СЊ `common/ppm_io` Рё СЃР±РѕСЂРєР° DLL
 
-- **Объектный файл / статическая библиотека** — по умолчанию, без флагов
-- **Динамическая библиотека (DLL / .so)** — с флагом `KV_DYNAMIC_LINK`:
+Р—Р°РґР°С‡Рё 1/3/4 РёСЃРїРѕР»СЊР·СѓСЋС‚ РѕР±С‰РёР№ РјРѕРґСѓР»СЊ РІРІРѕРґР°-РІС‹РІРѕРґР° PPM. РћРЅ СЃРѕР±РёСЂР°РµС‚СЃСЏ С‚СЂРµРјСЏ
+СЃРїРѕСЃРѕР±Р°РјРё (СЃР»РѕР№ 9 Р»РµСЃС‚РЅРёС†С‹):
+
+- **РћР±СЉРµРєС‚РЅС‹Р№ С„Р°Р№Р» / СЃС‚Р°С‚РёС‡РµСЃРєР°СЏ Р±РёР±Р»РёРѕС‚РµРєР°** вЂ” РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ, Р±РµР· С„Р»Р°РіРѕРІ
+- **Р”РёРЅР°РјРёС‡РµСЃРєР°СЏ Р±РёР±Р»РёРѕС‚РµРєР° (DLL / .so)** вЂ” СЃ С„Р»Р°РіРѕРј `KV_DYNAMIC_LINK`:
 
 ```
 # C++ DLL + import-lib
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /D KV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/ppm_io.dll /IMPLIB:build/ppm_io.lib
 
-# линковка потребителя через import-lib (вместо ppm_io.obj)
+# Р»РёРЅРєРѕРІРєР° РїРѕС‚СЂРµР±РёС‚РµР»СЏ С‡РµСЂРµР· import-lib (РІРјРµСЃС‚Рѕ ppm_io.obj)
 link /DEBUG filter.obj filter_test.obj build/ppm_io.lib /OUT:build/filter_test_dll.exe
 ```
 
-- **Linux / macOS** — флаг игнорируется, символы `.so` экспортируются по умолчанию
+- **Linux / macOS** вЂ” С„Р»Р°Рі РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ, СЃРёРјРІРѕР»С‹ `.so` СЌРєСЃРїРѕСЂС‚РёСЂСѓСЋС‚СЃСЏ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 
-Макрос экспорта: `KV_API` = `__declspec(dllexport)` на Windows при
-`KV_DYNAMIC_LINK`, иначе пусто. `dllimport` не используется: потребитель,
-линкующий import-lib, работает без него.
+РњР°РєСЂРѕСЃ СЌРєСЃРїРѕСЂС‚Р°: `KV_API` = `__declspec(dllexport)` РЅР° Windows РїСЂРё
+`KV_DYNAMIC_LINK`, РёРЅР°С‡Рµ РїСѓСЃС‚Рѕ. `dllimport` РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ: РїРѕС‚СЂРµР±РёС‚РµР»СЊ,
+Р»РёРЅРєСѓСЋС‰РёР№ import-lib, СЂР°Р±РѕС‚Р°РµС‚ Р±РµР· РЅРµРіРѕ.
 
-В C++ `Image` реализован как PIMPL-класс (move-only): поля скрыты за
-`std::unique_ptr<Impl>`, публичный API — через аксессоры (`width()`,
-`height()`, `pixel_count()`, `pixels()`). Это даёт стабильный layout
-объекта и снимает dependency на `<vector>` из заголовка.
-
----
-
-## Массовые тестовые данные
-
-`gen_mass_test_data.ps1` генерирует PPM в `build/test_data/`:
-
-```
-chcp 1251 >$null
-gen_mass_test_data.ps1          # C
-gen_mass_test_data.ps1 -Cpp     # C++
-```
-
-Создаёт 15 файлов: random (2 * 2, 64 * 64, 1024 * 1024 * 3 seed) + reference
-(gradient/checker/radial 2 * 2, 4 * 4).
-
-> Перед запуском установите кодовую страницу консоли: `chcp 1251 >$null`.
-> Это обеспечит корректный вывод русского текста программами.
+Р’ C++ `Image` СЂРµР°Р»РёР·РѕРІР°РЅ РєР°Рє PIMPL-РєР»Р°СЃСЃ (move-only): РїРѕР»СЏ СЃРєСЂС‹С‚С‹ Р·Р°
+`std::unique_ptr<Impl>`, РїСѓР±Р»РёС‡РЅС‹Р№ API вЂ” С‡РµСЂРµР· Р°РєСЃРµСЃСЃРѕСЂС‹ (`width()`,
+`height()`, `pixel_count()`, `pixels()`). Р­С‚Рѕ РґР°С‘С‚ СЃС‚Р°Р±РёР»СЊРЅС‹Р№ layout
+РѕР±СЉРµРєС‚Р° Рё СЃРЅРёРјР°РµС‚ dependency РЅР° `<vector>` РёР· Р·Р°РіРѕР»РѕРІРєР°.
 
 ---
 
-## Exit-коды
+## РњР°СЃСЃРѕРІС‹Рµ С‚РµСЃС‚РѕРІС‹Рµ РґР°РЅРЅС‹Рµ
 
-Определены в `common/exit_codes.h` (.hpp для C++):
+Р”Р°РЅРЅС‹Рµ РІ `build/test_data/` (РєР°С‚Р°Р»РѕРі РІ `.gitignore`) РіРµРЅРµСЂРёСЂСѓСЋС‚СЃСЏ РІСЂСѓС‡РЅСѓСЋ
+С‡РµСЂРµР· `gen_image` СЃ seed:
 
-| Константа | Код | Назначение |
+```
+gen_image --size 2 --seed 42 > build/test_data/random_2x2_seed42.ppm
+gen_image --size 1024 --seed 9999 > build/test_data/random_1024x1024_seed9999.ppm
+```
+
+Р­С‚Р°Р»РѕРЅРЅС‹Рµ С„Р°Р№Р»С‹ вЂ” С‡РµСЂРµР· ref-РіРµРЅРµСЂР°С‚РѕСЂС‹:
+
+```
+ref_gradient 4 > build/test_data/gradient_4x4.ppm
+```
+
+РС‚РѕРіРѕ 15 С„Р°Р№Р»РѕРІ: random (2Г—2, 64Г—64, 1024Г—1024 Г— 3 seed) + reference
+(gradient/checker/radial 2Г—2, 4Г—4).
+
+---
+
+## Exit-РєРѕРґС‹
+
+РћРїСЂРµРґРµР»РµРЅС‹ РІ `common/exit_codes.h` (.hpp РґР»СЏ C++):
+
+| РљРѕРЅСЃС‚Р°РЅС‚Р° | РљРѕРґ | РќР°Р·РЅР°С‡РµРЅРёРµ |
 |---|---|---|
-| `EC_OK` | 0 | Успех |
-| `EC_USAGE` | 64 | Неверные аргументы |
-| `EC_DATA` | 65 | Битый формат / невалидные данные |
-| `EC_NOINPUT` | 66 | Пустой ввод / нет данных |
-| `EC_IOERR` | 74 | Сбой ввода-вывода |
+| `EC_OK` | 0 | РЈСЃРїРµС… |
+| `EC_USAGE` | 64 | РќРµРІРµСЂРЅС‹Рµ Р°СЂРіСѓРјРµРЅС‚С‹ |
+| `EC_DATA` | 65 | Р‘РёС‚С‹Р№ С„РѕСЂРјР°С‚ / РЅРµРІР°Р»РёРґРЅС‹Рµ РґР°РЅРЅС‹Рµ |
+| `EC_NOINPUT` | 66 | РџСѓСЃС‚РѕР№ РІРІРѕРґ / РЅРµС‚ РґР°РЅРЅС‹С… |
+| `EC_IOERR` | 74 | РЎР±РѕР№ РІРІРѕРґР°-РІС‹РІРѕРґР° |
 
-Код — машинный канал для скриптов-обёрток; stderr — детали для человека.
+РљРѕРґ вЂ” РјР°С€РёРЅРЅС‹Р№ РєР°РЅР°Р» РґР»СЏ СЃРєСЂРёРїС‚РѕРІ-РѕР±С‘СЂС‚РѕРє; stderr вЂ” РґРµС‚Р°Р»Рё РґР»СЏ С‡РµР»РѕРІРµРєР°.

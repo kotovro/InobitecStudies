@@ -1,6 +1,9 @@
 #include "filter.h"
 
+#include "../../common/c/version.h"
+
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,18 +34,30 @@ void apply_threshold(struct Image* img, int threshold) {
         pixel_threshold(&img->pixels[i], threshold, &img->pixels[i]);
 }
 
-int parse_filter_args(int argc, char** argv, struct FilterArgs* out_args) {
+int parse_filter_args(int argc, char** argv, struct FilterParseResult* out_result) {
     if (argc < 2) {
         fprintf(stderr, "использование: image_filter --grayscale | --threshold T\n");
         return -1;
     }
+
+    if (strcmp(argv[1], "--help") == 0) {
+        out_result->request = FILTER_HELP;
+        return 0;
+    }
+
+    if (strcmp(argv[1], "--version") == 0) {
+        out_result->request = FILTER_VERSION;
+        return 0;
+    }
+
+    out_result->request = FILTER_RUN;
 
     if (strcmp(argv[1], "--grayscale") == 0) {
         if (argc > 2) {
             fprintf(stderr, "--grayscale не принимает аргументов\n");
             return -1;
         }
-        out_args->mode = FILTER_GRAYSCALE;
+        out_result->args.mode = FILTER_GRAYSCALE;
         return 0;
     }
 
@@ -64,8 +79,8 @@ int parse_filter_args(int argc, char** argv, struct FilterArgs* out_args) {
             return -1;
         }
 
-        out_args->mode = FILTER_THRESHOLD;
-        out_args->threshold = (int)t;
+        out_result->args.mode = FILTER_THRESHOLD;
+        out_result->args.threshold = (int)t;
         return 0;
     }
 
@@ -74,11 +89,38 @@ int parse_filter_args(int argc, char** argv, struct FilterArgs* out_args) {
     return -1;
 }
 
+void print_filter_usage(FILE* out) {
+    fprintf(out, "»спользование: image_filter --grayscale | --threshold T\n");
+    fprintf(out, "\n");
+    fprintf(out, "„итает PPM P3 из stdin, пишет валидный PPM в stdout.\n");
+    fprintf(out, "\n");
+    fprintf(out, "–ежимы:\n");
+    fprintf(out, "  --grayscale     конверси€ в оттенки серого по luma\n");
+    fprintf(out, "  --threshold T   бинаризаци€ по порогу €ркости (0 <= T <= 255)\n");
+    fprintf(out, "\n");
+    fprintf(out, "ќпции:\n");
+    fprintf(out, "  --help          показать справку\n");
+    fprintf(out, "  --version       показать версию\n");
+}
+
+void print_filter_version(FILE* out) { fprintf(out, "image_filter %s\n", KV_VERSION); }
+
 int run_filter(int argc, char** argv, FILE* input, FILE* output) {
-    struct FilterArgs args;
-    if (parse_filter_args(argc, argv, &args) != 0)
+    struct FilterParseResult parsed;
+    if (parse_filter_args(argc, argv, &parsed) != 0)
         return EC_USAGE;
 
+    if (parsed.request == FILTER_HELP) {
+        print_filter_usage(output);
+        return EC_OK;
+    }
+
+    if (parsed.request == FILTER_VERSION) {
+        print_filter_version(output);
+        return EC_OK;
+    }
+
+    struct FilterArgs args = parsed.args;
     struct PpmResult result = ppm_read(input);
     if (result.error != PRE_OK) {
         fprintf(stderr, "%s\n", result.diagnostic);

@@ -12,9 +12,20 @@ enum FilterMode {
     FILTER_THRESHOLD,
 };
 
+enum FilterRequest {
+    FILTER_RUN,
+    FILTER_HELP,
+    FILTER_VERSION,
+};
+
 struct FilterArgs {
     enum FilterMode mode;
     int threshold;
+};
+
+struct FilterParseResult {
+    enum FilterRequest request;
+    struct FilterArgs args;
 };
 
 static inline double luma(uint8_t r, uint8_t g, uint8_t b) {
@@ -27,7 +38,10 @@ void apply_grayscale(struct Image* img);
 void apply_threshold(struct Image* img, int threshold);
 
 // Returns 0 on success, -1 on error (diagnostic written to stderr)
-int parse_filter_args(int argc, char** argv, struct FilterArgs* out_args);
+int parse_filter_args(int argc, char** argv, struct FilterParseResult* out_result);
+
+void print_filter_usage(FILE* out);
+void print_filter_version(FILE* out);
 
 // Full pipeline. Returns exit code.
 int run_filter(int argc, char** argv, FILE* input, FILE* output);

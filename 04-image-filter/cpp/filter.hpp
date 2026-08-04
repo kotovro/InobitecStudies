@@ -13,9 +13,20 @@ enum class FilterMode {
     kThreshold,
 };
 
+enum class FilterRequest {
+    kRun,
+    kHelp,
+    kVersion,
+};
+
 struct FilterArgs {
     FilterMode mode;
     int threshold{};
+};
+
+struct FilterParseResult {
+    FilterRequest request = FilterRequest::kRun;
+    FilterArgs args{};
 };
 
 [[nodiscard]] inline double luma(uint8_t r, uint8_t g, uint8_t b) noexcept {
@@ -28,7 +39,10 @@ struct FilterArgs {
 void apply_grayscale(Image& img);
 void apply_threshold(Image& img, int threshold);
 
-std::optional<FilterArgs> parse_filter_args(int argc, char** argv);
+std::optional<FilterParseResult> parse_filter_args(int argc, char** argv);
+
+void print_filter_usage(std::ostream& os);
+void print_filter_version(std::ostream& os);
 
 int run_filter(int argc, char** argv, std::istream& input, std::ostream& output);
 

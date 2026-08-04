@@ -1,7 +1,10 @@
 #include "filter.hpp"
 
+#include "../../common/cpp/version.hpp"
+
 #include <charconv>
 #include <cstring>
+#include <ostream>
 #include <print>
 #include <string_view>
 
@@ -26,7 +29,7 @@ void apply_threshold(Image& img, int threshold) {
         pixel = pixel_threshold(pixel, threshold);
 }
 
-std::optional<FilterArgs> parse_filter_args(int argc, char** argv) {
+std::optional<FilterParseResult> parse_filter_args(int argc, char** argv) {
     if (argc < 2) {
         std::println(stderr, "использование: image_filter --grayscale | --threshold T");
         return std::nullopt;
@@ -34,12 +37,18 @@ std::optional<FilterArgs> parse_filter_args(int argc, char** argv) {
 
     std::string_view arg(argv[1]);
 
+    if (arg == "--help")
+        return FilterParseResult{.request = FilterRequest::kHelp};
+
+    if (arg == "--version")
+        return FilterParseResult{.request = FilterRequest::kVersion};
+
     if (arg == "--grayscale") {
         if (argc > 2) {
             std::println(stderr, "--grayscale не принимает аргументов");
             return std::nullopt;
         }
-        return FilterArgs{FilterMode::kGrayscale};
+        return FilterParseResult{.args = FilterArgs{FilterMode::kGrayscale}};
     }
 
     if (arg == "--threshold") {
@@ -61,7 +70,7 @@ std::optional<FilterArgs> parse_filter_args(int argc, char** argv) {
             return std::nullopt;
         }
 
-        return FilterArgs{FilterMode::kThreshold, t};
+        return FilterParseResult{.args = FilterArgs{FilterMode::kThreshold, t}};
     }
 
     std::println(stderr, "неизвестный аргумент: {}. используйте --grayscale или --threshold T",
@@ -69,11 +78,38 @@ std::optional<FilterArgs> parse_filter_args(int argc, char** argv) {
     return std::nullopt;
 }
 
+void print_filter_usage(std::ostream& os) {
+    std::println(os, "»спользование: image_filter --grayscale | --threshold T");
+    std::println(os);
+    std::println(os, "„итает PPM P3 из stdin, пишет валидный PPM в stdout.");
+    std::println(os);
+    std::println(os, "–ежимы:");
+    std::println(os, "  --grayscale     конверси€ в оттенки серого по luma");
+    std::println(os, "  --threshold T   бинаризаци€ по порогу €ркости (0 <= T <= 255)");
+    std::println(os);
+    std::println(os, "ќпции:");
+    std::println(os, "  --help          показать справку");
+    std::println(os, "  --version       показать версию");
+}
+
+void print_filter_version(std::ostream& os) { std::println(os, "image_filter {}", kVersion); }
+
 int run_filter(int argc, char** argv, std::istream& input, std::ostream& output) {
-    auto args = parse_filter_args(argc, argv);
-    if (!args)
+    auto parsed = parse_filter_args(argc, argv);
+    if (!parsed)
         return static_cast<int>(ExitCode::kUsage);
 
+    if (parsed->request == FilterRequest::kHelp) {
+        print_filter_usage(output);
+        return static_cast<int>(ExitCode::kOk);
+    }
+
+    if (parsed->request == FilterRequest::kVersion) {
+        print_filter_version(output);
+        return static_cast<int>(ExitCode::kOk);
+    }
+
+    const FilterArgs& args = parsed->args;
     auto result = Image::read(input);
     if (!result.value.has_value()) {
         std::println(stderr, "{}", result.diagnostic);
@@ -89,12 +125,12 @@ int run_filter(int argc, char** argv, std::istream& input, std::ostream& output)
 
     auto& image = *result.value;
 
-    switch (args->mode) {
+    switch (args.mode) {
     case FilterMode::kGrayscale:
         apply_grayscale(image);
         break;
     case FilterMode::kThreshold:
-        apply_threshold(image, args->threshold);
+        apply_threshold(image, args.threshold);
         break;
     }
 

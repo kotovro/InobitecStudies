@@ -103,11 +103,22 @@ static void generate_ppm(const struct ParseResult* args) {
 
 int main(int argc, char** argv) {
     struct ParseResult args = parse_args(argc, argv);
+
+    if (args.request == PR_HELP) {
+        print_usage();
+        return EC_OK;
+    }
+
+    if (args.request == PR_VERSION) {
+        print_version();
+        return EC_OK;
+    }
+
     if (args.error != PE_OK) {
         switch (args.error) {
         case PE_NOARG:
             fprintf(stderr, "N не указано. Использование: gen_image <N> [pattern]\n");
-            return EC_NOINPUT;
+            return EC_USAGE;
         case PE_BADNUMBER:
             fprintf(stderr, "N должно быть целым числом; получено: %s\n", argc >= 2 ? argv[1] : "");
             return EC_USAGE;

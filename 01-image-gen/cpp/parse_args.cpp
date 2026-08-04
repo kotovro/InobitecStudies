@@ -50,8 +50,22 @@ static std::expected<Args, ParseError> parse_args_new(int argc, char** argv) {
     return result;
 }
 
-std::expected<Args, ParseError> parse_args(int argc, char** argv) {
-    if (argc >= 2 && std::string_view(argv[1]) == "--size")
-        return parse_args_new(argc, argv);
-    return parse_args_old(argc, argv);
+std::expected<ParseResult, ParseError> parse_args(int argc, char** argv) {
+    if (argc >= 2 && std::string_view(argv[1]) == "--help")
+        return ParseResult{.request = ParseRequest::kHelp};
+
+    if (argc >= 2 && std::string_view(argv[1]) == "--version")
+        return ParseResult{.request = ParseRequest::kVersion};
+
+    if (argc >= 2 && std::string_view(argv[1]) == "--size") {
+        auto args = parse_args_new(argc, argv);
+        if (!args)
+            return std::unexpected(args.error());
+        return ParseResult{.args = *args};
+    }
+
+    auto args = parse_args_old(argc, argv);
+    if (!args)
+        return std::unexpected(args.error());
+    return ParseResult{.args = *args};
 }

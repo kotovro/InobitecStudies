@@ -113,50 +113,68 @@ static void test_threshold_boundary(void) {
 
 static void test_parse_grayscale(void) {
     char* argv[] = {"prog", "--grayscale"};
-    struct FilterArgs args;
-    check(parse_filter_args(2, argv, &args) == 0, "--grayscale -> ok");
-    if (parse_filter_args(2, argv, &args) == 0)
-        check(args.mode == FILTER_GRAYSCALE, "--grayscale mode");
+    struct FilterParseResult res;
+    check(parse_filter_args(2, argv, &res) == 0, "--grayscale -> ok");
+    if (parse_filter_args(2, argv, &res) == 0) {
+        check(res.request == FILTER_RUN, "--grayscale request RUN");
+        check(res.args.mode == FILTER_GRAYSCALE, "--grayscale mode");
+    }
 }
 
 static void test_parse_grayscale_with_arg(void) {
     char* argv[] = {"prog", "--grayscale", "extra"};
-    struct FilterArgs args;
-    check(parse_filter_args(3, argv, &args) != 0, "--grayscale extra -> error");
+    struct FilterParseResult res;
+    check(parse_filter_args(3, argv, &res) != 0, "--grayscale extra -> error");
 }
 
 static void test_parse_threshold_ok(void) {
     char* argv[] = {"prog", "--threshold", "128"};
-    struct FilterArgs args;
-    check(parse_filter_args(3, argv, &args) == 0, "--threshold 128 -> ok");
-    if (parse_filter_args(3, argv, &args) == 0) {
-        check(args.mode == FILTER_THRESHOLD, "--threshold 128 mode");
-        check(args.threshold == 128, "--threshold 128 value");
+    struct FilterParseResult res;
+    check(parse_filter_args(3, argv, &res) == 0, "--threshold 128 -> ok");
+    if (parse_filter_args(3, argv, &res) == 0) {
+        check(res.args.mode == FILTER_THRESHOLD, "--threshold 128 mode");
+        check(res.args.threshold == 128, "--threshold 128 value");
     }
 }
 
 static void test_parse_threshold_no_arg(void) {
     char* argv[] = {"prog", "--threshold"};
-    struct FilterArgs args;
-    check(parse_filter_args(2, argv, &args) != 0, "--threshold alone -> error");
+    struct FilterParseResult res;
+    check(parse_filter_args(2, argv, &res) != 0, "--threshold alone -> error");
 }
 
 static void test_parse_threshold_bad_value(void) {
     char* argv[] = {"prog", "--threshold", "abc"};
-    struct FilterArgs args;
-    check(parse_filter_args(3, argv, &args) != 0, "--threshold abc -> error");
+    struct FilterParseResult res;
+    check(parse_filter_args(3, argv, &res) != 0, "--threshold abc -> error");
 }
 
 static void test_parse_threshold_out_of_range(void) {
     char* argv[] = {"prog", "--threshold", "256"};
-    struct FilterArgs args;
-    check(parse_filter_args(3, argv, &args) != 0, "--threshold 256 -> error");
+    struct FilterParseResult res;
+    check(parse_filter_args(3, argv, &res) != 0, "--threshold 256 -> error");
+}
+
+static void test_parse_help(void) {
+    char* argv[] = {"prog", "--help"};
+    struct FilterParseResult res;
+    check(parse_filter_args(2, argv, &res) == 0, "--help -> ok");
+    if (parse_filter_args(2, argv, &res) == 0)
+        check(res.request == FILTER_HELP, "--help request HELP");
+}
+
+static void test_parse_version(void) {
+    char* argv[] = {"prog", "--version"};
+    struct FilterParseResult res;
+    check(parse_filter_args(2, argv, &res) == 0, "--version -> ok");
+    if (parse_filter_args(2, argv, &res) == 0)
+        check(res.request == FILTER_VERSION, "--version request VERSION");
 }
 
 static void test_parse_unknown(void) {
     char* argv[] = {"prog", "--blur"};
-    struct FilterArgs args;
-    check(parse_filter_args(2, argv, &args) != 0, "--blur -> error");
+    struct FilterParseResult res;
+    check(parse_filter_args(2, argv, &res) != 0, "--blur -> error");
 }
 
 // -------------------------------------------------------------------
@@ -232,6 +250,38 @@ static void test_run_filter_bad_args(void) {
     fclose(output);
 }
 
+static void test_run_filter_help(void) {
+    FILE* input = make_ppm("");
+    FILE* output = tmpfile();
+    char* argv[] = {"prog", "--help"};
+    int code = run_filter(2, argv, input, output);
+    check(code == EC_OK, "run_filter --help -> EC_OK");
+
+    rewind(output);
+    char buf[256];
+    size_t n = fread(buf, 1, sizeof(buf) - 1, output);
+    buf[n] = '\0';
+    check(strstr(buf, "Использование") != NULL, "run_filter --help: usage in stdout");
+    fclose(input);
+    fclose(output);
+}
+
+static void test_run_filter_version(void) {
+    FILE* input = make_ppm("");
+    FILE* output = tmpfile();
+    char* argv[] = {"prog", "--version"};
+    int code = run_filter(2, argv, input, output);
+    check(code == EC_OK, "run_filter --version -> EC_OK");
+
+    rewind(output);
+    char buf[256];
+    size_t n = fread(buf, 1, sizeof(buf) - 1, output);
+    buf[n] = '\0';
+    check(strstr(buf, "image_filter") != NULL, "run_filter --version: name in stdout");
+    fclose(input);
+    fclose(output);
+}
+
 // -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
@@ -262,12 +312,16 @@ int main(void) {
     test_parse_threshold_bad_value();
     test_parse_threshold_out_of_range();
     test_parse_unknown();
+    test_parse_help();
+    test_parse_version();
 
     printf("--- run_filter integration tests (C) ---\n");
     test_run_filter_grayscale();
     test_run_filter_threshold();
     test_run_filter_empty();
     test_run_filter_bad_args();
+    test_run_filter_help();
+    test_run_filter_version();
 
     printf("---\n");
     if (failed > 0)

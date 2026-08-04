@@ -1,11 +1,14 @@
 #include "parse_args.h"
 
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "../../common/c/version.h"
+
 static struct ParseResult parse_args_old(int argc, char** argv) {
-    struct ParseResult result = {0, PATTERN_GRADIENT, PE_OK, 0, 0};
+    struct ParseResult result = {0, PATTERN_GRADIENT, PE_OK, 0, 0, PR_RUN};
 
     if (argc < 2) {
         result.error = PE_NOARG;
@@ -37,7 +40,7 @@ static struct ParseResult parse_args_old(int argc, char** argv) {
 }
 
 static struct ParseResult parse_args_new(int argc, char** argv) {
-    struct ParseResult result = {0, PATTERN_RANDOM, PE_OK, 0, 0};
+    struct ParseResult result = {0, PATTERN_RANDOM, PE_OK, 0, 0, PR_RUN};
 
     // Expect: --size N [--seed S]
     if (argc < 3) {
@@ -74,7 +77,36 @@ static struct ParseResult parse_args_new(int argc, char** argv) {
 }
 
 struct ParseResult parse_args(int argc, char** argv) {
+    if (argc >= 2 && strcmp(argv[1], "--help") == 0) {
+        struct ParseResult result = {0, PATTERN_GRADIENT, PE_OK, 0, 0, PR_HELP};
+        return result;
+    }
+
+    if (argc >= 2 && strcmp(argv[1], "--version") == 0) {
+        struct ParseResult result = {0, PATTERN_GRADIENT, PE_OK, 0, 0, PR_VERSION};
+        return result;
+    }
+
     if (argc >= 2 && strcmp(argv[1], "--size") == 0)
         return parse_args_new(argc, argv);
     return parse_args_old(argc, argv);
 }
+
+void print_usage(void) {
+    printf("Использование: gen_image <N> [pattern]\n");
+    printf("               gen_image --size N [--seed S]\n");
+    printf("\n");
+    printf("Позиционный режим:\n");
+    printf("  N        сторона квадрата (1-512)\n");
+    printf("  pattern  gradient | checker | radial (по умолчанию gradient)\n");
+    printf("\n");
+    printf("Массовая генерация:\n");
+    printf("  --size N    сторона (без ограничения 512)\n");
+    printf("  --seed S    seed ГПСЧ (по умолчанию 42)\n");
+    printf("\n");
+    printf("Опции:\n");
+    printf("  --help      показать справку\n");
+    printf("  --version   показать версию\n");
+}
+
+void print_version(void) { printf("gen_image %s\n", KV_VERSION); }

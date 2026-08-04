@@ -7,6 +7,7 @@
 #include <locale>
 #include <print>
 #include <sstream>
+#include <string>
 
 static int failed = 0;
 
@@ -123,7 +124,7 @@ static void test_parse_grayscale() {
     auto r = parse_filter_args(2, argv);
     check(r.has_value(), "--grayscale -> ok");
     if (r.has_value())
-        check(r->mode == FilterMode::kGrayscale, "--grayscale mode");
+        check(r->args.mode == FilterMode::kGrayscale, "--grayscale mode");
 }
 
 static void test_parse_grayscale_with_arg() {
@@ -143,8 +144,8 @@ static void test_parse_threshold_ok() {
     auto r = parse_filter_args(3, argv);
     check(r.has_value(), "--threshold 128 -> ok");
     if (r.has_value()) {
-        check(r->mode == FilterMode::kThreshold, "--threshold 128 mode");
-        check(r->threshold == 128, "--threshold 128 value");
+        check(r->args.mode == FilterMode::kThreshold, "--threshold 128 mode");
+        check(r->args.threshold == 128, "--threshold 128 value");
     }
 }
 
@@ -156,7 +157,7 @@ static void test_parse_threshold_edge_low() {
     auto r = parse_filter_args(3, argv);
     check(r.has_value(), "--threshold 0 -> ok");
     if (r.has_value())
-        check(r->threshold == 0, "--threshold 0 value");
+        check(r->args.threshold == 0, "--threshold 0 value");
 }
 
 static void test_parse_threshold_edge_high() {
@@ -167,7 +168,7 @@ static void test_parse_threshold_edge_high() {
     auto r = parse_filter_args(3, argv);
     check(r.has_value(), "--threshold 255 -> ok");
     if (r.has_value())
-        check(r->threshold == 255, "--threshold 255 value");
+        check(r->args.threshold == 255, "--threshold 255 value");
 }
 
 static void test_parse_threshold_no_arg() {
@@ -211,6 +212,36 @@ static void test_parse_unknown_arg() {
     char* argv[] = {a0, a1};
     auto r = parse_filter_args(2, argv);
     check(!r.has_value(), "--blur -> error");
+}
+
+static void test_parse_help() {
+    char a0[] = "prog";
+    char a1[] = "--help";
+    char* argv[] = {a0, a1};
+    auto r = parse_filter_args(2, argv);
+    check(r.has_value(), "--help -> ok");
+    if (r.has_value())
+        check(r->request == FilterRequest::kHelp, "--help kHelp");
+}
+
+static void test_parse_version() {
+    char a0[] = "prog";
+    char a1[] = "--version";
+    char* argv[] = {a0, a1};
+    auto r = parse_filter_args(2, argv);
+    check(r.has_value(), "--version -> ok");
+    if (r.has_value())
+        check(r->request == FilterRequest::kVersion, "--version kVersion");
+}
+
+static void test_parse_run_request() {
+    char a0[] = "prog";
+    char a1[] = "--grayscale";
+    char* argv[] = {a0, a1};
+    auto r = parse_filter_args(2, argv);
+    check(r.has_value(), "--grayscale -> ok");
+    if (r.has_value())
+        check(r->request == FilterRequest::kRun, "--grayscale kRun");
 }
 
 // -------------------------------------------------------------------
@@ -300,6 +331,32 @@ static void test_run_filter_bad_args() {
     check(code == static_cast<int>(ExitCode::kUsage), "run_filter bad args -> kUsage");
 }
 
+static void test_run_filter_help() {
+    auto input_stream = std::istringstream("");
+    auto output_stream = std::ostringstream();
+    char a0[] = "prog";
+    char a1[] = "--help";
+    char* argv[] = {a0, a1};
+
+    int code = run_filter(2, argv, input_stream, output_stream);
+    check(code == static_cast<int>(ExitCode::kOk), "run_filter --help -> exit 0");
+    check(output_stream.str().find("Использование") != std::string::npos,
+          "run_filter --help: usage in stdout");
+}
+
+static void test_run_filter_version() {
+    auto input_stream = std::istringstream("");
+    auto output_stream = std::ostringstream();
+    char a0[] = "prog";
+    char a1[] = "--version";
+    char* argv[] = {a0, a1};
+
+    int code = run_filter(2, argv, input_stream, output_stream);
+    check(code == static_cast<int>(ExitCode::kOk), "run_filter --version -> exit 0");
+    check(output_stream.str().find("image_filter") != std::string::npos,
+          "run_filter --version: name in stdout");
+}
+
 // -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
@@ -339,6 +396,9 @@ int main() {
     test_parse_threshold_out_of_range_low();
     test_parse_threshold_out_of_range_high();
     test_parse_unknown_arg();
+    test_parse_help();
+    test_parse_version();
+    test_parse_run_request();
 
     std::println("--- run_filter integration tests ---");
     test_run_filter_grayscale();
@@ -346,6 +406,8 @@ int main() {
     test_run_filter_empty_input();
     test_run_filter_bad_ppm();
     test_run_filter_bad_args();
+    test_run_filter_help();
+    test_run_filter_version();
 
     std::println("---");
     if (failed > 0)

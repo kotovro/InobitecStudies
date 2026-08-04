@@ -124,6 +124,26 @@ static void test_new_bad_seed(void) {
     check(r.error == PE_BADSEED, "--seed abc -> PE_BADSEED");
 }
 
+// ---- --help / --version tests ----
+
+static void test_help(void) {
+    char* argv[] = {"prog", "--help"};
+    struct ParseResult r = parse_args(2, argv);
+    check(r.error == PE_OK && r.request == PR_HELP, "--help -> PR_HELP");
+}
+
+static void test_version(void) {
+    char* argv[] = {"prog", "--version"};
+    struct ParseResult r = parse_args(2, argv);
+    check(r.error == PE_OK && r.request == PR_VERSION, "--version -> PR_VERSION");
+}
+
+static void test_run_request(void) {
+    char* argv[] = {"prog", "5"};
+    struct ParseResult r = parse_args(2, argv);
+    check(r.error == PE_OK && r.request == PR_RUN, "5 -> PR_RUN");
+}
+
 // ---- hsv_to_rgb tests ----
 
 static void check_rgb(struct RGB actual, int er, int eg, int eb, const char* name) {
@@ -195,6 +215,11 @@ int main(void) {
     test_new_ok_no_seed();
     test_new_with_seed();
     test_new_bad_seed();
+
+    printf("--- help/version tests ---\n");
+    test_help();
+    test_version();
+    test_run_request();
 
     printf("--- hsv_to_rgb tests ---\n");
     test_hsv_red();

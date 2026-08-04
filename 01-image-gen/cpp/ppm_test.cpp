@@ -31,7 +31,7 @@ static void test_parse_args_bad_number() {
     char arg1[] = "abc";
     char* argv[] = {arg0, arg1};
     auto r = parse_args(2, argv);
-    check(!r.has_value(), "abc в†’ error");
+    check(!r.has_value(), "abc -> error");
     if (r.has_value())
         return;
     check(r.error() == ParseError::kBadNumber, "abc kBadNumber");
@@ -56,8 +56,8 @@ static void test_parse_args_negative_number() {
     check(r.has_value(), "-5 - accepted (parse_args only)");
     if (!r.has_value())
         return;
-    check(r->size == -5, "-5 в†’ size == -5");
-    check(r->pattern == Pattern::Gradient, "-5 default Gradient");
+    check(r->args.size == -5, "-5 -> size == -5");
+    check(r->args.pattern == Pattern::Gradient, "-5 default Gradient");
 }
 
 static void test_parse_args_bad_pattern() {
@@ -77,11 +77,11 @@ static void test_parse_args_default_pattern() {
     char arg1[] = "5";
     char* argv[] = {arg0, arg1};
     auto r = parse_args(2, argv);
-    check(r.has_value(), "5 в†’ ok");
+    check(r.has_value(), "5 -> ok");
     if (!r.has_value())
         return;
-    check(r->size == 5, "5 в†’ size == 5");
-    check(r->pattern == Pattern::Gradient, "5 default Gradient");
+    check(r->args.size == 5, "5 -> size == 5");
+    check(r->args.pattern == Pattern::Gradient, "5 default Gradient");
 }
 
 static void test_parse_args_checker() {
@@ -93,8 +93,8 @@ static void test_parse_args_checker() {
     check(r.has_value(), "10 checker ok");
     if (!r.has_value())
         return;
-    check(r->size == 10, "10 checker - size == 10");
-    check(r->pattern == Pattern::Checker, "10 checker Checker");
+    check(r->args.size == 10, "10 checker - size == 10");
+    check(r->args.pattern == Pattern::Checker, "10 checker Checker");
 }
 
 static void test_parse_args_radial() {
@@ -106,8 +106,8 @@ static void test_parse_args_radial() {
     check(r.has_value(), "7 radial ok");
     if (!r.has_value())
         return;
-    check(r->size == 7, "7 radial size == 7");
-    check(r->pattern == Pattern::Radial, "7 radial Radial");
+    check(r->args.size == 7, "7 radial size == 7");
+    check(r->args.pattern == Pattern::Radial, "7 radial Radial");
 }
 
 // ---- new CLI (--size N [--seed S]) tests ----
@@ -144,9 +144,9 @@ static void test_new_ok_no_seed() {
     check(r.has_value(), "--size 10 ok");
     if (!r.has_value())
         return;
-    check(r->size == 10, "--size 10 size == 10");
-    check(r->pattern == Pattern::Random, "--size 10 Random");
-    check(!r->seed_provided, "--size 10 seed not provided");
+    check(r->args.size == 10, "--size 10 size == 10");
+    check(r->args.pattern == Pattern::Random, "--size 10 Random");
+    check(!r->args.seed_provided, "--size 10 seed not provided");
 }
 
 static void test_new_with_seed() {
@@ -160,10 +160,10 @@ static void test_new_with_seed() {
     check(r.has_value(), "--size 5 --seed 42 ok");
     if (!r.has_value())
         return;
-    check(r->size == 5, "--size 5 size == 5");
-    check(r->pattern == Pattern::Random, "--size 5 Random");
-    check(r->seed_provided, "--size 5 seed provided");
-    check(r->seed == 42, "--size 5 seed == 42");
+    check(r->args.size == 5, "--size 5 size == 5");
+    check(r->args.pattern == Pattern::Random, "--size 5 Random");
+    check(r->args.seed_provided, "--size 5 seed provided");
+    check(r->args.seed == 42, "--size 5 seed == 42");
 }
 
 static void test_new_bad_seed() {
@@ -178,6 +178,41 @@ static void test_new_bad_seed() {
     if (r.has_value())
         return;
     check(r.error() == ParseError::kBadSeed, "--seed abc kBadSeed");
+}
+
+// ---- --help / --version tests ----
+
+static void test_help() {
+    char arg0[] = "prog";
+    char arg1[] = "--help";
+    char* argv[] = {arg0, arg1};
+    auto r = parse_args(2, argv);
+    check(r.has_value(), "--help ok");
+    if (!r.has_value())
+        return;
+    check(r->request == ParseRequest::kHelp, "--help kHelp");
+}
+
+static void test_version() {
+    char arg0[] = "prog";
+    char arg1[] = "--version";
+    char* argv[] = {arg0, arg1};
+    auto r = parse_args(2, argv);
+    check(r.has_value(), "--version ok");
+    if (!r.has_value())
+        return;
+    check(r->request == ParseRequest::kVersion, "--version kVersion");
+}
+
+static void test_run_request() {
+    char arg0[] = "prog";
+    char arg1[] = "5";
+    char* argv[] = {arg0, arg1};
+    auto r = parse_args(2, argv);
+    check(r.has_value(), "5 ok");
+    if (!r.has_value())
+        return;
+    check(r->request == ParseRequest::kRun, "5 request kRun");
 }
 
 // ---- hsv_to_rgb tests ----
@@ -262,6 +297,11 @@ int main() {
     test_new_ok_no_seed();
     test_new_with_seed();
     test_new_bad_seed();
+
+    std::println("--- help/version tests ---");
+    test_help();
+    test_version();
+    test_run_request();
 
     std::println("--- hsv_to_rgb tests ---");
     test_hsv_red();
