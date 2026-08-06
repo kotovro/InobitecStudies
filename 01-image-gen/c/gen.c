@@ -1,6 +1,7 @@
 #include "hsv_to_rgb.h"
 #include "parse_args.h"
 
+#include <locale.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>

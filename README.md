@@ -71,12 +71,6 @@ link /DEBUG parse_args.obj hsv_to_rgb.obj gen.obj /OUT:gen_image.exe
 
 Флаги: `Debug + ASan` (`/Od /Zi /MDd /fsanitize=address`).
 
-> Исходники с русским текстом сохранены в UTF-8 — компилируются с
-> `/source-charset:utf-8`. Исполнение остаётся системной кодовой страницей
-> (CP1251 на русской Windows): `setlocale` и `chcp 1251` работают как раньше.
-> Файлы, ещё не переведённые в UTF-8 (`common/ppm_io.c`, задачи 2–3),
-> собираются без этого флага.
-
 ### Эталонные программы
 
 Независимые реализации для acceptance-тестов. Собираются одними командами:
@@ -305,13 +299,11 @@ cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source
 link /DEBUG ppm_io.obj filter.obj filter_test.obj /OUT:build/filter_test.exe
 ```
 
-Примечание: `ppm_io.cpp` ещё в CP1251 — без `/source-charset:utf-8`;
-`filter.cpp`/`filter_test.cpp` в UTF-8 — с флагом. Аналогично для C-версии.
 
 ### Модуль `common/ppm_io` и сборка DLL
 
 Задачи 1/3/4 используют общий модуль ввода-вывода PPM. Он собирается тремя
-способами (слой 9 лестницы):
+способами:
 
 - **Объектный файл / статическая библиотека** — по умолчанию, без флагов
 - **Динамическая библиотека (DLL / .so)** — с флагом `KV_DYNAMIC_LINK`:
