@@ -6,6 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void safe_strerror(int errnum, char *buf, size_t bufsz) {
+#ifdef _WIN32
+    strerror_s(buf, bufsz, errnum);
+#else
+    strerror_r(errnum, buf, bufsz);   // POSIX версия
+#endif
+}
 // -------------------------------------------------------------------
 // Helper: skip whitespace and optional #-comments.
 // allow_hash: 1 = skip #-lines (header phase), 0 = return '#' to caller
@@ -42,7 +49,7 @@ static int read_long(FILE* f, int* line_num, int allow_hash, long long* val,
         if (ferror(f)) {
             int e = errno;
             char buf[256];
-            strerror_s(buf, sizeof buf, e);
+            safe_strerror(e, buf, sizeof buf);
             result->error = PRE_IO_ERROR;
             result->error_line = *line_num;
             snprintf(result->diagnostic, sizeof(result->diagnostic), "сбой чтения: %s (errno %d)",
@@ -111,7 +118,7 @@ struct PpmResult ppm_read(FILE* f) {
         if (ferror(f)) {
             int e = errno;
             char buf[256];
-            strerror_s(buf, sizeof buf, e);
+            safe_strerror(e, buf, sizeof buf);
             result.error = PRE_IO_ERROR;
             result.error_line = line_num;
             snprintf(result.diagnostic, sizeof(result.diagnostic), "сбой чтения: %s (errno %d)",
@@ -295,7 +302,7 @@ struct PpmResult ppm_read(FILE* f) {
     if (ferror(f)) {
         int e = errno;
         char buf[256];
-        strerror_s(buf, sizeof buf, e);
+        safe_strerror(e, buf, sizeof buf);
         result.error = PRE_IO_ERROR;
         result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic), "сбой чтения: %s (errno %d)", buf,
