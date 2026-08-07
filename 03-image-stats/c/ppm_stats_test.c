@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// luma определена с external linkage в ppm_stats.c
+// luma объ€влена в ppm_stats.c
 double luma(int32_t r, int32_t g, int32_t b);
 
 static int failed = 0;
@@ -30,112 +30,7 @@ static FILE* make_ppm(const char* data) {
     return f;
 }
 
-// Header tests
-
-static void test_empty_input(void) {
-    FILE* f = make_ppm("");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_EMPTY_INPUT, "empty input -> SE_EMPTY_INPUT");
-    fclose(f);
-}
-
-static void test_magic_bad(void) {
-    FILE* f = make_ppm("P5\n1 1\n255\n0 0 0\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_BAD_MAGIC, "P5 -> SE_BAD_MAGIC");
-    fclose(f);
-}
-
-static void test_magic_truncated(void) {
-    FILE* f = make_ppm("P");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_BAD_MAGIC, "just 'P' -> SE_BAD_MAGIC");
-    fclose(f);
-}
-
-static void test_magic_ok(void) {
-    FILE* f = make_ppm("P3\n1 1\n255\n128 128 128\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_OK, "valid P3 -> SE_OK");
-    if (r.error == SE_OK) {
-        check(r.stats.width == 1, "width == 1");
-        check(r.stats.height == 1, "height == 1");
-        check(r.stats.max_val == 255, "max_val == 255");
-        check(r.stats.pixel_count == 1, "pixel_count == 1");
-    }
-    fclose(f);
-}
-
-static void test_width_bad(void) {
-    FILE* f = make_ppm("P3\n0 1\n255\n0 0 0\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_BAD_NUMBER, "width=0 -> SE_BAD_NUMBER");
-    fclose(f);
-}
-
-static void test_maxval_not_255(void) {
-    FILE* f = make_ppm("P3\n1 1\n100\n0 0 0\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_BAD_NUMBER, "maxval=100 -> SE_BAD_NUMBER");
-    if (r.error == SE_BAD_NUMBER)
-        check(strstr(r.diagnostic, "255") != NULL, "diagnostic mentions 255");
-    fclose(f);
-}
-
-// Comment tests
-
-static void test_comment_header_only(void) {
-    // Comments only in header area (before maxval)
-    FILE* f = make_ppm("P3\n# width and height\n2 2\n# before maxval\n255\n"
-                       "0 0 0\n0 0 0\n0 0 0\n0 0 0\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_OK, "comments in header -> SE_OK");
-    if (r.error == SE_OK) {
-        check(r.stats.width == 2, "comments: width == 2");
-        check(r.stats.height == 2, "comments: height == 2");
-        check(r.stats.pixel_count == 4, "comments: pixel_count == 4");
-    }
-    fclose(f);
-}
-
-//  Pixel data tests
-
-static void test_channel_out_of_range(void) {
-    FILE* f = make_ppm("P3\n1 1\n255\n256 0 0\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_CHANNEL_RANGE, "channel 256 -> SE_CHANNEL_RANGE");
-    fclose(f);
-}
-
-static void test_channel_negative(void) {
-    FILE* f = make_ppm("P3\n1 1\n255\n-1 0 0\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_BAD_NUMBER, "channel -1 -> SE_BAD_NUMBER");
-    fclose(f);
-}
-
-static void test_not_a_number(void) {
-    FILE* f = make_ppm("P3\n1 1\n255\nx 0 0\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_BAD_NUMBER, "not a number -> SE_BAD_NUMBER");
-    fclose(f);
-}
-
-static void test_too_many_pixels(void) {
-    FILE* f = make_ppm("P3\n1 1\n255\n0 0 0 255 255 255\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_TOO_MANY_PIXELS, "extra pixel -> SE_TOO_MANY_PIXELS");
-    fclose(f);
-}
-
-static void test_too_few_pixels(void) {
-    FILE* f = make_ppm("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_TOO_FEW_PIXELS, "missing pixel -> SE_TOO_FEW_PIXELS");
-    fclose(f);
-}
-
-// Statistics accuracy tests
+// Statistics accuracy tests (input built through ppm_read)
 
 static void test_stats_known(void) {
     // 2x2 image:
@@ -150,22 +45,45 @@ static void test_stats_known(void) {
     FILE* f = make_ppm("P3\n2 2\n255\n"
                        "0 0 0 255 0 0\n"
                        "0 255 0 0 0 255\n");
-    struct StatsResult r = ppm_read_stats(f);
-    check(r.error == SE_OK, "known image -> SE_OK");
-    if (r.error == SE_OK) {
-        check(r.stats.width == 2, "known: width");
-        check(r.stats.height == 2, "known: height");
-        check(r.stats.pixel_count == 4, "known: pixel_count");
-        check(r.stats.total_r == 255, "known: total_r == 255");
-        check(r.stats.total_g == 255, "known: total_g == 255");
-        check(r.stats.total_b == 255, "known: total_b == 255");
-        check(r.stats.y_min >= 0.0 && r.stats.y_min <= 0.1, "known: y_min ~ 0.0");
-        check(r.stats.y_max >= 149.5 && r.stats.y_max <= 149.9, "known: y_max ~ 149.7");
-        check(r.stats.histogram[0] == 2, "known: hist[0] == 2");
-        check(r.stats.histogram[2] == 1, "known: hist[2] == 1");
-        check(r.stats.histogram[4] == 1, "known: hist[4] == 1");
-    }
+    struct PpmResult pr = ppm_read(f);
     fclose(f);
+    check(pr.error == PRE_OK, "known image -> PRE_OK");
+    if (pr.error != PRE_OK)
+        return;
+
+    struct Stats s;
+    compute_stats(&pr.image, &s);
+    ppm_image_free(&pr.image);
+
+    check(s.width == 2, "known: width");
+    check(s.height == 2, "known: height");
+    check(s.pixel_count == 4, "known: pixel_count");
+    check(s.total_r == 255, "known: total_r == 255");
+    check(s.total_g == 255, "known: total_g == 255");
+    check(s.total_b == 255, "known: total_b == 255");
+    check(s.y_min >= 0.0 && s.y_min <= 0.1, "known: y_min ~ 0.0");
+    check(s.y_max >= 149.5 && s.y_max <= 149.9, "known: y_max ~ 149.7");
+    check(s.histogram[0] == 2, "known: hist[0] == 2");
+    check(s.histogram[2] == 1, "known: hist[2] == 1");
+    check(s.histogram[4] == 1, "known: hist[4] == 1");
+}
+
+static void test_stats_comments(void) {
+    FILE* f = make_ppm("P3\n# width and height\n2 2\n# before maxval\n255\n"
+                       "0 0 0\n0 0 0\n0 0 0\n0 0 0\n");
+    struct PpmResult pr = ppm_read(f);
+    fclose(f);
+    check(pr.error == PRE_OK, "comments in header -> PRE_OK");
+    if (pr.error != PRE_OK)
+        return;
+
+    struct Stats s;
+    compute_stats(&pr.image, &s);
+    ppm_image_free(&pr.image);
+
+    check(s.width == 2, "comments: width == 2");
+    check(s.height == 2, "comments: height == 2");
+    check(s.pixel_count == 4, "comments: pixel_count == 4");
 }
 
 // luma unit tests
@@ -186,31 +104,12 @@ static void test_luma(void) {
 int main(void) {
     setlocale(LC_ALL, "Russian_Russia.1251");
 
-    printf("--- ppm_read_stats tests ---\n");
-
-    printf("-- header errors --\n");
-    test_empty_input();
-    test_magic_bad();
-    test_magic_truncated();
-    test_magic_ok();
-    test_width_bad();
-    test_maxval_not_255();
-
-    printf("-- comments --\n");
-    test_comment_header_only();
-
-    printf("-- pixel data errors --\n");
-    test_channel_out_of_range();
-    test_channel_negative();
-    test_not_a_number();
-    test_too_many_pixels();
-    test_too_few_pixels();
+    printf("--- compute_stats tests ---\n");
+    test_stats_known();
+    test_stats_comments();
 
     printf("-- luma --\n");
     test_luma();
-
-    printf("-- statistics --\n");
-    test_stats_known();
 
     printf("---\n");
     if (failed > 0)

@@ -60,13 +60,15 @@ vcvars64.bat
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c parse_args.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c gen.c
-link /DEBUG parse_args.obj hsv_to_rgb.obj gen.obj /OUT:gen_image.exe
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c ../../common/c/ppm_io.c
+link /DEBUG parse_args.obj hsv_to_rgb.obj gen.obj ppm_io.obj /OUT:gen_image.exe
 ```
 
 Для C++:
 ```
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c gen.cpp
-link /DEBUG parse_args.obj hsv_to_rgb.obj gen.obj /OUT:gen_image.exe
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c ../../common/cpp/ppm_io.cpp
+link /DEBUG parse_args.obj hsv_to_rgb.obj gen.obj ppm_io.obj /OUT:gen_image.exe
 ```
 
 Флаги: `Debug + ASan` (`/Od /Zi /MDd /fsanitize=address`).
@@ -224,9 +226,9 @@ gen_image --size 1024 --seed 42 | image_stats > report.txt
 
 ### Тесты
 
-Юнит-тесты:
+Юнит-тесты (luma, статистика через общий `ppm_io`):
 ```
-ppm_stats_test.exe   # luma, парсинг, статистики
+ppm_stats_test.exe   # compute_stats, luma
 ```
 
 Acceptance — ручной прогон (конвейер + `fc`):
@@ -326,6 +328,14 @@ link /DEBUG filter.obj filter_test.obj build/ppm_io.lib /OUT:build/filter_test_d
 `std::unique_ptr<Impl>`, публичный API — через аксессоры (`width()`,
 `height()`, `pixel_count()`, `pixels()`). Это даёт стабильный layout
 объекта и снимает dependency на `<vector>` из заголовка.
+
+### Номер строки ошибки
+
+Результат чтения (`struct PpmResult` в C, `struct PpmResult` в C++)
+содержит номер строки, на которой возникла ошибка парсинга: поле
+`error_line` (C) / `line` (C++). Диагностическое сообщение (`diagnostic`)
+по-прежнему содержит и текст вида «строка N: …» — поле добавлено для
+программного доступа к номеру строки без разбора текста.
 
 ---
 

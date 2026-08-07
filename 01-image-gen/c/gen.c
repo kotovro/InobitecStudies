@@ -1,15 +1,13 @@
 #include "hsv_to_rgb.h"
 #include "parse_args.h"
 
+#include "../../common/c/ppm_io.h"
+
 #include <locale.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-static void write_ppm_header(int32_t width, int32_t height) {
-    printf("P3\n%d %d\n255\n", width, height);
-}
 
 static uint32_t xorshift32(uint32_t* state) {
     uint32_t x = *state;
@@ -20,7 +18,7 @@ static uint32_t xorshift32(uint32_t* state) {
     return x;
 }
 
-static void draw_random(int32_t size, uint32_t seed) {
+static void draw_random(struct PpmWriter* w, int32_t size, uint32_t seed) {
     uint32_t state = seed ? seed : 42;
     int32_t max_val = 255;
     for (int32_t y = 0; y < size; ++y) {
@@ -28,42 +26,33 @@ static void draw_random(int32_t size, uint32_t seed) {
             int32_t r = (int32_t)(xorshift32(&state) % (max_val + 1));
             int32_t g = (int32_t)(xorshift32(&state) % (max_val + 1));
             int32_t b = (int32_t)(xorshift32(&state) % (max_val + 1));
-            printf("%3d %3d %3d", r, g, b);
-            if (x + 1 < size)
-                printf(" ");
+            ppm_writer_put(w, (uint8_t)r, (uint8_t)g, (uint8_t)b);
         }
-        printf("\n");
     }
 }
 
-static void draw_gradient(int32_t size) {
+static void draw_gradient(struct PpmWriter* w, int32_t size) {
     int32_t max_coord = (size == 1) ? 1 : (size - 1);
     for (int32_t y = 0; y < size; ++y) {
         for (int32_t x = 0; x < size; ++x) {
             int32_t r = x * 255 / max_coord;
             int32_t g = (max_coord - y) * 255 / max_coord;
             int32_t b = 0;
-            printf("%3d %3d %3d", r, g, b);
-            if (x + 1 < size)
-                printf(" ");
+            ppm_writer_put(w, (uint8_t)r, (uint8_t)g, (uint8_t)b);
         }
-        printf("\n");
     }
 }
 
-static void draw_checker(int32_t size) {
+static void draw_checker(struct PpmWriter* w, int32_t size) {
     for (int32_t y = 0; y < size; ++y) {
         for (int32_t x = 0; x < size; ++x) {
             int32_t v = ((x + y) % 2 == 0) ? 255 : 0;
-            printf("%3d %3d %3d", v, v, v);
-            if (x + 1 < size)
-                printf(" ");
+            ppm_writer_put(w, (uint8_t)v, (uint8_t)v, (uint8_t)v);
         }
-        printf("\n");
     }
 }
 
-static void draw_radial(int32_t size) {
+static void draw_radial(struct PpmWriter* w, int32_t size) {
     double cx = (size - 1) / 2.0;
     double cy = (size - 1) / 2.0;
     double max_dist = sqrt(cx * cx + cy * cy);
@@ -76,28 +65,26 @@ static void draw_radial(int32_t size) {
 
             double hue = (max_dist > 0.0) ? (dist / max_dist) * 360.0 : 0.0;
             struct RGB color = hsv_to_rgb(hue, 1.0, 1.0);
-            printf("%3d %3d %3d", color.r, color.g, color.b);
-            if (x + 1 < size)
-                printf(" ");
+            ppm_writer_put(w, color.r, color.g, color.b);
         }
-        printf("\n");
     }
 }
 
 static void generate_ppm(const struct ParseResult* args) {
-    write_ppm_header(args->size, args->size);
+    struct PpmWriter writer;
+    ppm_writer_init(&writer, stdout, args->size, args->size);
     switch (args->pattern) {
     case PATTERN_GRADIENT:
-        draw_gradient(args->size);
+        draw_gradient(&writer, args->size);
         break;
     case PATTERN_CHECKER:
-        draw_checker(args->size);
+        draw_checker(&writer, args->size);
         break;
     case PATTERN_RADIAL:
-        draw_radial(args->size);
+        draw_radial(&writer, args->size);
         break;
     case PATTERN_RANDOM:
-        draw_random(args->size, args->seed);
+        draw_random(&writer, args->size, args->seed);
         break;
     }
 }

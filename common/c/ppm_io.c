@@ -44,11 +44,13 @@ static int read_long(FILE* f, int* line_num, int allow_hash, long long* val,
             char buf[256];
             strerror_s(buf, sizeof buf, e);
             result->error = PRE_IO_ERROR;
+            result->error_line = *line_num;
             snprintf(result->diagnostic, sizeof(result->diagnostic), "сбой чтения: %s (errno %d)",
                      buf, e);
             return -1;
         }
         result->error = PRE_BAD_NUMBER;
+        result->error_line = *line_num;
         snprintf(result->diagnostic, sizeof(result->diagnostic),
                  "строка %d: неожиданный конец файла", *line_num);
         return -1;
@@ -56,6 +58,7 @@ static int read_long(FILE* f, int* line_num, int allow_hash, long long* val,
 
     if (c == '#') {
         result->error = PRE_BAD_NUMBER;
+        result->error_line = *line_num;
         snprintf(result->diagnostic, sizeof(result->diagnostic),
                  "строка %d: символ '#' не допускается в данных", *line_num);
         return -1;
@@ -63,6 +66,7 @@ static int read_long(FILE* f, int* line_num, int allow_hash, long long* val,
 
     if (c < '0' || c > '9') {
         result->error = PRE_BAD_NUMBER;
+        result->error_line = *line_num;
         if (c >= ' ' && c <= '~')
             snprintf(result->diagnostic, sizeof(result->diagnostic),
                      "строка %d: нечисловое значение, получено: '%c'", *line_num, (char)c);
@@ -77,6 +81,7 @@ static int read_long(FILE* f, int* line_num, int allow_hash, long long* val,
         v = v * 10 + (c - '0');
         if (v > 0x7FFFFFFF) {
             result->error = PRE_BAD_NUMBER;
+            result->error_line = *line_num;
             snprintf(result->diagnostic, sizeof(result->diagnostic),
                      "строка %d: число превышает допустимый диапазон", *line_num);
             return -1;
@@ -97,7 +102,7 @@ static int read_long(FILE* f, int* line_num, int allow_hash, long long* val,
 // -------------------------------------------------------------------
 
 struct PpmResult ppm_read(FILE* f) {
-    struct PpmResult result = {PRE_OK, "", {0, 0, 0, NULL}};
+    struct PpmResult result = {PRE_OK, 0, "", {0, 0, 0, NULL}};
     int line_num = 1;
 
     // ---- 1. Magic "P3" ----
@@ -108,17 +113,20 @@ struct PpmResult ppm_read(FILE* f) {
             char buf[256];
             strerror_s(buf, sizeof buf, e);
             result.error = PRE_IO_ERROR;
+            result.error_line = line_num;
             snprintf(result.diagnostic, sizeof(result.diagnostic), "сбой чтения: %s (errno %d)",
                      buf, e);
             return result;
         }
         result.error = PRE_EMPTY_INPUT;
+        result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic), "нет входных данных");
         return result;
     }
 
     if (c != 'P') {
         result.error = PRE_BAD_MAGIC;
+        result.error_line = line_num;
         if (c >= ' ' && c <= '~')
             snprintf(result.diagnostic, sizeof(result.diagnostic),
                      "строка %d: ожидалось 'P3', получено: '%c'", line_num, (char)c);
@@ -131,12 +139,14 @@ struct PpmResult ppm_read(FILE* f) {
     c = fgetc(f);
     if (c == EOF) {
         result.error = PRE_BAD_MAGIC;
+        result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
                  "строка %d: ожидалось 'P3', получено: 'P'", line_num);
         return result;
     }
     if (c != '3') {
         result.error = PRE_BAD_MAGIC;
+        result.error_line = line_num;
         if (c >= ' ' && c <= '~')
             snprintf(result.diagnostic, sizeof(result.diagnostic),
                      "строка %d: ожидалось 'P3', получено: 'P%c'", line_num, (char)c);
@@ -152,6 +162,7 @@ struct PpmResult ppm_read(FILE* f) {
         return result;
     if (w_val <= 0 || w_val > 0x7FFFFFFF) {
         result.error = PRE_BAD_NUMBER;
+        result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
                  "строка %d: ширина должна быть положительным числом; получено: %lld", line_num,
                  w_val);
@@ -163,6 +174,7 @@ struct PpmResult ppm_read(FILE* f) {
         return result;
     if (h_val <= 0 || h_val > 0x7FFFFFFF) {
         result.error = PRE_BAD_NUMBER;
+        result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
                  "строка %d: высота должна быть положительным числом; получено: %lld", line_num,
                  h_val);
@@ -174,6 +186,7 @@ struct PpmResult ppm_read(FILE* f) {
         return result;
     if (m_val != 255) {
         result.error = PRE_BAD_NUMBER;
+        result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
                  "строка %d: максимальное значение канала должно быть 255; получено: %lld",
                  line_num, m_val);
@@ -187,6 +200,7 @@ struct PpmResult ppm_read(FILE* f) {
     long long total_pixels = w_val * h_val;
     if (total_pixels == 0) {
         result.error = PRE_BAD_NUMBER;
+        result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
                  "строка %d: изображение не содержит пикселей", line_num);
         return result;
@@ -195,6 +209,7 @@ struct PpmResult ppm_read(FILE* f) {
     result.image.pixels = (struct Pixel*)malloc((size_t)total_pixels * sizeof(struct Pixel));
     if (!result.image.pixels) {
         result.error = PRE_ALLOC_ERROR;
+        result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
                  "не удалось выделить память для %lld пикселей", total_pixels);
         return result;
@@ -223,6 +238,7 @@ struct PpmResult ppm_read(FILE* f) {
         if (r_val < 0 || r_val > result.image.max_val || g_val < 0 ||
             g_val > result.image.max_val || b_val < 0 || b_val > result.image.max_val) {
             result.error = PRE_CHANNEL_RANGE;
+            result.error_line = line_num;
             snprintf(result.diagnostic, sizeof(result.diagnostic),
                      "строка %d: значение канала должно быть в [0; %d]; получено: %lld %lld %lld",
                      line_num, result.image.max_val, r_val, g_val, b_val);
@@ -240,6 +256,7 @@ struct PpmResult ppm_read(FILE* f) {
     if (pixel_error) {
         if (result.error == PRE_BAD_NUMBER && pixel_count < total_pixels && feof(f)) {
             result.error = PRE_TOO_FEW_PIXELS;
+            result.error_line = line_num;
             snprintf(result.diagnostic, sizeof(result.diagnostic),
                      "строка %d: получено только %lld пикселей (ожидалось %lld)", line_num,
                      pixel_count, total_pixels);
@@ -259,6 +276,7 @@ struct PpmResult ppm_read(FILE* f) {
         }
         if (c == '#') {
             result.error = PRE_BAD_NUMBER;
+            result.error_line = line_num;
             snprintf(result.diagnostic, sizeof(result.diagnostic),
                      "строка %d: символ '#' не допускается в данных", line_num);
             free(result.image.pixels);
@@ -266,6 +284,7 @@ struct PpmResult ppm_read(FILE* f) {
             return result;
         }
         result.error = PRE_TOO_MANY_PIXELS;
+        result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
                  "строка %d: лишние данные после %lld пикселей", line_num, pixel_count);
         free(result.image.pixels);
@@ -278,6 +297,7 @@ struct PpmResult ppm_read(FILE* f) {
         char buf[256];
         strerror_s(buf, sizeof buf, e);
         result.error = PRE_IO_ERROR;
+        result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic), "сбой чтения: %s (errno %d)", buf,
                  e);
         free(result.image.pixels);

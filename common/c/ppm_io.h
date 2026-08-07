@@ -41,6 +41,7 @@ enum PpmReadError {
 
 struct PpmResult {
     enum PpmReadError error;
+    int32_t error_line;
     char diagnostic[PPM_DIAG_SIZE];
     struct Image image;
 };

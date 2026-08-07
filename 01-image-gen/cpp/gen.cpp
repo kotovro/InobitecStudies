@@ -1,21 +1,17 @@
 #include "hsv_to_rgb.hpp"
 #include "parse_args.hpp"
 
+#include "../../common/cpp/ppm_io.hpp"
 #include "../../common/cpp/version.hpp"
 
 #include <cmath>
 #include <cstdint>
 #include <expected>
+#include <iostream>
 #include <print>
 #include <random>
 
-void write_ppm_header(int32_t width, int32_t height) {
-    std::println("P3");
-    std::println("{} {}", width, height);
-    std::println("255");
-}
-
-void draw_random(int32_t size, uint32_t seed) {
+void draw_random(PpmWriter& w, int32_t size, uint32_t seed) {
     std::mt19937 rng(seed ? seed : 42);
     std::uniform_int_distribution dist(0, 255);
     for (int32_t y = 0; y < size; ++y) {
@@ -23,42 +19,33 @@ void draw_random(int32_t size, uint32_t seed) {
             int32_t r = dist(rng);
             int32_t g = dist(rng);
             int32_t b = dist(rng);
-            std::print("{:3d} {:3d} {:3d}", r, g, b);
-            if (x + 1 < size)
-                std::print(" ");
+            w.put(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b));
         }
-        std::println();
     }
 }
 
-void draw_gradient(int32_t size) {
+void draw_gradient(PpmWriter& w, int32_t size) {
     int32_t max_coord = (size == 1) ? 1 : (size - 1);
     for (int32_t y = 0; y < size; ++y) {
         for (int32_t x = 0; x < size; ++x) {
             int32_t r = x * 255 / max_coord;
             int32_t g = (max_coord - y) * 255 / max_coord;
             int32_t b = 0;
-            std::print("{:3d} {:3d} {:3d}", r, g, b);
-            if (x + 1 < size)
-                std::print(" ");
+            w.put(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b));
         }
-        std::println();
     }
 }
 
-void draw_checker(int32_t size) {
+void draw_checker(PpmWriter& w, int32_t size) {
     for (int32_t y = 0; y < size; ++y) {
         for (int32_t x = 0; x < size; ++x) {
             int32_t v = ((x + y) % 2 == 0) ? 255 : 0;
-            std::print("{:3d} {:3d} {:3d}", v, v, v);
-            if (x + 1 < size)
-                std::print(" ");
+            w.put(static_cast<uint8_t>(v), static_cast<uint8_t>(v), static_cast<uint8_t>(v));
         }
-        std::println();
     }
 }
 
-void draw_radial(int32_t size) {
+void draw_radial(PpmWriter& w, int32_t size) {
     double cx = (size - 1) / 2.0;
     double cy = (size - 1) / 2.0;
     double max_dist = std::sqrt(cx * cx + cy * cy);
@@ -70,29 +57,26 @@ void draw_radial(int32_t size) {
 
             double hue = max_dist > 0 ? (dist / max_dist) * 360.0 : 0.0;
             RGB color = hsv_to_rgb(hue, 1.0, 1.0);
-            std::print("{:3d} {:3d} {:3d}", color.r, color.g, color.b);
-            if (x + 1 < size)
-                std::print(" ");
+            w.put(color.r, color.g, color.b);
         }
-        std::println();
     }
 }
 
 void generate_ppm(const Args& args) {
-    write_ppm_header(args.size, args.size);
+    PpmWriter writer(std::cout, args.size, args.size);
     switch (args.pattern) {
         using enum Pattern;
     case Gradient:
-        draw_gradient(args.size);
+        draw_gradient(writer, args.size);
         break;
     case Checker:
-        draw_checker(args.size);
+        draw_checker(writer, args.size);
         break;
     case Radial:
-        draw_radial(args.size);
+        draw_radial(writer, args.size);
         break;
     case Random:
-        draw_random(args.size, args.seed);
+        draw_random(writer, args.size, args.seed);
         break;
     }
 }

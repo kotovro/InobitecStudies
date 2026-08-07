@@ -60,6 +60,7 @@ class Image {
 
 struct PpmResult {
     std::expected<Image, PpmReadError> value;
+    int32_t line = 0;
     std::string diagnostic;
 };
 

@@ -2,23 +2,9 @@
 #define KV_PPM_STATS_HPP
 
 #include <cstdint>
-#include <expected>
 #include <iosfwd>
-#include <string>
-#include <string_view>
 
-#include "../../common/cpp/exit_codes.hpp"
-
-enum class StatsError {
-    kOk,
-    kEmptyInput,
-    kBadMagic,
-    kBadNumber,
-    kChannelRange,
-    kTooFewPixels,
-    kTooManyPixels,
-    kIOError
-};
+#include "../../common/cpp/ppm_io.hpp"
 
 struct Stats {
     int32_t width{};
@@ -33,12 +19,7 @@ struct Stats {
     int32_t histogram[8]{};
 };
 
-struct StatsResult {
-    std::expected<Stats, StatsError> value;
-    std::string diagnostic;
-};
-
-StatsResult ppm_read_stats(std::istream& is);
+Stats compute_stats(const Image& img);
 void ppm_print_stats(const Stats& s, std::ostream& os);
 
 #endif

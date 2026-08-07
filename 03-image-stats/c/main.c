@@ -1,5 +1,6 @@
 #include "ppm_stats.h"
 
+#include "../../common/c/exit_codes.h"
 #include "../../common/c/version.h"
 
 #include <locale.h>
@@ -35,23 +36,20 @@ int main(int argc, char** argv) {
         return EC_OK;
     }
 
-    struct StatsResult result = ppm_read_stats(stdin);
-
-    switch (result.error) {
-    case SE_OK:
-        ppm_print_stats(&result.stats, stdout);
-        return EC_OK;
-
-    case SE_EMPTY_INPUT:
+    struct PpmResult result = ppm_read(stdin);
+    if (result.error != PRE_OK) {
         fprintf(stderr, "%s\n", result.diagnostic);
-        return EC_NOINPUT;
-
-    case SE_IO_ERROR:
-        fprintf(stderr, "%s\n", result.diagnostic);
-        return EC_IOERR;
-
-    default:
-        fprintf(stderr, "%s\n", result.diagnostic);
+        if (result.error == PRE_EMPTY_INPUT)
+            return EC_NOINPUT;
+        if (result.error == PRE_IO_ERROR)
+            return EC_IOERR;
         return EC_DATA;
     }
+
+    struct Stats stats;
+    compute_stats(&result.image, &stats);
+    ppm_print_stats(&stats, stdout);
+
+    ppm_image_free(&result.image);
+    return EC_OK;
 }

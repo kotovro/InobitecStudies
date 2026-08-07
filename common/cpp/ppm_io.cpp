@@ -40,38 +40,44 @@ PpmResult Image::read(std::istream& is) {
     int line_num = 1;
     enum class Phase { kHeader, kData } phase = Phase::kHeader;
 
-    auto err = [&](PpmReadError e, std::string msg) -> PpmResult {
-        return PpmResult{std::unexpected(e), std::move(msg)};
+    auto err = [&](PpmReadError e, int32_t line, std::string msg) -> PpmResult {
+        return PpmResult{std::unexpected(e), line, std::move(msg)};
     };
 
     auto skip_ws = [&]() -> bool {
         while (true) {
-            is >> std::ws;
-            if (is.eof())
-                return false;
-            if (phase == Phase::kHeader && is.peek() == '#') {
+            int c = is.peek();
+            if (c == '\n') {
+                is.get();
+                ++line_num;
+                continue;
+            }
+            if (c == ' ' || c == '\t' || c == '\r') {
+                is.get();
+                continue;
+            }
+            if (phase == Phase::kHeader && c == '#') {
                 is.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 ++line_num;
                 continue;
             }
             break;
         }
-        return true;
+        return !is.eof();
     };
 
     // ---- 1. Magic ----
-    is >> std::ws;
-    if (is.eof())
-        return err(PpmReadError::kEmptyInput, "нет входных данных");
+    if (!skip_ws())
+        return err(PpmReadError::kEmptyInput, line_num, "нет входных данных");
 
     std::string magic;
     is >> magic;
     if (is.fail())
-        return err(PpmReadError::kIOError,
+        return err(PpmReadError::kIOError, line_num,
                    std::format("сбой чтения: {}", std::generic_category().message(errno)));
 
     if (magic != "P3")
-        return err(PpmReadError::kBadMagic,
+        return err(PpmReadError::kBadMagic, line_num,
                    std::format("строка {}: ожидалось 'P3', получено: '{}'", line_num, magic));
 
     // ---- 2. Width, Height, Maxval ----
@@ -85,27 +91,27 @@ PpmResult Image::read(std::istream& is) {
     {
         long long w, h, m;
         if (!read_int(w))
-            return err(PpmReadError::kBadNumber,
+            return err(PpmReadError::kBadNumber, line_num,
                        std::format("строка {}: не удалось прочитать ширину", line_num));
         if (w <= 0)
             return err(
-                PpmReadError::kBadNumber,
+                PpmReadError::kBadNumber, line_num,
                 std::format("строка {}: ширина должна быть положительным числом; получено: {}",
                             line_num, w));
         if (!read_int(h))
-            return err(PpmReadError::kBadNumber,
+            return err(PpmReadError::kBadNumber, line_num,
                        std::format("строка {}: не удалось прочитать высоту", line_num));
         if (h <= 0)
             return err(
-                PpmReadError::kBadNumber,
+                PpmReadError::kBadNumber, line_num,
                 std::format("строка {}: высота должна быть положительным числом; получено: {}",
                             line_num, h));
         if (!read_int(m))
-            return err(PpmReadError::kBadNumber,
+            return err(PpmReadError::kBadNumber, line_num,
                        std::format("строка {}: не удалось прочитать максимальное значение канала",
                                    line_num));
         if (m != 255)
-            return err(PpmReadError::kBadNumber,
+            return err(PpmReadError::kBadNumber, line_num,
                        std::format("строка {}: максимальное значение канала должно быть 255; "
                                    "получено: {}",
                                    line_num, m));
@@ -123,23 +129,32 @@ PpmResult Image::read(std::istream& is) {
     for (long long i = 0; i < total_pixels; ++i) {
         skip_ws();
         if (is.eof())
-            return err(PpmReadError::kTooFewPixels,
+            return err(PpmReadError::kTooFewPixels, line_num,
                        std::format("строка {}: получено только {} пикселей (ожидалось {})",
                                    line_num, img._impl->pixels.size(), total_pixels));
 
         if (is.peek() == '#')
-            return err(PpmReadError::kBadNumber,
+            return err(PpmReadError::kBadNumber, line_num,
                        std::format("строка {}: символ '#' не допускается в данных", line_num));
 
         int r, g, b;
-        is >> r >> g >> b;
+        is >> r;
         if (is.fail())
-            return err(PpmReadError::kBadNumber,
+            return err(PpmReadError::kBadNumber, line_num,
                        std::format("строка {}: нечисловое значение", line_num));
-
+        skip_ws();
+        is >> g;
+        if (is.fail())
+            return err(PpmReadError::kBadNumber, line_num,
+                       std::format("строка {}: нечисловое значение", line_num));
+        skip_ws();
+        is >> b;
+        if (is.fail())
+            return err(PpmReadError::kBadNumber, line_num,
+                       std::format("строка {}: нечисловое значение", line_num));
         if (r < 0 || r > img._impl->max_val || g < 0 || g > img._impl->max_val || b < 0 ||
             b > img._impl->max_val)
-            return err(PpmReadError::kChannelRange,
+            return err(PpmReadError::kChannelRange, line_num,
                        std::format("строка {}: значение канала должно быть в [0; {}]; "
                                    "получено: {} {} {}",
                                    line_num, img._impl->max_val, r, g, b));
@@ -149,25 +164,25 @@ PpmResult Image::read(std::istream& is) {
     }
 
     // ---- 4. Check for trailing data ----
-    is >> std::ws;
+    skip_ws();
     if (!is.eof()) {
         if (is.peek() == '#')
-            return err(PpmReadError::kBadNumber,
+            return err(PpmReadError::kBadNumber, line_num,
                        std::format("строка {}: символ '#' не допускается в данных", line_num));
 
         char extra;
         is >> extra;
         if (!is.eof())
-            return err(PpmReadError::kTooManyPixels,
+            return err(PpmReadError::kTooManyPixels, line_num,
                        std::format("строка {}: лишние данные после {} пикселей", line_num,
                                    img._impl->pixels.size()));
     }
 
     if (is.bad())
-        return err(PpmReadError::kIOError,
+        return err(PpmReadError::kIOError, line_num,
                    std::format("сбой чтения: {}", std::generic_category().message(errno)));
 
-    return PpmResult{std::move(img), {}};
+    return PpmResult{std::move(img), 0, {}};
 }
 
 PpmWriter::PpmWriter(std::ostream& os, int32_t width, int32_t height) : _os(os), _width(width) {

@@ -164,6 +164,23 @@ static void test_too_few_pixels() {
         check(r.value.error() == PpmReadError::kTooFewPixels, "missing -> kTooFewPixels");
 }
 
+static void test_error_line() {
+    auto ss = std::istringstream("P3\n1 1\n255\nx 0 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "not a number -> error");
+    check(r.line == 4, "bad number reported on line 4");
+
+    ss = std::istringstream("P3\n1 1\n255\n256 0 0\n");
+    r = Image::read(ss);
+    check(!r.value.has_value(), "channel 256 -> error");
+    check(r.line == 4, "channel range reported on line 4");
+
+    ss = std::istringstream("P3\n1 1\n100\n0 0 0\n");
+    r = Image::read(ss);
+    check(!r.value.has_value(), "maxval=100 -> error");
+    check(r.line == 3, "maxval reported on line 3");
+}
+
 // -------------------------------------------------------------------
 // Writer tests
 // -------------------------------------------------------------------
@@ -257,6 +274,7 @@ int main() {
     test_too_many_pixels();
     test_too_few_pixels();
     test_valid_2x2();
+    test_error_line();
 
     std::println("-- writer --");
     test_writer_basic();

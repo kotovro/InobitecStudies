@@ -170,6 +170,26 @@ static void test_too_few_pixels(void) {
     fclose(f);
 }
 
+static void test_error_line(void) {
+    FILE* f = make_ppm("P3\n1 1\n255\nx 0 0\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "not a number -> PRE_BAD_NUMBER");
+    check(r.error_line == 4, "bad number reported on line 4");
+    fclose(f);
+
+    f = make_ppm("P3\n1 1\n255\n256 0 0\n");
+    r = ppm_read(f);
+    check(r.error == PRE_CHANNEL_RANGE, "channel 256 -> PRE_CHANNEL_RANGE");
+    check(r.error_line == 4, "channel range reported on line 4");
+    fclose(f);
+
+    f = make_ppm("P3\n1 1\n100\n0 0 0\n");
+    r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "maxval=100 -> PRE_BAD_NUMBER");
+    check(r.error_line == 3, "maxval reported on line 3");
+    fclose(f);
+}
+
 // -------------------------------------------------------------------
 // Writer tests
 // -------------------------------------------------------------------
@@ -243,6 +263,7 @@ int main(void) {
     test_too_many_pixels();
     test_too_few_pixels();
     test_valid_2x2();
+    test_error_line();
 
     printf("-- writer --\n");
     test_writer_basic();

@@ -4,20 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "../../common/c/exit_codes.h"
-
-#define STATS_DIAG_SIZE 256
-
-enum StatsError {
-    SE_OK,
-    SE_EMPTY_INPUT,
-    SE_BAD_MAGIC,
-    SE_BAD_NUMBER,
-    SE_CHANNEL_RANGE,
-    SE_TOO_FEW_PIXELS,
-    SE_TOO_MANY_PIXELS,
-    SE_IO_ERROR
-};
+#include "../../common/c/ppm_io.h"
 
 struct Stats {
     int32_t width;
@@ -32,13 +19,7 @@ struct Stats {
     int32_t histogram[8];
 };
 
-struct StatsResult {
-    enum StatsError error;
-    char diagnostic[STATS_DIAG_SIZE];
-    struct Stats stats;
-};
-
-struct StatsResult ppm_read_stats(FILE* f);
+void compute_stats(const struct Image* img, struct Stats* out);
 void ppm_print_stats(const struct Stats* s, FILE* out);
 
 #endif

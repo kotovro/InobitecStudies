@@ -1,5 +1,6 @@
 #include "ppm_stats.hpp"
 
+#include "../../common/cpp/exit_codes.hpp"
 #include "../../common/cpp/version.hpp"
 
 #include <cstdlib>
@@ -36,21 +37,20 @@ int main(int argc, char** argv) {
         return (int)ExitCode::kOk;
     }
 
-    auto result = ppm_read_stats(std::cin);
+    auto result = Image::read(std::cin);
     if (!result.value) {
+        std::println(stderr, "{}", result.diagnostic);
         switch (result.value.error()) {
-        case StatsError::kEmptyInput:
-            std::println(stderr, "{}", result.diagnostic);
+        case PpmReadError::kEmptyInput:
             return (int)ExitCode::kNoInput;
-        case StatsError::kIOError:
-            std::println(stderr, "{}", result.diagnostic);
+        case PpmReadError::kIOError:
             return (int)ExitCode::kIOErr;
         default:
-            std::println(stderr, "{}", result.diagnostic);
             return (int)ExitCode::kData;
         }
     }
 
-    ppm_print_stats(*result.value, std::cout);
+    Stats stats = compute_stats(*result.value);
+    ppm_print_stats(stats, std::cout);
     return (int)ExitCode::kOk;
 }
