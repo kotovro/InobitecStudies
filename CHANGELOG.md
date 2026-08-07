@@ -20,3 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Все программы (`gen`, `filter`, `stats`, паспорт) можно объединять в конвейер, например `gen | filter | stats`
 - Флаги `--help` и `--version` во всех четырёх программах
 - Разные коды завершения для разных типов ошибок (некорректные аргументы, некорректные данные, отсутствие входных данных, ошибки ввода-вывода) — удобно для обработки в скриптах
+
+
+[0.1.0] https://github.com/kotovro/InobitecStudies/releases/tag/v0.1.0
