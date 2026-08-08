@@ -5,6 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void safe_strerror(int errnum, char* buf, size_t bufsz) {
+#ifdef _WIN32
+    strerror_s(buf, bufsz, errnum);
+#else
+    strerror_r(errnum, buf, bufsz); // POSIX версия
+#endif
+}
+
 struct PassportResult read_passport(void) {
     printf("Введите название изображения: \n");
 
@@ -15,7 +23,7 @@ struct PassportResult read_passport(void) {
             return (struct PassportResult){PE_NO_INPUT, NULL, 0};
         }
         char errbuf[256];
-        strerror_s(errbuf, sizeof errbuf, errno);
+        safe_strerror(errno, errbuf, sizeof errbuf);
         fprintf(stderr, "сбой ввода: %s (errno %d)\n", errbuf, errno);
         return (struct PassportResult){PE_IO_ERROR, NULL, 0};
     }
@@ -39,7 +47,7 @@ struct PassportResult read_passport(void) {
         return (struct PassportResult){PE_EMPTY_NAME, NULL, 0};
     }
 
-    char* name = malloc(name_len + 1);
+    char* name = (char*)malloc(name_len + 1);
     if (!name) {
         fprintf(stderr, "не удалось выделить память\n");
         return (struct PassportResult){PE_IO_ERROR, NULL, 0};
@@ -54,7 +62,7 @@ struct PassportResult read_passport(void) {
             fprintf(stderr, "нет входных данных\n");
         else {
             char errbuf[256];
-            strerror_s(errbuf, sizeof errbuf, errno);
+            safe_strerror(errbuf, sizeof errbuf, errno);
             fprintf(stderr, "сбой ввода: %s (errno %d)\n", errbuf, errno);
         }
         free(name);

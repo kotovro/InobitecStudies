@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-08
+### Fixed
+- »справлена сборка проекта на Linux Ч ранее она завершалась ошибкой из-за использовани€ `strerror_s`, которой нет за пределами Windows.
+- »справлена сборка C++-версии Ч отсутствовало €вное приведение типа результата `malloc`, из-за чего компил€ци€ могла падать
+
 ## [0.1.0] - 2026-08-07
 
 ### Added
@@ -21,5 +26,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ‘лаги `--help` и `--version` во всех четырЄх программах
 - –азные коды завершени€ дл€ разных типов ошибок (некорректные аргументы, некорректные данные, отсутствие входных данных, ошибки ввода-вывода) Ч удобно дл€ обработки в скриптах
 
-
-[0.1.0] https://github.com/kotovro/InobitecStudies/releases/tag/v0.1.0
+[0.1.0]: https://github.com/kotovro/InobitecStudies/releases/tag/v0.1.0
