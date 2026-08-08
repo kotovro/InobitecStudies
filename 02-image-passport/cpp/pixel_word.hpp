@@ -6,4 +6,4 @@
 
 std::string_view pixel_word(int32_t n);
 
-#endif KV_PIXEL_WORD_HPP
+#endif
