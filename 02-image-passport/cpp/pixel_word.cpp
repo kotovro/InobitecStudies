@@ -5,16 +5,16 @@
 std::string_view pixel_word(int32_t n) {
     int32_t mod100 = n % 100;
     if (mod100 >= 11 && mod100 <= 14)
-        return "ïèêñåëåé";
+        return "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹";
 
     switch (n % 10) {
     case 1:
-        return "ïèêñåëü";
+        return "Ð¿Ð¸ÐºÑÐµÐ»ÑŒ";
     case 2:
     case 3:
     case 4:
-        return "ïèêñåëÿ";
+        return "Ð¿Ð¸ÐºÑÐµÐ»Ñ";
     default:
-        return "ïèêñåëåé";
+        return "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹";
     }
 }

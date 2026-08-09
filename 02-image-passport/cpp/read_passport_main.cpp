@@ -12,21 +12,19 @@
 #include "read_passport.hpp"
 
 void print_usage() {
-    std::println("Èñïîëüçîâàíèå: read_passport");
+    std::println("Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ðµ: read_passport");
     std::println();
-    std::println("Èíòåðàêòèâíî ÷èòàåò èç stdin íàçâàíèå èçîáðàæåíèÿ è ÷èñëî");
-    std::println("ïèêñåëåé, âûâîäèò ôðàçó ñî ñêëîíåíèåì «ïèêñåëü/ïèêñåëÿ/ïèêñåëåé».");
+    std::println("Ð˜Ð½Ñ‚ÐµÑ€Ð°ÐºÑ‚Ð¸Ð²Ð½Ð¾ Ñ‡Ð¸Ñ‚Ð°ÐµÑ‚ Ð¸Ð· stdin Ð½Ð°Ð·Ð²Ð°Ð½Ð¸Ðµ Ð¸Ð·Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ñ Ð¸ Ñ‡Ð¸ÑÐ»Ð¾");
+    std::println("Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹, Ð²Ñ‹Ð²Ð¾Ð´Ð¸Ñ‚ Ñ„Ñ€Ð°Ð·Ñƒ ÑÐ¾ ÑÐºÐ»Ð¾Ð½ÐµÐ½Ð¸ÐµÐ¼ Â«Ð¿Ð¸ÐºÑÐµÐ»ÑŒ/Ð¿Ð¸ÐºÑÐµÐ»Ñ/Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹Â».");
     std::println();
-    std::println("Îïöèè:");
-    std::println("  --help      ïîêàçàòü ñïðàâêó");
-    std::println("  --version   ïîêàçàòü âåðñèþ");
+    std::println("ÐžÐ¿Ñ†Ð¸Ð¸:");
+    std::println("  --help      Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ ÑÐ¿Ñ€Ð°Ð²ÐºÑƒ");
+    std::println("  --version   Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð²ÐµÑ€ÑÐ¸ÑŽ");
 }
 
 void print_version() { std::println("read_passport {}", kVersion); }
 
 int main(int argc, char** argv) {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
-
     if (argc >= 2 && std::string_view(argv[1]) == "--help") {
         print_usage();
         return (int)ExitCode::kOk;
@@ -41,27 +39,27 @@ int main(int argc, char** argv) {
     if (!result) [[unlikely]] {
         switch (result.error().kind) {
         case PassportErrorKind::kNoInput:
-            std::println(stderr, "Íåò ââîäà");
+            std::println(stderr, "ÐÐµÑ‚ Ð²Ð²Ð¾Ð´Ð°");
             return (int)ExitCode::kNoInput;
         case PassportErrorKind::kEmptyName:
-            std::println(stderr, "Íàçâàíèå èçîáðàæåíèÿ íå ìîæåò áûòü ïóñòûì");
+            std::println(stderr, "ÐÐ°Ð·Ð²Ð°Ð½Ð¸Ðµ Ð¸Ð·Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ñ Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð¿ÑƒÑÑ‚Ñ‹Ð¼");
             return (int)ExitCode::kData;
         case PassportErrorKind::kBadCount:
-            std::println(stderr, "êîëè÷åñòâî ïèêñåëåé äîëæíî áûòü ÷èñëîì; ïîëó÷åíî: {}",
+            std::println(stderr, "ÐºÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾ Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹ Ð´Ð¾Ð»Ð¶Ð½Ð¾ Ð±Ñ‹Ñ‚ÑŒ Ñ‡Ð¸ÑÐ»Ð¾Ð¼; Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¾: {}",
                          result.error().bad_value);
             return (int)ExitCode::kData;
         case PassportErrorKind::kNegativeCount:
-            std::println(stderr, "êîëè÷åñòâî ïèêñåëåé äîëæíî áûòü ïîëîæèòåëüíûì; ïîëó÷åíî: {}",
+            std::println(stderr, "ÐºÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾ Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹ Ð´Ð¾Ð»Ð¶Ð½Ð¾ Ð±Ñ‹Ñ‚ÑŒ Ð¿Ð¾Ð»Ð¾Ð¶Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ð¼; Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¾: {}",
                          result.error().bad_value);
             return (int)ExitCode::kData;
         case PassportErrorKind::kIOError:
-            std::println(stderr, "Ñáîé ââîäà: {} (errno {})",
+            std::println(stderr, "Ð¡Ð±Ð¾Ð¹ Ð²Ð²Ð¾Ð´Ð°: {} (errno {})",
                          std::generic_category().message(errno), errno);
             return (int)ExitCode::kIOErr;
         }
     }
 
-    std::println("Èçîáðàæåíèå \xAB{}\xBB: {} {}.", result->name, result->count,
+    std::println("Ð˜Ð·Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð¸Ðµ \xAB{}\xBB: {} {}.", result->name, result->count,
                  pixel_word(result->count));
     return (int)ExitCode::kOk;
 }

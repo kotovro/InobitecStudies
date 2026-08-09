@@ -9,21 +9,19 @@
 #include "read_passport.h"
 
 void print_usage(void) {
-    printf("Использование: read_passport\n");
+    printf("РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: read_passport\n");
     printf("\n");
-    printf("Интерактивно читает из stdin название изображения и число\n");
-    printf("пикселей, выводит фразу со склонением «пиксель/пикселя/пикселей».\n");
+    printf("РРЅС‚РµСЂР°РєС‚РёРІРЅРѕ С‡РёС‚Р°РµС‚ РёР· stdin РЅР°Р·РІР°РЅРёРµ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ Рё С‡РёСЃР»Рѕ\n");
+    printf("РїРёРєСЃРµР»РµР№, РІС‹РІРѕРґРёС‚ С„СЂР°Р·Сѓ СЃРѕ СЃРєР»РѕРЅРµРЅРёРµРј В«РїРёРєСЃРµР»СЊ/РїРёРєСЃРµР»СЏ/РїРёРєСЃРµР»РµР№В».\n");
     printf("\n");
-    printf("Опции:\n");
-    printf("  --help      показать справку\n");
-    printf("  --version   показать версию\n");
+    printf("РћРїС†РёРё:\n");
+    printf("  --help      РїРѕРєР°Р·Р°С‚СЊ СЃРїСЂР°РІРєСѓ\n");
+    printf("  --version   РїРѕРєР°Р·Р°С‚СЊ РІРµСЂСЃРёСЋ\n");
 }
 
 void print_version(void) { printf("read_passport %s\n", KV_VERSION); }
 
 int main(int argc, char** argv) {
-    setlocale(LC_ALL, "Russian_Russia.1251");
-
     if (argc >= 2 && strcmp(argv[1], "--help") == 0) {
         print_usage();
         return EC_OK;
@@ -50,7 +48,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    printf("Изображение \xAB%s\xBB: %d %s.\n", result.name, result.count, pixel_word(result.count));
+    printf("РР·РѕР±СЂР°Р¶РµРЅРёРµ \xAB%s\xBB: %d %s.\n", result.name, result.count, pixel_word(result.count));
     free(result.name);
     return EC_OK;
 }

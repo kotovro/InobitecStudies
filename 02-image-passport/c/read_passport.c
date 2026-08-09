@@ -9,22 +9,22 @@ static void safe_strerror(int errnum, char* buf, size_t bufsz) {
 #ifdef _WIN32
     strerror_s(buf, bufsz, errnum);
 #else
-    strerror_r(errnum, buf, bufsz); // POSIX версия
+    strerror_r(errnum, buf, bufsz); // POSIX РІРµСЂСЃРёСЏ
 #endif
 }
 
 struct PassportResult read_passport(void) {
-    printf("Введите название изображения: \n");
+    printf("Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ: \n");
 
     char name_buf[1024];
     if (!fgets(name_buf, sizeof(name_buf), stdin)) {
         if (feof(stdin)) {
-            fprintf(stderr, "нет входных данных\n");
+            fprintf(stderr, "РЅРµС‚ РІС…РѕРґРЅС‹С… РґР°РЅРЅС‹С…\n");
             return (struct PassportResult){PE_NO_INPUT, NULL, 0};
         }
         char errbuf[256];
         safe_strerror(errno, errbuf, sizeof errbuf);
-        fprintf(stderr, "сбой ввода: %s (errno %d)\n", errbuf, errno);
+        fprintf(stderr, "СЃР±РѕР№ РІРІРѕРґР°: %s (errno %d)\n", errbuf, errno);
         return (struct PassportResult){PE_IO_ERROR, NULL, 0};
     }
 
@@ -43,27 +43,27 @@ struct PassportResult read_passport(void) {
     }
 
     if (name_len == 0) {
-        fprintf(stderr, "название не может быть пустым\n");
+        fprintf(stderr, "РЅР°Р·РІР°РЅРёРµ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј\n");
         return (struct PassportResult){PE_EMPTY_NAME, NULL, 0};
     }
 
     char* name = (char*)malloc(name_len + 1);
     if (!name) {
-        fprintf(stderr, "не удалось выделить память\n");
+        fprintf(stderr, "РЅРµ СѓРґР°Р»РѕСЃСЊ РІС‹РґРµР»РёС‚СЊ РїР°РјСЏС‚СЊ\n");
         return (struct PassportResult){PE_IO_ERROR, NULL, 0};
     }
     memcpy(name, name_buf, name_len + 1);
 
-    printf("Введите количество пикселей: \n");
+    printf("Р’РІРµРґРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№: \n");
 
     char count_str[64];
     if (!fgets(count_str, sizeof(count_str), stdin)) {
         if (feof(stdin))
-            fprintf(stderr, "нет входных данных\n");
+            fprintf(stderr, "РЅРµС‚ РІС…РѕРґРЅС‹С… РґР°РЅРЅС‹С…\n");
         else {
             char errbuf[256];
-            safe_strerror(errbuf, sizeof errbuf, errno);
-            fprintf(stderr, "сбой ввода: %s (errno %d)\n", errbuf, errno);
+            safe_strerror(errno, errbuf, sizeof errbuf);
+            fprintf(stderr, "СЃР±РѕР№ РІРІРѕРґР°: %s (errno %d)\n", errbuf, errno);
         }
         free(name);
         return (struct PassportResult){feof(stdin) ? PE_NO_INPUT : PE_IO_ERROR, NULL, 0};
@@ -77,17 +77,17 @@ struct PassportResult read_passport(void) {
     errno = 0;
     long count = strtol(count_str, &end, 10);
     if (end == count_str || *end != '\0') {
-        fprintf(stderr, "количество пикселей должно быть целым числом; получено: %s\n", count_str);
+        fprintf(stderr, "РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С†РµР»С‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: %s\n", count_str);
         free(name);
         return (struct PassportResult){PE_BAD_COUNT, NULL, 0};
     }
     if (errno == ERANGE) {
-        fprintf(stderr, "количество пикселей должно быть целым числом; получено: %s\n", count_str);
+        fprintf(stderr, "РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С†РµР»С‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: %s\n", count_str);
         free(name);
         return (struct PassportResult){PE_BAD_COUNT, NULL, 0};
     }
     if (count <= 0) {
-        fprintf(stderr, "количество пикселей должно быть положительным; получено: %s\n", count_str);
+        fprintf(stderr, "РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј; РїРѕР»СѓС‡РµРЅРѕ: %s\n", count_str);
         free(name);
         return (struct PassportResult){PE_NEGATIVE_COUNT, NULL, 0};
     }

@@ -16,37 +16,35 @@ static void check(int cond, const char* name) {
 }
 
 int main(void) {
-    setlocale(LC_ALL, "Russian_Russia.1251");
-
     printf("--- pixel_word tests ---\n");
 
-    check(strcmp(pixel_word(0), "ïèêñåëåé") == 0, "0 ïèêñåëåé");
-    check(strcmp(pixel_word(1), "ïèêñåëü") == 0, "1 ïèêñåëü");
-    check(strcmp(pixel_word(2), "ïèêñåëÿ") == 0, "2 ïèêñåëÿ");
-    check(strcmp(pixel_word(3), "ïèêñåëÿ") == 0, "3 ïèêñåëÿ");
-    check(strcmp(pixel_word(4), "ïèêñåëÿ") == 0, "4 ïèêñåëÿ");
-    check(strcmp(pixel_word(5), "ïèêñåëåé") == 0, "5 ïèêñåëåé");
-    check(strcmp(pixel_word(6), "ïèêñåëåé") == 0, "6 ïèêñåëåé");
-    check(strcmp(pixel_word(10), "ïèêñåëåé") == 0, "10 ïèêñåëåé");
-    check(strcmp(pixel_word(11), "ïèêñåëåé") == 0, "11 ïèêñåëåé");
-    check(strcmp(pixel_word(12), "ïèêñåëåé") == 0, "12 ïèêñåëåé");
-    check(strcmp(pixel_word(13), "ïèêñåëåé") == 0, "13 ïèêñåëåé");
-    check(strcmp(pixel_word(14), "ïèêñåëåé") == 0, "14 ïèêñåëåé");
-    check(strcmp(pixel_word(20), "ïèêñåëåé") == 0, "20 ïèêñåëåé");
-    check(strcmp(pixel_word(21), "ïèêñåëü") == 0, "21 ïèêñåëü");
-    check(strcmp(pixel_word(22), "ïèêñåëÿ") == 0, "22 ïèêñåëÿ");
-    check(strcmp(pixel_word(23), "ïèêñåëÿ") == 0, "23 ïèêñåëÿ");
-    check(strcmp(pixel_word(24), "ïèêñåëÿ") == 0, "24 ïèêñåëÿ");
-    check(strcmp(pixel_word(25), "ïèêñåëåé") == 0, "25 ïèêñåëåé");
-    check(strcmp(pixel_word(101), "ïèêñåëü") == 0, "101 ïèêñåëü");
-    check(strcmp(pixel_word(102), "ïèêñåëÿ") == 0, "102 ïèêñåëÿ");
-    check(strcmp(pixel_word(111), "ïèêñåëåé") == 0, "111 ïèêñåëåé");
-    check(strcmp(pixel_word(114), "ïèêñåëåé") == 0, "114 ïèêñåëåé");
-    check(strcmp(pixel_word(121), "ïèêñåëü") == 0, "121 ïèêñåëü");
-    check(strcmp(pixel_word(122), "ïèêñåëÿ") == 0, "122 ïèêñåëÿ");
-    check(strcmp(pixel_word(1000), "ïèêñåëåé") == 0, "1000 ïèêñåëåé");
-    check(strcmp(pixel_word(1001), "ïèêñåëü") == 0, "1001 ïèêñåëü");
-    check(strcmp(pixel_word(2002), "ïèêñåëÿ") == 0, "2002 ïèêñåëÿ");
+    check(strcmp(pixel_word(0), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "0 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(1), "Ð¿Ð¸ÐºÑÐµÐ»ÑŒ") == 0, "1 Ð¿Ð¸ÐºÑÐµÐ»ÑŒ");
+    check(strcmp(pixel_word(2), "Ð¿Ð¸ÐºÑÐµÐ»Ñ") == 0, "2 Ð¿Ð¸ÐºÑÐµÐ»Ñ");
+    check(strcmp(pixel_word(3), "Ð¿Ð¸ÐºÑÐµÐ»Ñ") == 0, "3 Ð¿Ð¸ÐºÑÐµÐ»Ñ");
+    check(strcmp(pixel_word(4), "Ð¿Ð¸ÐºÑÐµÐ»Ñ") == 0, "4 Ð¿Ð¸ÐºÑÐµÐ»Ñ");
+    check(strcmp(pixel_word(5), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "5 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(6), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "6 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(10), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "10 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(11), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "11 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(12), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "12 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(13), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "13 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(14), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "14 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(20), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "20 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(21), "Ð¿Ð¸ÐºÑÐµÐ»ÑŒ") == 0, "21 Ð¿Ð¸ÐºÑÐµÐ»ÑŒ");
+    check(strcmp(pixel_word(22), "Ð¿Ð¸ÐºÑÐµÐ»Ñ") == 0, "22 Ð¿Ð¸ÐºÑÐµÐ»Ñ");
+    check(strcmp(pixel_word(23), "Ð¿Ð¸ÐºÑÐµÐ»Ñ") == 0, "23 Ð¿Ð¸ÐºÑÐµÐ»Ñ");
+    check(strcmp(pixel_word(24), "Ð¿Ð¸ÐºÑÐµÐ»Ñ") == 0, "24 Ð¿Ð¸ÐºÑÐµÐ»Ñ");
+    check(strcmp(pixel_word(25), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "25 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(101), "Ð¿Ð¸ÐºÑÐµÐ»ÑŒ") == 0, "101 Ð¿Ð¸ÐºÑÐµÐ»ÑŒ");
+    check(strcmp(pixel_word(102), "Ð¿Ð¸ÐºÑÐµÐ»Ñ") == 0, "102 Ð¿Ð¸ÐºÑÐµÐ»Ñ");
+    check(strcmp(pixel_word(111), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "111 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(114), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "114 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(121), "Ð¿Ð¸ÐºÑÐµÐ»ÑŒ") == 0, "121 Ð¿Ð¸ÐºÑÐµÐ»ÑŒ");
+    check(strcmp(pixel_word(122), "Ð¿Ð¸ÐºÑÐµÐ»Ñ") == 0, "122 Ð¿Ð¸ÐºÑÐµÐ»Ñ");
+    check(strcmp(pixel_word(1000), "Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹") == 0, "1000 Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹");
+    check(strcmp(pixel_word(1001), "Ð¿Ð¸ÐºÑÐµÐ»ÑŒ") == 0, "1001 Ð¿Ð¸ÐºÑÐµÐ»ÑŒ");
+    check(strcmp(pixel_word(2002), "Ð¿Ð¸ÐºÑÐµÐ»Ñ") == 0, "2002 Ð¿Ð¸ÐºÑÐµÐ»Ñ");
 
     printf("---\n");
     if (failed > 0)
