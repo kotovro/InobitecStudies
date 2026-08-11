@@ -31,7 +31,7 @@ void apply_threshold(Image& img, int threshold) {
 
 std::optional<FilterParseResult> parse_filter_args(int argc, char** argv) {
     if (argc < 2) {
-        std::println(stderr, "использование: image_filter --grayscale | --threshold T");
+        std::println(stderr, "РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: image_filter --grayscale | --threshold T");
         return std::nullopt;
     }
 
@@ -45,7 +45,7 @@ std::optional<FilterParseResult> parse_filter_args(int argc, char** argv) {
 
     if (arg == "--grayscale") {
         if (argc > 2) {
-            std::println(stderr, "--grayscale не принимает аргументов");
+            std::println(stderr, "--grayscale РЅРµ РїСЂРёРЅРёРјР°РµС‚ Р°СЂРіСѓРјРµРЅС‚РѕРІ");
             return std::nullopt;
         }
         return FilterParseResult{.args = FilterArgs{FilterMode::kGrayscale}};
@@ -53,7 +53,7 @@ std::optional<FilterParseResult> parse_filter_args(int argc, char** argv) {
 
     if (arg == "--threshold") {
         if (argc < 3) {
-            std::println(stderr, "--threshold требует аргумента T");
+            std::println(stderr, "--threshold С‚СЂРµР±СѓРµС‚ Р°СЂРіСѓРјРµРЅС‚Р° T");
             return std::nullopt;
         }
 
@@ -61,35 +61,35 @@ std::optional<FilterParseResult> parse_filter_args(int argc, char** argv) {
         const char* val = argv[2];
         auto [ptr, ec] = std::from_chars(val, val + std::strlen(val), t);
         if (ec != std::errc{} || *ptr != '\0') {
-            std::println(stderr, "T должен быть целым числом; получено: {}", val);
+            std::println(stderr, "T РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ С†РµР»С‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: {}", val);
             return std::nullopt;
         }
 
         if (t < 0 || t > 255) {
-            std::println(stderr, "T должен быть в [0; 255]; получено: {}", t);
+            std::println(stderr, "T РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІ [0; 255]; РїРѕР»СѓС‡РµРЅРѕ: {}", t);
             return std::nullopt;
         }
 
         return FilterParseResult{.args = FilterArgs{FilterMode::kThreshold, t}};
     }
 
-    std::println(stderr, "неизвестный аргумент: {}. используйте --grayscale или --threshold T",
+    std::println(stderr, "РЅРµРёР·РІРµСЃС‚РЅС‹Р№ Р°СЂРіСѓРјРµРЅС‚: {}. РёСЃРїРѕР»СЊР·СѓР№С‚Рµ --grayscale РёР»Рё --threshold T",
                  arg);
     return std::nullopt;
 }
 
 void print_filter_usage(std::ostream& os) {
-    std::println(os, "Использование: image_filter --grayscale | --threshold T");
+    std::println(os, "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: image_filter --grayscale | --threshold T");
     std::println(os);
-    std::println(os, "Читает PPM P3 из stdin, пишет валидный PPM в stdout.");
+    std::println(os, "Р§РёС‚Р°РµС‚ PPM P3 РёР· stdin, РїРёС€РµС‚ РІР°Р»РёРґРЅС‹Р№ PPM РІ stdout.");
     std::println(os);
-    std::println(os, "Режимы:");
-    std::println(os, "  --grayscale     конверсия в оттенки серого по luma");
-    std::println(os, "  --threshold T   бинаризация по порогу яркости (0 <= T <= 255)");
+    std::println(os, "Р РµР¶РёРјС‹:");
+    std::println(os, "  --grayscale     РєРѕРЅРІРµСЂСЃРёСЏ РІ РѕС‚С‚РµРЅРєРё СЃРµСЂРѕРіРѕ РїРѕ luma");
+    std::println(os, "  --threshold T   Р±РёРЅР°СЂРёР·Р°С†РёСЏ РїРѕ РїРѕСЂРѕРіСѓ СЏСЂРєРѕСЃС‚Рё (0 <= T <= 255)");
     std::println(os);
-    std::println(os, "Опции:");
-    std::println(os, "  --help          показать справку");
-    std::println(os, "  --version       показать версию");
+    std::println(os, "РћРїС†РёРё:");
+    std::println(os, "  --help          РїРѕРєР°Р·Р°С‚СЊ СЃРїСЂР°РІРєСѓ");
+    std::println(os, "  --version       РїРѕРєР°Р·Р°С‚СЊ РІРµСЂСЃРёСЋ");
 }
 
 void print_filter_version(std::ostream& os) { std::println(os, "image_filter {}", kVersion); }

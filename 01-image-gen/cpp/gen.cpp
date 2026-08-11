@@ -82,20 +82,20 @@ void generate_ppm(const Args& args) {
 }
 
 void print_usage() {
-    std::println("Использование: gen_image <N> [pattern]");
+    std::println("РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: gen_image <N> [pattern]");
     std::println("               gen_image --size N [--seed S]");
     std::println();
-    std::println("Позиционный режим:");
-    std::println("  N        сторона квадрата (1-512)");
-    std::println("  pattern  gradient | checker | radial (по умолчанию gradient)");
+    std::println("РџРѕР·РёС†РёРѕРЅРЅС‹Р№ СЂРµР¶РёРј:");
+    std::println("  N        СЃС‚РѕСЂРѕРЅР° РєРІР°РґСЂР°С‚Р° (1-512)");
+    std::println("  pattern  gradient | checker | radial (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ gradient)");
     std::println();
-    std::println("Массовая генерация:");
-    std::println("  --size N    сторона (без ограничения 512)");
-    std::println("  --seed S    seed ГПСЧ (по умолчанию 42)");
+    std::println("РњР°СЃСЃРѕРІР°СЏ РіРµРЅРµСЂР°С†РёСЏ:");
+    std::println("  --size N    СЃС‚РѕСЂРѕРЅР° (Р±РµР· РѕРіСЂР°РЅРёС‡РµРЅРёСЏ 512)");
+    std::println("  --seed S    seed Р“РџРЎР§ (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 42)");
     std::println();
-    std::println("Опции:");
-    std::println("  --help      показать справку");
-    std::println("  --version   показать версию");
+    std::println("РћРїС†РёРё:");
+    std::println("  --help      РїРѕРєР°Р·Р°С‚СЊ СЃРїСЂР°РІРєСѓ");
+    std::println("  --version   РїРѕРєР°Р·Р°С‚СЊ РІРµСЂСЃРёСЋ");
 }
 
 void print_version() { std::println("gen_image {}", kVersion); }
@@ -105,18 +105,18 @@ int main(int argc, char** argv) {
     if (!result) [[unlikely]] {
         switch (result.error()) {
         case ParseError::kNoArg:
-            std::println(stderr, "N не указано. Использование: gen_image <N> [pattern]");
+            std::println(stderr, "N РЅРµ СѓРєР°Р·Р°РЅРѕ. РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: gen_image <N> [pattern]");
             return (int)ExitCode::kUsage;
         case ParseError::kBadNumber:
-            std::println(stderr, "N должно быть целым числом; получено: {}",
+            std::println(stderr, "N РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С†РµР»С‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: {}",
                          argc >= 2 ? argv[1] : "");
             return (int)ExitCode::kUsage;
         case ParseError::kBadPattern:
-            std::println(stderr, "Неизвестный паттерн: {}. Допустимые: gradient, checker, radial",
+            std::println(stderr, "РќРµРёР·РІРµСЃС‚РЅС‹Р№ РїР°С‚С‚РµСЂРЅ: {}. Р”РѕРїСѓСЃС‚РёРјС‹Рµ: gradient, checker, radial",
                          argc >= 3 ? argv[2] : "");
             return (int)ExitCode::kUsage;
         case ParseError::kBadSeed:
-            std::println(stderr, "seed должно быть целым числом; получено: {}",
+            std::println(stderr, "seed РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С†РµР»С‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: {}",
                          argc >= 5 ? argv[4] : "");
             return (int)ExitCode::kUsage;
         }
@@ -134,12 +134,12 @@ int main(int argc, char** argv) {
 
     const Args& args = result->args;
     if (args.size < 1) [[unlikely]] {
-        std::println(stderr, "размер должен быть положительным; получено: {}", args.size);
+        std::println(stderr, "СЂР°Р·РјРµСЂ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј; РїРѕР»СѓС‡РµРЅРѕ: {}", args.size);
         return (int)ExitCode::kUsage;
     }
 
     if (args.pattern != Pattern::Random && args.size > 512) [[unlikely]] {
-        std::println(stderr, "N должно быть в [1; 512]; получено: {}", args.size);
+        std::println(stderr, "N РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІ [1; 512]; РїРѕР»СѓС‡РµРЅРѕ: {}", args.size);
         return (int)ExitCode::kUsage;
     }
 

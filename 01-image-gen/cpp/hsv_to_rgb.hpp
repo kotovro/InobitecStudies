@@ -11,4 +11,4 @@ struct RGB {
 
 RGB hsv_to_rgb(double hue, double saturation, double value);
 
-#endif // KV_HSV_TO_RGB_HPP
+#endif

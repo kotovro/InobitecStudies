@@ -93,20 +93,20 @@ struct ParseResult parse_args(int argc, char** argv) {
 }
 
 void print_usage(void) {
-    printf("Использование: gen_image <N> [pattern]\n");
+    printf("РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: gen_image <N> [pattern]\n");
     printf("               gen_image --size N [--seed S]\n");
     printf("\n");
-    printf("Позиционный режим:\n");
-    printf("  N        сторона квадрата (1-512)\n");
-    printf("  pattern  gradient | checker | radial (по умолчанию gradient)\n");
+    printf("РџРѕР·РёС†РёРѕРЅРЅС‹Р№ СЂРµР¶РёРј:\n");
+    printf("  N        СЃС‚РѕСЂРѕРЅР° РєРІР°РґСЂР°С‚Р° (1-512)\n");
+    printf("  pattern  gradient | checker | radial (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ gradient)\n");
     printf("\n");
-    printf("Массовая генерация:\n");
-    printf("  --size N    сторона (без ограничения 512)\n");
-    printf("  --seed S    seed ГПСЧ (по умолчанию 42)\n");
+    printf("РњР°СЃСЃРѕРІР°СЏ РіРµРЅРµСЂР°С†РёСЏ:\n");
+    printf("  --size N    СЃС‚РѕСЂРѕРЅР° (Р±РµР· РѕРіСЂР°РЅРёС‡РµРЅРёСЏ 512)\n");
+    printf("  --seed S    seed Р“РџРЎР§ (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 42)\n");
     printf("\n");
-    printf("Опции:\n");
-    printf("  --help      показать справку\n");
-    printf("  --version   показать версию\n");
+    printf("РћРїС†РёРё:\n");
+    printf("  --help      РїРѕРєР°Р·Р°С‚СЊ СЃРїСЂР°РІРєСѓ\n");
+    printf("  --version   РїРѕРєР°Р·Р°С‚СЊ РІРµСЂСЃРёСЋ\n");
 }
 
 void print_version(void) { printf("gen_image %s\n", KV_VERSION); }

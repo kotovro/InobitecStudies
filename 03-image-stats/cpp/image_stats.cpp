@@ -10,16 +10,16 @@
 #include <string_view>
 
 void print_usage() {
-    std::println("Использование: image_stats");
+    std::println("РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: image_stats");
     std::println();
-    std::println("Читает PPM P3 из stdin до EOF, выводит статистику:");
-    std::println("  размеры, число пикселей, средний цвет, яркость, гистограмма");
+    std::println("Р§РёС‚Р°РµС‚ PPM P3 РёР· stdin РґРѕ EOF, РІС‹РІРѕРґРёС‚ СЃС‚Р°С‚РёСЃС‚РёРєСѓ:");
+    std::println("  СЂР°Р·РјРµСЂС‹, С‡РёСЃР»Рѕ РїРёРєСЃРµР»РµР№, СЃСЂРµРґРЅРёР№ С†РІРµС‚, СЏСЂРєРѕСЃС‚СЊ, РіРёСЃС‚РѕРіСЂР°РјРјР°");
     std::println();
-    std::println("Работает в конвейере: gen_image | image_stats");
+    std::println("Р Р°Р±РѕС‚Р°РµС‚ РІ РєРѕРЅРІРµР№РµСЂРµ: gen_image | image_stats");
     std::println();
-    std::println("Опции:");
-    std::println("  --help      показать справку");
-    std::println("  --version   показать версию");
+    std::println("РћРїС†РёРё:");
+    std::println("  --help      РїРѕРєР°Р·Р°С‚СЊ СЃРїСЂР°РІРєСѓ");
+    std::println("  --version   РїРѕРєР°Р·Р°С‚СЊ РІРµСЂСЃРёСЋ");
 }
 
 void print_version() { std::println("image_stats {}", kVersion); }

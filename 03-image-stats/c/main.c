@@ -9,16 +9,16 @@
 #include <string.h>
 
 void print_usage(void) {
-    printf("Использование: image_stats\n");
+    printf("РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: image_stats\n");
     printf("\n");
-    printf("Читает PPM P3 из stdin до EOF, выводит статистику:\n");
-    printf("  размеры, число пикселей, средний цвет, яркость, гистограмма\n");
+    printf("Р§РёС‚Р°РµС‚ PPM P3 РёР· stdin РґРѕ EOF, РІС‹РІРѕРґРёС‚ СЃС‚Р°С‚РёСЃС‚РёРєСѓ:\n");
+    printf("  СЂР°Р·РјРµСЂС‹, С‡РёСЃР»Рѕ РїРёРєСЃРµР»РµР№, СЃСЂРµРґРЅРёР№ С†РІРµС‚, СЏСЂРєРѕСЃС‚СЊ, РіРёСЃС‚РѕРіСЂР°РјРјР°\n");
     printf("\n");
-    printf("Работает в конвейере: gen_image | image_stats\n");
+    printf("Р Р°Р±РѕС‚Р°РµС‚ РІ РєРѕРЅРІРµР№РµСЂРµ: gen_image | image_stats\n");
     printf("\n");
-    printf("Опции:\n");
-    printf("  --help      показать справку\n");
-    printf("  --version   показать версию\n");
+    printf("РћРїС†РёРё:\n");
+    printf("  --help      РїРѕРєР°Р·Р°С‚СЊ СЃРїСЂР°РІРєСѓ\n");
+    printf("  --version   РїРѕРєР°Р·Р°С‚СЊ РІРµСЂСЃРёСЋ\n");
 }
 
 void print_version(void) { printf("image_stats %s\n", KV_VERSION); }

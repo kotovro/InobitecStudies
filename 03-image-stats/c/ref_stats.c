@@ -10,9 +10,7 @@ static char* line_buf = NULL;
 static size_t line_cap = 0;
 static char* line_pos = NULL;
 
-static int is_space(int c) {
-    return c == ' ' || c == '\t' || c == '\r' || c == '\n';
-}
+static int is_space(int c) { return c == ' ' || c == '\t' || c == '\r' || c == '\n'; }
 
 static int read_line(void) {
     size_t len = 0;

@@ -105,25 +105,25 @@ int main(int argc, char** argv) {
     if (args.error != PE_OK) {
         switch (args.error) {
         case PE_NOARG:
-            fprintf(stderr, "N не указано. Использование: gen_image <N> [pattern]\n");
+            fprintf(stderr, "N РЅРµ СѓРєР°Р·Р°РЅРѕ. РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: gen_image <N> [pattern]\n");
             return EC_USAGE;
         case PE_BADNUMBER:
-            fprintf(stderr, "N должно быть целым числом; получено: %s\n", argc >= 2 ? argv[1] : "");
+            fprintf(stderr, "N РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С†РµР»С‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: %s\n", argc >= 2 ? argv[1] : "");
             return EC_USAGE;
         case PE_BADPATTERN:
-            fprintf(stderr, "Неизвестный паттерн: %s. Допустимые: gradient, checker, radial\n",
+            fprintf(stderr, "РќРµРёР·РІРµСЃС‚РЅС‹Р№ РїР°С‚С‚РµСЂРЅ: %s. Р”РѕРїСѓСЃС‚РёРјС‹Рµ: gradient, checker, radial\n",
                     argc >= 3 ? argv[2] : "");
             return EC_USAGE;
         }
     }
 
     if (args.size < 1) {
-        fprintf(stderr, "размер должен быть положительным; получено: %d\n", args.size);
+        fprintf(stderr, "СЂР°Р·РјРµСЂ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј; РїРѕР»СѓС‡РµРЅРѕ: %d\n", args.size);
         return EC_USAGE;
     }
 
     if (args.pattern != PATTERN_RANDOM && args.size > 512) {
-        fprintf(stderr, "N должно быть в [1; 512]; получено: %d\n", args.size);
+        fprintf(stderr, "N РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІ [1; 512]; РїРѕР»СѓС‡РµРЅРѕ: %d\n", args.size);
         return EC_USAGE;
     }
 

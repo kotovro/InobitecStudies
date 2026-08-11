@@ -36,7 +36,7 @@ void apply_threshold(struct Image* img, int threshold) {
 
 int parse_filter_args(int argc, char** argv, struct FilterParseResult* out_result) {
     if (argc < 2) {
-        fprintf(stderr, "использование: image_filter --grayscale | --threshold T\n");
+        fprintf(stderr, "РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: image_filter --grayscale | --threshold T\n");
         return -1;
     }
 
@@ -54,7 +54,7 @@ int parse_filter_args(int argc, char** argv, struct FilterParseResult* out_resul
 
     if (strcmp(argv[1], "--grayscale") == 0) {
         if (argc > 2) {
-            fprintf(stderr, "--grayscale не принимает аргументов\n");
+            fprintf(stderr, "--grayscale РЅРµ РїСЂРёРЅРёРјР°РµС‚ Р°СЂРіСѓРјРµРЅС‚РѕРІ\n");
             return -1;
         }
         out_result->args.mode = FILTER_GRAYSCALE;
@@ -63,19 +63,19 @@ int parse_filter_args(int argc, char** argv, struct FilterParseResult* out_resul
 
     if (strcmp(argv[1], "--threshold") == 0) {
         if (argc < 3) {
-            fprintf(stderr, "--threshold требует аргумента T\n");
+            fprintf(stderr, "--threshold С‚СЂРµР±СѓРµС‚ Р°СЂРіСѓРјРµРЅС‚Р° T\n");
             return -1;
         }
 
         char* end = NULL;
         long t = strtol(argv[2], &end, 10);
         if (end == argv[2] || *end != '\0') {
-            fprintf(stderr, "T должен быть целым числом; получено: %s\n", argv[2]);
+            fprintf(stderr, "T РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ С†РµР»С‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: %s\n", argv[2]);
             return -1;
         }
 
         if (t < 0 || t > 255) {
-            fprintf(stderr, "T должен быть в [0; 255]; получено: %ld\n", t);
+            fprintf(stderr, "T РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІ [0; 255]; РїРѕР»СѓС‡РµРЅРѕ: %ld\n", t);
             return -1;
         }
 
@@ -84,23 +84,23 @@ int parse_filter_args(int argc, char** argv, struct FilterParseResult* out_resul
         return 0;
     }
 
-    fprintf(stderr, "неизвестный аргумент: %s. используйте --grayscale или --threshold T\n",
+    fprintf(stderr, "РЅРµРёР·РІРµСЃС‚РЅС‹Р№ Р°СЂРіСѓРјРµРЅС‚: %s. РёСЃРїРѕР»СЊР·СѓР№С‚Рµ --grayscale РёР»Рё --threshold T\n",
             argv[1]);
     return -1;
 }
 
 void print_filter_usage(FILE* out) {
-    fprintf(out, "Использование: image_filter --grayscale | --threshold T\n");
+    fprintf(out, "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: image_filter --grayscale | --threshold T\n");
     fprintf(out, "\n");
-    fprintf(out, "Читает PPM P3 из stdin, пишет валидный PPM в stdout.\n");
+    fprintf(out, "Р§РёС‚Р°РµС‚ PPM P3 РёР· stdin, РїРёС€РµС‚ РІР°Р»РёРґРЅС‹Р№ PPM РІ stdout.\n");
     fprintf(out, "\n");
-    fprintf(out, "Режимы:\n");
-    fprintf(out, "  --grayscale     конверсия в оттенки серого по luma\n");
-    fprintf(out, "  --threshold T   бинаризация по порогу яркости (0 <= T <= 255)\n");
+    fprintf(out, "Р РµР¶РёРјС‹:\n");
+    fprintf(out, "  --grayscale     РєРѕРЅРІРµСЂСЃРёСЏ РІ РѕС‚С‚РµРЅРєРё СЃРµСЂРѕРіРѕ РїРѕ luma\n");
+    fprintf(out, "  --threshold T   Р±РёРЅР°СЂРёР·Р°С†РёСЏ РїРѕ РїРѕСЂРѕРіСѓ СЏСЂРєРѕСЃС‚Рё (0 <= T <= 255)\n");
     fprintf(out, "\n");
-    fprintf(out, "Опции:\n");
-    fprintf(out, "  --help          показать справку\n");
-    fprintf(out, "  --version       показать версию\n");
+    fprintf(out, "РћРїС†РёРё:\n");
+    fprintf(out, "  --help          РїРѕРєР°Р·Р°С‚СЊ СЃРїСЂР°РІРєСѓ\n");
+    fprintf(out, "  --version       РїРѕРєР°Р·Р°С‚СЊ РІРµСЂСЃРёСЋ\n");
 }
 
 void print_filter_version(FILE* out) { fprintf(out, "image_filter %s\n", KV_VERSION); }

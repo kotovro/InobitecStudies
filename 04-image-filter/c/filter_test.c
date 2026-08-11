@@ -261,7 +261,7 @@ static void test_run_filter_help(void) {
     char buf[256];
     size_t n = fread(buf, 1, sizeof(buf) - 1, output);
     buf[n] = '\0';
-    check(strstr(buf, "Использование") != NULL, "run_filter --help: usage in stdout");
+    check(strstr(buf, "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ") != NULL, "run_filter --help: usage in stdout");
     fclose(input);
     fclose(output);
 }
