@@ -1,5 +1,6 @@
 #include "hsv_to_rgb.h"
 #include "parse_args.h"
+#include "patterns.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -196,6 +197,89 @@ static void test_hsv_half_saturation(void) {
     check_rgb(c, 255, 127, 127, "hsv(0,0.5,1) == pinkish");
 }
 
+static void test_gradient_pixel(void) {
+    check_rgb(gradient_pixel(0, 0, 3), 0, 255, 0, "gradient (0,0,3)");
+    check_rgb(gradient_pixel(1, 0, 3), 127, 255, 0, "gradient (1,0,3)");
+    check_rgb(gradient_pixel(2, 0, 3), 255, 255, 0, "gradient (2,0,3)");
+    check_rgb(gradient_pixel(0, 1, 3), 0, 127, 0, "gradient (0,1,3)");
+    check_rgb(gradient_pixel(1, 1, 3), 127, 127, 0, "gradient (1,1,3)");
+    check_rgb(gradient_pixel(2, 1, 3), 255, 127, 0, "gradient (2,1,3)");
+    check_rgb(gradient_pixel(0, 2, 3), 0, 0, 0, "gradient (0,2,3)");
+    check_rgb(gradient_pixel(1, 2, 3), 127, 0, 0, "gradient (1,2,3)");
+    check_rgb(gradient_pixel(2, 2, 3), 255, 0, 0, "gradient (2,2,3)");
+    check_rgb(gradient_pixel(0, 0, 1), 0, 255, 0, "gradient size=1 (0,0)");
+    check_rgb(gradient_pixel(0, 0, 2), 0, 255, 0, "gradient size=2 (0,0)");
+    check_rgb(gradient_pixel(1, 1, 2), 255, 0, 0, "gradient size=2 (1,1)");
+}
+
+static void test_checker_pixel(void) {
+    check_rgb(checker_pixel(0, 0, 3), 255, 255, 255, "checker (0,0)");
+    check_rgb(checker_pixel(1, 0, 3), 0, 0, 0, "checker (1,0)");
+    check_rgb(checker_pixel(0, 1, 3), 0, 0, 0, "checker (0,1)");
+    check_rgb(checker_pixel(1, 1, 3), 255, 255, 255, "checker (1,1)");
+    check_rgb(checker_pixel(2, 0, 3), 255, 255, 255, "checker (2,0)");
+    check_rgb(checker_pixel(2, 1, 3), 0, 0, 0, "checker (2,1)");
+    check_rgb(checker_pixel(2, 2, 3), 255, 255, 255, "checker (2,2)");
+    check_rgb(checker_pixel(0, 0, 1), 255, 255, 255, "checker size=1 (0,0)");
+}
+
+static void test_radial_pixel(void) {
+    check_rgb(radial_pixel(0, 0, 3), 255, 0, 0, "radial (0,0,3)");
+    check_rgb(radial_pixel(1, 0, 3), 61, 0, 255, "radial (1,0,3)");
+    check_rgb(radial_pixel(2, 0, 3), 255, 0, 0, "radial (2,0,3)");
+    check_rgb(radial_pixel(0, 1, 3), 61, 0, 255, "radial (0,1,3)");
+    check_rgb(radial_pixel(1, 1, 3), 255, 0, 0, "radial (1,1,3)");
+    check_rgb(radial_pixel(2, 1, 3), 61, 0, 255, "radial (2,1,3)");
+    check_rgb(radial_pixel(0, 2, 3), 255, 0, 0, "radial (0,2,3)");
+    check_rgb(radial_pixel(1, 2, 3), 61, 0, 255, "radial (1,2,3)");
+    check_rgb(radial_pixel(2, 2, 3), 255, 0, 0, "radial (2,2,3)");
+    check_rgb(radial_pixel(0, 0, 1), 255, 0, 0, "radial size=1 (0,0)");
+}
+
+// ---- random pixel tests ----
+
+static void test_random_deterministic(void) {
+    uint32_t s1 = 42, s2 = 42;
+    int ok = 1;
+    for (int i = 0; i < 100; ++i) {
+        struct RGB a = random_pixel(&s1);
+        struct RGB b = random_pixel(&s2);
+        if (a.r != b.r || a.g != b.g || a.b != b.b) {
+            ok = 0;
+            break;
+        }
+    }
+    check(ok, "random deterministic for same seed");
+}
+
+static void test_random_seed_difference(void) {
+    uint32_t s1 = 42, s2 = 43;
+    struct RGB a = random_pixel(&s1);
+    struct RGB b = random_pixel(&s2);
+    check(a.r != b.r || a.g != b.g || a.b != b.b, "random different seed differs");
+}
+
+static void test_random_not_degenerate(void) {
+    uint32_t state = 42;
+    struct RGB first = random_pixel(&state);
+    int all_same = 1;
+    for (int i = 1; i < 1000; ++i) {
+        struct RGB c = random_pixel(&state);
+        if (c.r != first.r || c.g != first.g || c.b != first.b) {
+            all_same = 0;
+            break;
+        }
+    }
+    check(!all_same, "random not degenerate (not all pixels equal)");
+}
+
+static void test_random_zero_state_protection(void) {
+    uint32_t s_zero = 0, s_42 = 42;
+    struct RGB a = random_pixel(&s_zero);
+    struct RGB b = random_pixel(&s_42);
+    check_rgb(a, b.r, b.g, b.b, "random *state==0 -> 42");
+}
+
 // ---- main ----
 
 int main(void) {
@@ -232,6 +316,17 @@ int main(void) {
     test_hsv_zero_saturation();
     test_hsv_zero_value();
     test_hsv_half_saturation();
+
+    printf("--- pixel pattern tests ---\n");
+    test_gradient_pixel();
+    test_checker_pixel();
+    test_radial_pixel();
+
+    printf("--- random pixel tests ---\n");
+    test_random_deterministic();
+    test_random_seed_difference();
+    test_random_not_degenerate();
+    test_random_zero_state_protection();
 
     printf("---\n");
     if (failed > 0)
