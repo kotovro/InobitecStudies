@@ -1,83 +1,36 @@
-#include "hsv_to_rgb.hpp"
 #include "parse_args.hpp"
+#include "patterns.hpp"
 
 #include "../../common/cpp/ppm_io.hpp"
 #include "../../common/cpp/version.hpp"
 
-#include <cmath>
-#include <cstdint>
-#include <expected>
 #include <iostream>
 #include <print>
 #include <random>
 
-void draw_random(PpmWriter& w, int32_t size, uint32_t seed) {
-    std::mt19937 rng(seed ? seed : 42);
-    std::uniform_int_distribution dist(0, 255);
-    for (int32_t y = 0; y < size; ++y) {
-        for (int32_t x = 0; x < size; ++x) {
-            int32_t r = dist(rng);
-            int32_t g = dist(rng);
-            int32_t b = dist(rng);
-            w.put(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b));
-        }
-    }
-}
-
-void draw_gradient(PpmWriter& w, int32_t size) {
-    int32_t max_coord = (size == 1) ? 1 : (size - 1);
-    for (int32_t y = 0; y < size; ++y) {
-        for (int32_t x = 0; x < size; ++x) {
-            int32_t r = x * 255 / max_coord;
-            int32_t g = (max_coord - y) * 255 / max_coord;
-            int32_t b = 0;
-            w.put(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b));
-        }
-    }
-}
-
-void draw_checker(PpmWriter& w, int32_t size) {
-    for (int32_t y = 0; y < size; ++y) {
-        for (int32_t x = 0; x < size; ++x) {
-            int32_t v = ((x + y) % 2 == 0) ? 255 : 0;
-            w.put(static_cast<uint8_t>(v), static_cast<uint8_t>(v), static_cast<uint8_t>(v));
-        }
-    }
-}
-
-void draw_radial(PpmWriter& w, int32_t size) {
-    double cx = (size - 1) / 2.0;
-    double cy = (size - 1) / 2.0;
-    double max_dist = std::sqrt(cx * cx + cy * cy);
-    for (int32_t y = 0; y < size; ++y) {
-        for (int32_t x = 0; x < size; ++x) {
-            double dx = x - cx;
-            double dy = y - cy;
-            double dist = std::sqrt(dx * dx + dy * dy);
-
-            double hue = max_dist > 0 ? (dist / max_dist) * 360.0 : 0.0;
-            RGB color = hsv_to_rgb(hue, 1.0, 1.0);
-            w.put(color.r, color.g, color.b);
-        }
-    }
-}
-
 void generate_ppm(const Args& args) {
     PpmWriter writer(std::cout, args.size, args.size);
-    switch (args.pattern) {
-        using enum Pattern;
-    case Gradient:
-        draw_gradient(writer, args.size);
-        break;
-    case Checker:
-        draw_checker(writer, args.size);
-        break;
-    case Radial:
-        draw_radial(writer, args.size);
-        break;
-    case Random:
-        draw_random(writer, args.size, args.seed);
-        break;
+    std::mt19937 rng(args.seed ? args.seed : 42);
+    for (int32_t y = 0; y < args.size; ++y) {
+        for (int32_t x = 0; x < args.size; ++x) {
+            RGB c{};
+            switch (args.pattern) {
+                using enum Pattern;
+            case Gradient:
+                c = gradient_pixel(x, y, args.size);
+                break;
+            case Checker:
+                c = checker_pixel(x, y);
+                break;
+            case Radial:
+                c = radial_pixel(x, y, args.size);
+                break;
+            case Random:
+                c = random_pixel(rng);
+                break;
+            }
+            writer.put(c.r, c.g, c.b);
+        }
     }
 }
 
@@ -106,7 +59,7 @@ int main(int argc, char** argv) {
         switch (result.error()) {
         case ParseError::kNoArg:
             std::println(stderr, "N не указано. Использование: gen_image <N> [pattern]");
-            return (int)ExitCode::kUsage;
+            return std::to_underlying(ExitCode::kUsage);
         case ParseError::kBadNumber:
             std::println(stderr, "N должно быть целым числом; получено: {}",
                          argc >= 2 ? argv[1] : "");

@@ -1,7 +1,9 @@
 #include "hsv_to_rgb.hpp"
 #include "parse_args.hpp"
+#include "patterns.hpp"
 
 #include <print>
+#include <random>
 
 static int failed = 0;
 
@@ -278,6 +280,117 @@ static void test_hsv_half_saturation() {
     check_rgb(c, 255, 127, 127, "hsv(0,0.5,1) == pinkish");
 }
 
+// ---- pixel pattern tests ----
+
+static void test_gradient_pixel(void) {
+    check_rgb(gradient_pixel(0, 0, 3), 0, 255, 0, "gradient (0,0,3)");
+    check_rgb(gradient_pixel(1, 0, 3), 127, 255, 0, "gradient (1,0,3)");
+    check_rgb(gradient_pixel(2, 0, 3), 255, 255, 0, "gradient (2,0,3)");
+    check_rgb(gradient_pixel(0, 1, 3), 0, 127, 0, "gradient (0,1,3)");
+    check_rgb(gradient_pixel(1, 1, 3), 127, 127, 0, "gradient (1,1,3)");
+    check_rgb(gradient_pixel(2, 1, 3), 255, 127, 0, "gradient (2,1,3)");
+    check_rgb(gradient_pixel(0, 2, 3), 0, 0, 0, "gradient (0,2,3)");
+    check_rgb(gradient_pixel(2, 2, 3), 255, 0, 0, "gradient (2,2,3)");
+    check_rgb(gradient_pixel(0, 0, 1), 0, 255, 0, "gradient size=1 (0,0)");
+    check_rgb(gradient_pixel(0, 0, 2), 0, 255, 0, "gradient size=2 (0,0)");
+    check_rgb(gradient_pixel(1, 1, 2), 255, 0, 0, "gradient size=2 (1,1)");
+    check_rgb(gradient_pixel(0, 0, 512), 0, 255, 0, "gradient size=512 (0,0)");
+    check_rgb(gradient_pixel(511, 511, 512), 255, 0, 0, "gradient size=512 (511,511)");
+    check_rgb(gradient_pixel(511, 0, 512), 255, 255, 0, "gradient size=512 (511,0)");
+    check_rgb(gradient_pixel(0, 511, 512), 0, 0, 0, "gradient size=512 (0,511)");
+}
+
+static void test_checker_pixel(void) {
+    check_rgb(checker_pixel(0, 0), 255, 255, 255, "checker (0,0)");
+    check_rgb(checker_pixel(1, 0), 0, 0, 0, "checker (1,0)");
+    check_rgb(checker_pixel(0, 1), 0, 0, 0, "checker (0,1)");
+    check_rgb(checker_pixel(1, 1), 255, 255, 255, "checker (1,1)");
+    check_rgb(checker_pixel(2, 0), 255, 255, 255, "checker (2,0)");
+    check_rgb(checker_pixel(2, 1), 0, 0, 0, "checker (2,1)");
+    check_rgb(checker_pixel(0, 0), 255, 255, 255, "checker size=1 (0,0)");
+    check_rgb(checker_pixel(0, 0), 255, 255, 255, "checker size=512 (0,0)");
+    check_rgb(checker_pixel(511, 511), 255, 255, 255, "checker size=512 (511,511)");
+    check_rgb(checker_pixel(511, 0), 0, 0, 0, "checker size=512 (511,0)");
+    check_rgb(checker_pixel(0, 511), 0, 0, 0, "checker size=512 (0,511)");
+}
+
+static void test_radial_pixel(void) {
+    check_rgb(radial_pixel(0, 0, 3), 255, 0, 0, "radial (0,0,3)");
+    check_rgb(radial_pixel(1, 0, 3), 61, 0, 255, "radial (1,0,3)");
+    check_rgb(radial_pixel(2, 0, 3), 255, 0, 0, "radial (2,0,3)");
+    check_rgb(radial_pixel(0, 1, 3), 61, 0, 255, "radial (0,1,3)");
+    check_rgb(radial_pixel(1, 1, 3), 255, 0, 0, "radial (1,1,3)");
+    check_rgb(radial_pixel(2, 1, 3), 61, 0, 255, "radial (2,1,3)");
+    check_rgb(radial_pixel(0, 2, 3), 255, 0, 0, "radial (0,2,3)");
+    check_rgb(radial_pixel(1, 2, 3), 61, 0, 255, "radial (1,2,3)");
+    check_rgb(radial_pixel(2, 2, 3), 255, 0, 0, "radial (2,2,3)");
+    check_rgb(radial_pixel(0, 0, 1), 255, 0, 0, "radial size=1 (0,0)");
+    check_rgb(radial_pixel(0, 0, 512), 255, 0, 0, "radial size=512 corner (0,0)");
+    check_rgb(radial_pixel(511, 511, 512), 255, 0, 0, "radial size=512 corner (511,511)");
+}
+
+static void test_radial_not_degenerate(void) {
+    RGB first = radial_pixel(0, 0, 512);
+    bool all_same = true;
+    for (int32_t y = 0; y < 512 && all_same; ++y)
+        for (int32_t x = 0; x < 512 && all_same; ++x) {
+            RGB c = radial_pixel(x, y, 512);
+            if (c.r != first.r || c.g != first.g || c.b != first.b)
+                all_same = false;
+        }
+    check(!all_same, "radial size=512 not degenerate");
+}
+
+// ---- random pixel tests ----
+
+static void test_random_not_degenerate(void) {
+    std::mt19937 rng(42);
+    RGB first = random_pixel(rng);
+    bool all_same = true;
+    for (int i = 1; i < 1000 && all_same; ++i) {
+        RGB c = random_pixel(rng);
+        if (c.r != first.r || c.g != first.g || c.b != first.b)
+            all_same = false;
+    }
+    check(!all_same, "random not degenerate (seed=42)");
+}
+
+static void test_random_zero_seed(void) {
+    std::mt19937 rng(0);
+    RGB first = random_pixel(rng);
+    bool all_same = true;
+    for (int i = 1; i < 1000 && all_same; ++i) {
+        RGB c = random_pixel(rng);
+        if (c.r != first.r || c.g != first.g || c.b != first.b)
+            all_same = false;
+    }
+    check(!all_same, "random not degenerate (seed=0)");
+}
+
+static void test_random_seed_difference(void) {
+    std::mt19937 rng1(42), rng2(43);
+    bool differ = false;
+    for (int i = 0; i < 10 && !differ; ++i) {
+        RGB a = random_pixel(rng1);
+        RGB b = random_pixel(rng2);
+        if (a.r != b.r || a.g != b.g || a.b != b.b)
+            differ = true;
+    }
+    check(differ, "random different seed differs");
+}
+
+static void test_random_deterministic(void) {
+    std::mt19937 rng1(42), rng2(42);
+    bool ok = true;
+    for (int i = 0; i < 100 && ok; ++i) {
+        RGB a = random_pixel(rng1);
+        RGB b = random_pixel(rng2);
+        if (a.r != b.r || a.g != b.g || a.b != b.b)
+            ok = false;
+    }
+    check(ok, "random deterministic for same seed");
+}
+
 // ---- main ----
 
 int main() {
@@ -314,6 +427,18 @@ int main() {
     test_hsv_zero_saturation();
     test_hsv_zero_value();
     test_hsv_half_saturation();
+
+    std::println("--- pixel pattern tests ---");
+    test_gradient_pixel();
+    test_checker_pixel();
+    test_radial_pixel();
+    test_radial_not_degenerate();
+
+    std::println("--- random pixel tests ---");
+    test_random_not_degenerate();
+    test_random_zero_seed();
+    test_random_seed_difference();
+    test_random_deterministic();
 
     std::println("---");
     if (failed > 0)
