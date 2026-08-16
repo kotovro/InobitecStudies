@@ -213,14 +213,14 @@ static void test_gradient_pixel(void) {
 }
 
 static void test_checker_pixel(void) {
-    check_rgb(checker_pixel(0, 0, 3), 255, 255, 255, "checker (0,0)");
-    check_rgb(checker_pixel(1, 0, 3), 0, 0, 0, "checker (1,0)");
-    check_rgb(checker_pixel(0, 1, 3), 0, 0, 0, "checker (0,1)");
-    check_rgb(checker_pixel(1, 1, 3), 255, 255, 255, "checker (1,1)");
-    check_rgb(checker_pixel(2, 0, 3), 255, 255, 255, "checker (2,0)");
-    check_rgb(checker_pixel(2, 1, 3), 0, 0, 0, "checker (2,1)");
-    check_rgb(checker_pixel(2, 2, 3), 255, 255, 255, "checker (2,2)");
-    check_rgb(checker_pixel(0, 0, 1), 255, 255, 255, "checker size=1 (0,0)");
+    check_rgb(checker_pixel(0, 0), 255, 255, 255, "checker (0,0)");
+    check_rgb(checker_pixel(1, 0), 0, 0, 0, "checker (1,0)");
+    check_rgb(checker_pixel(0, 1), 0, 0, 0, "checker (0,1)");
+    check_rgb(checker_pixel(1, 1), 255, 255, 255, "checker (1,1)");
+    check_rgb(checker_pixel(2, 0), 255, 255, 255, "checker (2,0)");
+    check_rgb(checker_pixel(2, 1), 0, 0, 0, "checker (2,1)");
+    check_rgb(checker_pixel(2, 2), 255, 255, 255, "checker (2,2)");
+    check_rgb(checker_pixel(0, 0), 255, 255, 255, "checker size=1 (0,0)");
 }
 
 static void test_radial_pixel(void) {

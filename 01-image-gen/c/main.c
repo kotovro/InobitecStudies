@@ -1,4 +1,3 @@
-#include "hsv_to_rgb.h"
 #include "parse_args.h"
 #include "patterns.h"
 
@@ -16,7 +15,7 @@ static void generate_ppm(const struct ParseResult* args) {
                 c = gradient_pixel(x, y, args->size);
                 break;
             case PATTERN_CHECKER:
-                c = checker_pixel(x, y, args->size);
+                c = checker_pixel(x, y);
                 break;
             case PATTERN_RADIAL:
                 c = radial_pixel(x, y, args->size);

@@ -20,8 +20,7 @@ struct RGB gradient_pixel(int32_t x, int32_t y, int32_t size) {
 }
 
 // @pre 0 <= x < size, 0 <= y < size, size >= 1
-struct RGB checker_pixel(int32_t x, int32_t y, int32_t size) {
-    (void)size;
+struct RGB checker_pixel(int32_t x, int32_t y) {
     int32_t v = ((x + y) % 2 == 0) ? 255 : 0;
     return (struct RGB){(uint8_t)v, (uint8_t)v, (uint8_t)v};
 }
