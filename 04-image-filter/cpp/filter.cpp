@@ -31,7 +31,7 @@ void apply_threshold(Image& img, int threshold) {
 
 std::optional<FilterParseResult> parse_filter_args(int argc, char** argv) {
     if (argc < 2) {
-        std::println(stderr, "использование: image_filter --grayscale | --threshold T");
+        std::println(stderr, "использование: filter --grayscale | --threshold T");
         return std::nullopt;
     }
 
@@ -79,7 +79,7 @@ std::optional<FilterParseResult> parse_filter_args(int argc, char** argv) {
 }
 
 void print_filter_usage(std::ostream& os) {
-    std::println(os, "Использование: image_filter --grayscale | --threshold T");
+    std::println(os, "Использование: filter --grayscale | --threshold T");
     std::println(os);
     std::println(os, "Читает PPM P3 из stdin, пишет валидный PPM в stdout.");
     std::println(os);
@@ -92,7 +92,7 @@ void print_filter_usage(std::ostream& os) {
     std::println(os, "  --version       показать версию");
 }
 
-void print_filter_version(std::ostream& os) { std::println(os, "image_filter {}", kVersion); }
+void print_filter_version(std::ostream& os) { std::println(os, "filter {}", kVersion); }
 
 int run_filter(int argc, char** argv, std::istream& input, std::ostream& output) {
     auto parsed = parse_filter_args(argc, argv);

@@ -1,7 +1,6 @@
 #include "ppm_io.hpp"
 
 #include <cstdlib>
-#include <locale>
 #include <print>
 #include <sstream>
 #include <string_view>
@@ -253,8 +252,6 @@ static void test_writer_format_no_trailing_space() {
 // -------------------------------------------------------------------
 
 int main() {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
-
     std::println("--- ppm_read tests ---");
 
     std::println("-- header errors --");

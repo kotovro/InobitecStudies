@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <cstdlib>
-#include <locale>
 #include <optional>
 #include <print>
 #include <sstream>
@@ -86,8 +85,6 @@ static void test_luma() {
 // ---- main ----
 
 int main() {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
-
     std::println("--- compute_stats tests ---");
     test_stats_known();
     test_stats_comments();

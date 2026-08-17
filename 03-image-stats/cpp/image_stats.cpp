@@ -5,7 +5,6 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <locale>
 #include <print>
 #include <string_view>
 
@@ -25,8 +24,6 @@ void print_usage() {
 void print_version() { std::println("image_stats {}", kVersion); }
 
 int main(int argc, char** argv) {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
-
     if (argc >= 2 && std::string_view(argv[1]) == "--help") {
         print_usage();
         return (int)ExitCode::kOk;

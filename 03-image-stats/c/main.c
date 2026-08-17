@@ -3,7 +3,6 @@
 #include "../../common/c/exit_codes.h"
 #include "../../common/c/version.h"
 
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,8 +23,6 @@ void print_usage(void) {
 void print_version(void) { printf("image_stats %s\n", KV_VERSION); }
 
 int main(int argc, char** argv) {
-    setlocale(LC_ALL, "Russian_Russia.1251");
-
     if (argc >= 2 && strcmp(argv[1], "--help") == 0) {
         print_usage();
         return EC_OK;
@@ -52,4 +49,4 @@ int main(int argc, char** argv) {
 
     ppm_image_free(&result.image);
     return EC_OK;
-}
+}               

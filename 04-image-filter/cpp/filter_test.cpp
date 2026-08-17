@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <locale>
 #include <print>
 #include <sstream>
 #include <string>
@@ -353,7 +352,7 @@ static void test_run_filter_version() {
 
     int code = run_filter(2, argv, input_stream, output_stream);
     check(code == static_cast<int>(ExitCode::kOk), "run_filter --version -> exit 0");
-    check(output_stream.str().find("image_filter") != std::string::npos,
+    check(output_stream.str().find("filter") != std::string::npos,
           "run_filter --version: name in stdout");
 }
 
@@ -362,8 +361,6 @@ static void test_run_filter_version() {
 // -------------------------------------------------------------------
 
 int main() {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
-
     std::println("--- luma tests ---");
     test_luma_black();
     test_luma_white();

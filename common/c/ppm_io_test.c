@@ -1,6 +1,5 @@
 #include "ppm_io.h"
 
-#include <locale.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -242,8 +241,6 @@ static void test_image_free_null(void) {
 // -------------------------------------------------------------------
 
 int main(void) {
-    setlocale(LC_ALL, "Russian_Russia.1251");
-
     printf("--- ppm_read tests (C) ---\n");
 
     printf("-- header errors --\n");

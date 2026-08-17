@@ -1,7 +1,6 @@
 #include <cerrno>
 #include <cstdlib>
 #include <iostream>
-#include <locale>
 #include <print>
 #include <string_view>
 #include <system_error>

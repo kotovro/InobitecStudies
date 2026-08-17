@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <locale>
 #include <print>
 #include <string_view>
 
@@ -17,8 +16,6 @@ static void check(bool cond, std::string_view name) {
 }
 
 int main() {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
-
     std::println("--- pixel_word tests ---");
 
     check(pixel_word(0) == "пикселей", "0 пикселей");

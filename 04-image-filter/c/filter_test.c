@@ -1,6 +1,5 @@
 #include "filter.h"
 
-#include <locale.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -277,7 +276,7 @@ static void test_run_filter_version(void) {
     char buf[256];
     size_t n = fread(buf, 1, sizeof(buf) - 1, output);
     buf[n] = '\0';
-    check(strstr(buf, "image_filter") != NULL, "run_filter --version: name in stdout");
+    check(strstr(buf, "filter") != NULL, "run_filter --version: name in stdout");
     fclose(input);
     fclose(output);
 }
@@ -287,8 +286,6 @@ static void test_run_filter_version(void) {
 // -------------------------------------------------------------------
 
 int main(void) {
-    setlocale(LC_ALL, "Russian_Russia.1251");
-
     printf("--- luma tests (C) ---\n");
     test_luma_black();
     test_luma_red();

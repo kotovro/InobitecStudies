@@ -1,5 +1,4 @@
 #include <errno.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,8 +71,6 @@ static int parse_int(const char* s, long long* out) {
 }
 
 int main(void) {
-    setlocale(LC_ALL, "Russian_Russia.1251");
-
     const char* magic = next_token();
     if (!magic) {
         fprintf(stderr, "no input\n");

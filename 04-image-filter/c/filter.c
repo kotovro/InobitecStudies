@@ -36,7 +36,7 @@ void apply_threshold(struct Image* img, int threshold) {
 
 int parse_filter_args(int argc, char** argv, struct FilterParseResult* out_result) {
     if (argc < 2) {
-        fprintf(stderr, "использование: image_filter --grayscale | --threshold T\n");
+        fprintf(stderr, "использование: filter --grayscale | --threshold T\n");
         return -1;
     }
 
@@ -90,7 +90,7 @@ int parse_filter_args(int argc, char** argv, struct FilterParseResult* out_resul
 }
 
 void print_filter_usage(FILE* out) {
-    fprintf(out, "Использование: image_filter --grayscale | --threshold T\n");
+    fprintf(out, "Использование: filter --grayscale | --threshold T\n");
     fprintf(out, "\n");
     fprintf(out, "Читает PPM P3 из stdin, пишет валидный PPM в stdout.\n");
     fprintf(out, "\n");
@@ -103,7 +103,7 @@ void print_filter_usage(FILE* out) {
     fprintf(out, "  --version       показать версию\n");
 }
 
-void print_filter_version(FILE* out) { fprintf(out, "image_filter %s\n", KV_VERSION); }
+void print_filter_version(FILE* out) { fprintf(out, "filter %s\n", KV_VERSION); }
 
 int run_filter(int argc, char** argv, FILE* input, FILE* output) {
     struct FilterParseResult parsed;
