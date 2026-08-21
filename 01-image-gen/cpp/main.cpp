@@ -7,6 +7,7 @@
 #include <iostream>
 #include <print>
 #include <random>
+#include <utility>
 
 using namespace raster::common;
 using namespace raster::gen;
@@ -70,39 +71,39 @@ int main(int argc, char** argv) {
         case ParseError::kBadNumber:
             std::println(stderr, "N должно быть целым числом; получено: {}",
                          argc >= 2 ? argv[1] : "");
-            return (int)ExitCode::kUsage;
+            return std::to_underlying(ExitCode::kUsage);
         case ParseError::kBadPattern:
             std::println(stderr, "Неизвестный паттерн: {}. Допустимые: gradient, checker, radial",
                          argc >= 3 ? argv[2] : "");
-            return (int)ExitCode::kUsage;
+            return std::to_underlying(ExitCode::kUsage);
         case ParseError::kBadSeed:
             std::println(stderr, "seed должно быть целым числом; получено: {}",
                          argc >= 5 ? argv[4] : "");
-            return (int)ExitCode::kUsage;
+            return std::to_underlying(ExitCode::kUsage);
         }
     }
 
     if (result->request == ParseRequest::kHelp) [[unlikely]] {
         print_usage();
-        return (int)ExitCode::kOk;
+        return std::to_underlying(ExitCode::kOk);
     }
 
     if (result->request == ParseRequest::kVersion) [[unlikely]] {
         print_version();
-        return (int)ExitCode::kOk;
+        return std::to_underlying(ExitCode::kOk);
     }
 
     const Args& args = result->args;
     if (args.size < 1) [[unlikely]] {
         std::println(stderr, "размер должен быть положительным; получено: {}", args.size);
-        return (int)ExitCode::kUsage;
+        return std::to_underlying(ExitCode::kUsage);
     }
 
     if (args.pattern != Pattern::Random && args.size > 512) [[unlikely]] {
         std::println(stderr, "N должно быть в [1; 512]; получено: {}", args.size);
-        return (int)ExitCode::kUsage;
+        return std::to_underlying(ExitCode::kUsage);
     }
 
     generate_ppm(args);
-    return (int)ExitCode::kOk;
+    return std::to_underlying(ExitCode::kOk);
 }

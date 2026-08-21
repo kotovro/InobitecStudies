@@ -9,6 +9,7 @@
 #include <print>
 #include <sstream>
 #include <string>
+#include <utility>
 
 using namespace raster::common;
 using namespace raster::filter;
@@ -307,7 +308,7 @@ void test_run_filter_empty_input() {
     char* argv[] = {a0, a1};
 
     int code = run_filter(2, argv, input_stream, output_stream);
-    check(code == static_cast<int>(ExitCode::kNoInput), "run_filter empty input -> kNoInput");
+    check(code == std::to_underlying(ExitCode::kNoInput), "run_filter empty input -> kNoInput");
 }
 
 void test_run_filter_bad_ppm() {
@@ -318,7 +319,7 @@ void test_run_filter_bad_ppm() {
     char* argv[] = {a0, a1};
 
     int code = run_filter(2, argv, input_stream, output_stream);
-    check(code == static_cast<int>(ExitCode::kData), "run_filter bad ppm -> kData");
+    check(code == std::to_underlying(ExitCode::kData), "run_filter bad ppm -> kData");
 }
 
 void test_run_filter_bad_args() {
@@ -329,7 +330,7 @@ void test_run_filter_bad_args() {
     char* argv[] = {a0, a1};
 
     int code = run_filter(2, argv, input_stream, output_stream);
-    check(code == static_cast<int>(ExitCode::kUsage), "run_filter bad args -> kUsage");
+    check(code == std::to_underlying(ExitCode::kUsage), "run_filter bad args -> kUsage");
 }
 
 void test_run_filter_help() {
@@ -340,7 +341,7 @@ void test_run_filter_help() {
     char* argv[] = {a0, a1};
 
     int code = run_filter(2, argv, input_stream, output_stream);
-    check(code == static_cast<int>(ExitCode::kOk), "run_filter --help -> exit 0");
+    check(code == std::to_underlying(ExitCode::kOk), "run_filter --help -> exit 0");
     check(output_stream.str().find("Использование:") != std::string::npos,
           "run_filter --help: usage in stdout");
 }
@@ -353,7 +354,7 @@ void test_run_filter_version() {
     char* argv[] = {a0, a1};
 
     int code = run_filter(2, argv, input_stream, output_stream);
-    check(code == static_cast<int>(ExitCode::kOk), "run_filter --version -> exit 0");
+    check(code == std::to_underlying(ExitCode::kOk), "run_filter --version -> exit 0");
     check(output_stream.str().find("filter") != std::string::npos,
           "run_filter --version: name in stdout");
 }

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <print>
 #include <string_view>
+#include <utility>
 
 using namespace raster::common;
 using namespace raster::stats;
@@ -33,12 +34,12 @@ void print_version() { std::println("image_stats {}", kVersion); }
 int main(int argc, char** argv) {
     if (argc >= 2 && std::string_view(argv[1]) == "--help") {
         print_usage();
-        return (int)ExitCode::kOk;
+        return std::to_underlying(ExitCode::kOk);
     }
 
     if (argc >= 2 && std::string_view(argv[1]) == "--version") {
         print_version();
-        return (int)ExitCode::kOk;
+        return std::to_underlying(ExitCode::kOk);
     }
 
     auto result = Image::read(std::cin);
@@ -46,15 +47,15 @@ int main(int argc, char** argv) {
         std::println(stderr, "{}", result.diagnostic);
         switch (result.value.error()) {
         case PpmReadError::kEmptyInput:
-            return (int)ExitCode::kNoInput;
+            return std::to_underlying(ExitCode::kNoInput);
         case PpmReadError::kIOError:
-            return (int)ExitCode::kIOErr;
+            return std::to_underlying(ExitCode::kIOErr);
         default:
-            return (int)ExitCode::kData;
+            return std::to_underlying(ExitCode::kData);
         }
     }
 
     Stats stats = compute_stats(*result.value);
     ppm_print_stats(stats, std::cout);
-    return (int)ExitCode::kOk;
+    return std::to_underlying(ExitCode::kOk);
 }

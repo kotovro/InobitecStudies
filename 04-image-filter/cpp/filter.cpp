@@ -8,6 +8,7 @@
 #include <ostream>
 #include <print>
 #include <string_view>
+#include <utility>
 
 using namespace raster::common;
 
@@ -102,16 +103,16 @@ void print_filter_version(std::ostream& os) { std::println(os, "filter {}", kVer
 int run_filter(int argc, char** argv, std::istream& input, std::ostream& output) {
     auto parsed = parse_filter_args(argc, argv);
     if (!parsed)
-        return static_cast<int>(ExitCode::kUsage);
+        return std::to_underlying(ExitCode::kUsage);
 
     if (parsed->request == FilterRequest::kHelp) {
         print_filter_usage(output);
-        return static_cast<int>(ExitCode::kOk);
+        return std::to_underlying(ExitCode::kOk);
     }
 
     if (parsed->request == FilterRequest::kVersion) {
         print_filter_version(output);
-        return static_cast<int>(ExitCode::kOk);
+        return std::to_underlying(ExitCode::kOk);
     }
 
     const FilterArgs& args = parsed->args;
@@ -120,11 +121,11 @@ int run_filter(int argc, char** argv, std::istream& input, std::ostream& output)
         std::println(stderr, "{}", result.diagnostic);
         switch (result.value.error()) {
         case PpmReadError::kEmptyInput:
-            return static_cast<int>(ExitCode::kNoInput);
+            return std::to_underlying(ExitCode::kNoInput);
         case PpmReadError::kIOError:
-            return static_cast<int>(ExitCode::kIOErr);
+            return std::to_underlying(ExitCode::kIOErr);
         default:
-            return static_cast<int>(ExitCode::kData);
+            return std::to_underlying(ExitCode::kData);
         }
     }
 
@@ -143,7 +144,7 @@ int run_filter(int argc, char** argv, std::istream& input, std::ostream& output)
     for (const auto& pixel : image.pixels())
         writer.put(pixel.r, pixel.g, pixel.b);
 
-    return static_cast<int>(ExitCode::kOk);
+    return std::to_underlying(ExitCode::kOk);
 }
 
 } // namespace raster::filter
