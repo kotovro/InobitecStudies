@@ -14,8 +14,12 @@ using namespace raster::gen;
 
 namespace {
 
-void generate_ppm(const Args& args) {
+PpmWriteResult generate_ppm(const Args& args) {
     PpmWriter writer(std::cout, args.size, args.size);
+    auto header = writer.putHeader();
+    if (!header.value)
+        return header;
+
     std::mt19937 rng(args.seed ? args.seed : 42);
     for (int32_t y = 0; y < args.size; ++y) {
         for (int32_t x = 0; x < args.size; ++x) {
@@ -35,9 +39,12 @@ void generate_ppm(const Args& args) {
                 c = random_pixel(rng);
                 break;
             }
-            writer.put(c.r, c.g, c.b);
+            auto res = writer.put(c.r, c.g, c.b);
+            if (!res.value)
+                return res;
         }
     }
+    return PpmWriteResult{};
 }
 
 void print_usage() {
@@ -104,6 +111,15 @@ int main(int argc, char** argv) {
         return std::to_underlying(ExitCode::kUsage);
     }
 
-    generate_ppm(args);
+    auto write_result = generate_ppm(args);
+    if (!write_result.value) {
+        std::println(stderr, "{}", write_result.diagnostic);
+        switch (write_result.value.error()) {
+        case PpmWriteError::kIOError:
+            return std::to_underlying(ExitCode::kIOErr);
+        case PpmWriteError::kTooManyPixels:
+            return std::to_underlying(ExitCode::kData);
+        }
+    }
     return std::to_underlying(ExitCode::kOk);
 }

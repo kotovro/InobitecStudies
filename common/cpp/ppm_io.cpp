@@ -112,11 +112,11 @@ PpmResult Image::read(std::istream& is) {
             return err(PpmReadError::kBadNumber, line_num,
                        std::format("строка {}: не удалось прочитать максимальное значение канала",
                                    line_num));
-        if (m != 255)
+        if (m != kMaxChannel)
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: максимальное значение канала должно быть 255; "
+                       std::format("строка {}: максимальное значение канала должно быть {}; "
                                    "получено: {}",
-                                   line_num, m));
+                                   line_num, kMaxChannel, m));
 
         img._impl->width = static_cast<int32_t>(w);
         img._impl->height = static_cast<int32_t>(h);
@@ -187,13 +187,30 @@ PpmResult Image::read(std::istream& is) {
     return PpmResult{std::move(img), 0, {}};
 }
 
-PpmWriter::PpmWriter(std::ostream& os, int32_t width, int32_t height) : _os(os), _width(width) {
+PpmWriter::PpmWriter(std::ostream& os, int32_t width, int32_t height, uint16_t max_val)
+    : _os(os), _width(width), _height(height), _max_val(max_val),
+      _capacity(static_cast<std::int64_t>(width) * height) {}
+
+PpmWriteResult PpmWriter::putHeader() {
     std::println(_os, "P3");
-    std::println(_os, "{} {}", width, height);
-    std::println(_os, "255");
+    std::println(_os, "{} {}", _width, _height);
+    std::println(_os, "{}", _max_val);
+    if (_os.bad() || _os.fail())
+        return PpmWriteResult{std::unexpected(PpmWriteError::kIOError),
+                              "сбой записи заголовка в поток"};
+    _header_written = true;
+    return PpmWriteResult{};
 }
 
-void PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
+PpmWriteResult PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
+    if (!_header_written)
+        return PpmWriteResult{std::unexpected(PpmWriteError::kIOError), "вызван put до putHeader"};
+
+    if (_total >= _capacity)
+        return PpmWriteResult{std::unexpected(PpmWriteError::kTooManyPixels),
+                              std::format("попытка записать {} пикселей при размере {}x{}",
+                                          _total + 1, _width, _height)};
+
     if (_col == 0) {
         std::print(_os, "{:3d} {:3d} {:3d}", static_cast<int>(r), static_cast<int>(g),
                    static_cast<int>(b));
@@ -202,10 +219,16 @@ void PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
                    static_cast<int>(b));
     }
     ++_col;
+    ++_total;
     if (_col >= _width) {
         std::println(_os);
         _col = 0;
     }
+    if (_os.bad() || _os.fail())
+        return PpmWriteResult{std::unexpected(PpmWriteError::kIOError),
+                              "сбой записи пикселя в поток"};
+
+    return PpmWriteResult{};
 }
 
 } // namespace raster::common

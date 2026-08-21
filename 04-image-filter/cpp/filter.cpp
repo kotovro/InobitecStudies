@@ -141,8 +141,23 @@ int run_filter(int argc, char** argv, std::istream& input, std::ostream& output)
     }
 
     PpmWriter writer(output, image.width(), image.height());
-    for (const auto& pixel : image.pixels())
-        writer.put(pixel.r, pixel.g, pixel.b);
+    auto header = writer.putHeader();
+    if (!header.value) {
+        std::println(stderr, "{}", header.diagnostic);
+        return std::to_underlying(ExitCode::kIOErr);
+    }
+    for (const auto& pixel : image.pixels()) {
+        auto res = writer.put(pixel.r, pixel.g, pixel.b);
+        if (!res.value) {
+            std::println(stderr, "{}", res.diagnostic);
+            switch (res.value.error()) {
+            case PpmWriteError::kIOError:
+                return std::to_underlying(ExitCode::kIOErr);
+            case PpmWriteError::kTooManyPixels:
+                return std::to_underlying(ExitCode::kData);
+            }
+        }
+    }
 
     return std::to_underlying(ExitCode::kOk);
 }
