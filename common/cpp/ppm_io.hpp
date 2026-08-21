@@ -18,6 +18,8 @@
 #define KV_API
 #endif
 
+namespace raster::common {
+
 struct Pixel {
     uint8_t r{}, g{}, b{};
 };
@@ -74,5 +76,7 @@ class KV_API PpmWriter {
     int32_t _width;
     int32_t _col = 0;
 };
+
+} // namespace raster::common
 
 #endif

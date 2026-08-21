@@ -1,5 +1,6 @@
 #include "filter.hpp"
 
+#include "../../common/cpp/luma.hpp"
 #include "../../common/cpp/version.hpp"
 
 #include <charconv>
@@ -7,6 +8,10 @@
 #include <ostream>
 #include <print>
 #include <string_view>
+
+using namespace raster::common;
+
+namespace raster::filter {
 
 Pixel pixel_to_grayscale(const Pixel& p) {
     double y = luma(p.r, p.g, p.b);
@@ -140,3 +145,5 @@ int run_filter(int argc, char** argv, std::istream& input, std::ostream& output)
 
     return static_cast<int>(ExitCode::kOk);
 }
+
+} // namespace raster::filter

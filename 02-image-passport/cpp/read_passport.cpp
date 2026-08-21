@@ -5,6 +5,8 @@
 #include <print>
 #include <string>
 
+namespace raster::passport {
+
 std::expected<PassportData, PassportError> read_passport(std::istream& is) {
     std::println("Введите название изображения: ");
 
@@ -51,3 +53,5 @@ std::expected<PassportData, PassportError> read_passport(std::istream& is) {
 
     return PassportData{std::move(name), count};
 }
+
+} // namespace raster::passport

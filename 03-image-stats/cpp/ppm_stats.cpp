@@ -1,11 +1,15 @@
 #include "ppm_stats.hpp"
 
+#include "../../common/cpp/luma.hpp"
+
 #include <cmath>
 #include <cstdint>
 #include <ostream>
 #include <print>
 
-double luma(int32_t r, int32_t g, int32_t b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
+using namespace raster::common;
+
+namespace raster::stats {
 
 Stats compute_stats(const Image& img) {
     Stats s{};
@@ -66,3 +70,5 @@ void ppm_print_stats(const Stats& s, std::ostream& os) {
         std::println(os, "  [{:3d},{:3d}]: {}", lo, hi, s.histogram[i]);
     }
 }
+
+} // namespace raster::stats

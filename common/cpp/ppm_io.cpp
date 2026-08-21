@@ -8,6 +8,8 @@
 #include <system_error>
 #include <vector>
 
+namespace raster::common {
+
 struct Image::Impl {
     int32_t width{};
     int32_t height{};
@@ -205,3 +207,5 @@ void PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
         _col = 0;
     }
 }
+
+} // namespace raster::common

@@ -5,9 +5,13 @@
 #include <print>
 #include <random>
 
-static int failed = 0;
+using namespace raster::gen;
 
-static void check(bool cond, std::string_view name, std::string_view detail = {}) {
+namespace {
+
+int failed = 0;
+
+void check(bool cond, std::string_view name, std::string_view detail = {}) {
     if (!cond) {
         std::println(stderr, "FAIL: {} {}", name, detail);
         ++failed;
@@ -18,7 +22,7 @@ static void check(bool cond, std::string_view name, std::string_view detail = {}
 
 // ---- parse_args tests ----
 
-static void test_parse_args_no_args() {
+void test_parse_args_no_args() {
     char arg0[] = "prog";
     char* argv[] = {arg0};
     auto r = parse_args(1, argv);
@@ -28,7 +32,7 @@ static void test_parse_args_no_args() {
     check(r.error() == ParseError::kNoArg, "no args kNoArg");
 }
 
-static void test_parse_args_bad_number() {
+void test_parse_args_bad_number() {
     char arg0[] = "prog";
     char arg1[] = "abc";
     char* argv[] = {arg0, arg1};
@@ -39,7 +43,7 @@ static void test_parse_args_bad_number() {
     check(r.error() == ParseError::kBadNumber, "abc kBadNumber");
 }
 
-static void test_parse_args_trailing_garbage() {
+void test_parse_args_trailing_garbage() {
     char arg0[] = "prog";
     char arg1[] = "4abc";
     char* argv[] = {arg0, arg1};
@@ -50,7 +54,7 @@ static void test_parse_args_trailing_garbage() {
     check(r.error() == ParseError::kBadNumber, "4abc kBadNumber");
 }
 
-static void test_parse_args_negative_number() {
+void test_parse_args_negative_number() {
     char arg0[] = "prog";
     char arg1[] = "-5";
     char* argv[] = {arg0, arg1};
@@ -62,7 +66,7 @@ static void test_parse_args_negative_number() {
     check(r->args.pattern == Pattern::Gradient, "-5 default Gradient");
 }
 
-static void test_parse_args_bad_pattern() {
+void test_parse_args_bad_pattern() {
     char arg0[] = "prog";
     char arg1[] = "5";
     char arg2[] = "invalid";
@@ -74,7 +78,7 @@ static void test_parse_args_bad_pattern() {
     check(r.error() == ParseError::kBadPattern, "invalid kBadPattern");
 }
 
-static void test_parse_args_default_pattern() {
+void test_parse_args_default_pattern() {
     char arg0[] = "prog";
     char arg1[] = "5";
     char* argv[] = {arg0, arg1};
@@ -86,7 +90,7 @@ static void test_parse_args_default_pattern() {
     check(r->args.pattern == Pattern::Gradient, "5 default Gradient");
 }
 
-static void test_parse_args_checker() {
+void test_parse_args_checker() {
     char arg0[] = "prog";
     char arg1[] = "10";
     char arg2[] = "checker";
@@ -99,7 +103,7 @@ static void test_parse_args_checker() {
     check(r->args.pattern == Pattern::Checker, "10 checker Checker");
 }
 
-static void test_parse_args_radial() {
+void test_parse_args_radial() {
     char arg0[] = "prog";
     char arg1[] = "7";
     char arg2[] = "radial";
@@ -114,7 +118,7 @@ static void test_parse_args_radial() {
 
 // ---- new CLI (--size N [--seed S]) tests ----
 
-static void test_new_no_args() {
+void test_new_no_args() {
     char arg0[] = "prog";
     char arg1[] = "--size";
     char* argv[] = {arg0, arg1};
@@ -125,7 +129,7 @@ static void test_new_no_args() {
     check(r.error() == ParseError::kNoArg, "--size alone kNoArg");
 }
 
-static void test_new_bad_size() {
+void test_new_bad_size() {
     char arg0[] = "prog";
     char arg1[] = "--size";
     char arg2[] = "abc";
@@ -137,7 +141,7 @@ static void test_new_bad_size() {
     check(r.error() == ParseError::kBadNumber, "--size abc kBadNumber");
 }
 
-static void test_new_ok_no_seed() {
+void test_new_ok_no_seed() {
     char arg0[] = "prog";
     char arg1[] = "--size";
     char arg2[] = "10";
@@ -151,7 +155,7 @@ static void test_new_ok_no_seed() {
     check(!r->args.seed_provided, "--size 10 seed not provided");
 }
 
-static void test_new_with_seed() {
+void test_new_with_seed() {
     char arg0[] = "prog";
     char arg1[] = "--size";
     char arg2[] = "5";
@@ -168,7 +172,7 @@ static void test_new_with_seed() {
     check(r->args.seed == 42, "--size 5 seed == 42");
 }
 
-static void test_new_bad_seed() {
+void test_new_bad_seed() {
     char arg0[] = "prog";
     char arg1[] = "--size";
     char arg2[] = "5";
@@ -184,7 +188,7 @@ static void test_new_bad_seed() {
 
 // ---- --help / --version tests ----
 
-static void test_help() {
+void test_help() {
     char arg0[] = "prog";
     char arg1[] = "--help";
     char* argv[] = {arg0, arg1};
@@ -195,7 +199,7 @@ static void test_help() {
     check(r->request == ParseRequest::kHelp, "--help kHelp");
 }
 
-static void test_version() {
+void test_version() {
     char arg0[] = "prog";
     char arg1[] = "--version";
     char* argv[] = {arg0, arg1};
@@ -206,7 +210,7 @@ static void test_version() {
     check(r->request == ParseRequest::kVersion, "--version kVersion");
 }
 
-static void test_run_request() {
+void test_run_request() {
     char arg0[] = "prog";
     char arg1[] = "5";
     char* argv[] = {arg0, arg1};
@@ -219,7 +223,7 @@ static void test_run_request() {
 
 // ---- hsv_to_rgb tests ----
 
-static void check_rgb(RGB actual, int er, int eg, int eb, std::string_view name) {
+void check_rgb(RGB actual, int er, int eg, int eb, std::string_view name) {
     bool ok = (actual.r == er && actual.g == eg && actual.b == eb);
     if (!ok) {
         std::println(stderr, "FAIL: {} got ({},{},{}) expected ({},{},{})", name, actual.r,
@@ -230,59 +234,59 @@ static void check_rgb(RGB actual, int er, int eg, int eb, std::string_view name)
     }
 }
 
-static void test_hsv_red() {
+void test_hsv_red() {
     auto c = hsv_to_rgb(0, 1, 1);
     check_rgb(c, 255, 0, 0, "hsv(0,1,1) == red");
 }
 
-static void test_hsv_green() {
+void test_hsv_green() {
     auto c = hsv_to_rgb(120, 1, 1);
     check_rgb(c, 0, 255, 0, "hsv(120,1,1) == green");
 }
 
-static void test_hsv_blue() {
+void test_hsv_blue() {
     auto c = hsv_to_rgb(240, 1, 1);
     check_rgb(c, 0, 0, 255, "hsv(240,1,1) == blue");
 }
 
-static void test_hsv_yellow() {
+void test_hsv_yellow() {
     auto c = hsv_to_rgb(60, 1, 1);
     check_rgb(c, 255, 255, 0, "hsv(60,1,1) == yellow");
 }
 
-static void test_hsv_cyan() {
+void test_hsv_cyan() {
     auto c = hsv_to_rgb(180, 1, 1);
     check_rgb(c, 0, 255, 255, "hsv(180,1,1) == cyan");
 }
 
-static void test_hsv_magenta() {
+void test_hsv_magenta() {
     auto c = hsv_to_rgb(300, 1, 1);
     check_rgb(c, 255, 0, 255, "hsv(300,1,1) == magenta");
 }
 
-static void test_hsv_360_is_red() {
+void test_hsv_360_is_red() {
     auto c = hsv_to_rgb(360, 1, 1);
     check_rgb(c, 255, 0, 0, "hsv(360,1,1) == red (wrap)");
 }
 
-static void test_hsv_zero_saturation() {
+void test_hsv_zero_saturation() {
     auto c = hsv_to_rgb(0, 0, 1);
     check_rgb(c, 255, 255, 255, "hsv(0,0,1) == white");
 }
 
-static void test_hsv_zero_value() {
+void test_hsv_zero_value() {
     auto c = hsv_to_rgb(0, 1, 0);
     check_rgb(c, 0, 0, 0, "hsv(0,1,0) == black");
 }
 
-static void test_hsv_half_saturation() {
+void test_hsv_half_saturation() {
     auto c = hsv_to_rgb(0, 0.5, 1);
     check_rgb(c, 255, 127, 127, "hsv(0,0.5,1) == pinkish");
 }
 
 // ---- pixel pattern tests ----
 
-static void test_gradient_pixel(void) {
+void test_gradient_pixel(void) {
     check_rgb(gradient_pixel(0, 0, 3), 0, 255, 0, "gradient (0,0,3)");
     check_rgb(gradient_pixel(1, 0, 3), 127, 255, 0, "gradient (1,0,3)");
     check_rgb(gradient_pixel(2, 0, 3), 255, 255, 0, "gradient (2,0,3)");
@@ -300,7 +304,7 @@ static void test_gradient_pixel(void) {
     check_rgb(gradient_pixel(0, 511, 512), 0, 0, 0, "gradient size=512 (0,511)");
 }
 
-static void test_checker_pixel(void) {
+void test_checker_pixel(void) {
     check_rgb(checker_pixel(0, 0), 255, 255, 255, "checker (0,0)");
     check_rgb(checker_pixel(1, 0), 0, 0, 0, "checker (1,0)");
     check_rgb(checker_pixel(0, 1), 0, 0, 0, "checker (0,1)");
@@ -314,7 +318,7 @@ static void test_checker_pixel(void) {
     check_rgb(checker_pixel(0, 511), 0, 0, 0, "checker size=512 (0,511)");
 }
 
-static void test_radial_pixel(void) {
+void test_radial_pixel(void) {
     check_rgb(radial_pixel(0, 0, 3), 255, 0, 0, "radial (0,0,3)");
     check_rgb(radial_pixel(1, 0, 3), 61, 0, 255, "radial (1,0,3)");
     check_rgb(radial_pixel(2, 0, 3), 255, 0, 0, "radial (2,0,3)");
@@ -329,7 +333,7 @@ static void test_radial_pixel(void) {
     check_rgb(radial_pixel(511, 511, 512), 255, 0, 0, "radial size=512 corner (511,511)");
 }
 
-static void test_radial_not_degenerate(void) {
+void test_radial_not_degenerate(void) {
     RGB first = radial_pixel(0, 0, 512);
     bool all_same = true;
     for (int32_t y = 0; y < 512 && all_same; ++y)
@@ -343,7 +347,7 @@ static void test_radial_not_degenerate(void) {
 
 // ---- random pixel tests ----
 
-static void test_random_not_degenerate(void) {
+void test_random_not_degenerate(void) {
     std::mt19937 rng(42);
     RGB first = random_pixel(rng);
     bool all_same = true;
@@ -355,7 +359,7 @@ static void test_random_not_degenerate(void) {
     check(!all_same, "random not degenerate (seed=42)");
 }
 
-static void test_random_zero_seed(void) {
+void test_random_zero_seed(void) {
     std::mt19937 rng(0);
     RGB first = random_pixel(rng);
     bool all_same = true;
@@ -367,7 +371,7 @@ static void test_random_zero_seed(void) {
     check(!all_same, "random not degenerate (seed=0)");
 }
 
-static void test_random_seed_difference(void) {
+void test_random_seed_difference(void) {
     std::mt19937 rng1(42), rng2(43);
     bool differ = false;
     for (int i = 0; i < 10 && !differ; ++i) {
@@ -379,7 +383,7 @@ static void test_random_seed_difference(void) {
     check(differ, "random different seed differs");
 }
 
-static void test_random_deterministic(void) {
+void test_random_deterministic(void) {
     std::mt19937 rng1(42), rng2(42);
     bool ok = true;
     for (int i = 0; i < 100 && ok; ++i) {
@@ -392,6 +396,8 @@ static void test_random_deterministic(void) {
 }
 
 // ---- main ----
+
+} // namespace
 
 int main() {
     std::println("--- parse_args tests ---");

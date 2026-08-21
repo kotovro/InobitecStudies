@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+namespace raster::passport {
+
 std::string_view pixel_word(int32_t n) {
     int32_t mod100 = n % 100;
     if (mod100 >= 11 && mod100 <= 14)
@@ -18,3 +20,5 @@ std::string_view pixel_word(int32_t n) {
         return "пикселей";
     }
 }
+
+} // namespace raster::passport

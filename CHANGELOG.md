@@ -5,6 +5,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-08-18
+
+### Changed
+
+- Обновлены команды сборки/запуска в README в соответствии с новой структурой проекта
+
+### Fixed
+
+- Исправлены некорректные сообщения об ошибках, возникавшие из-за неправильной обработки системных ошибок
+
 ## [0.1.1] - 2026-08-08
 
 ### Fixed
@@ -26,5 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Флаги `--help` и `--version` во всех четырёх программах
 - Разные коды завершения для разных типов ошибок (некорректные аргументы, некорректные данные, отсутствие входных данных, ошибки ввода-вывода) — удобно для обработки в скриптах
 
+[0.1.2]: https://github.com/kotovro/InobitecStudies/compare/v0.1.0...v0.1.2
 [0.1.1]: https://github.com/kotovro/InobitecStudies/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/kotovro/InobitecStudies/releases/tag/v0.1.0

@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <random>
 
+namespace raster::gen {
+
 RGB random_pixel(std::mt19937& rng) {
     std::uniform_int_distribution dist(0, 255);
     int32_t r = dist(rng);
@@ -36,3 +38,5 @@ RGB radial_pixel(int32_t x, int32_t y, int32_t size) {
     RGB color = hsv_to_rgb(hue, 1.0, 1.0);
     return color;
 }
+
+} // namespace raster::gen

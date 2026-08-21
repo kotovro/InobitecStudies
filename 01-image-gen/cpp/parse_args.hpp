@@ -6,6 +6,8 @@
 
 #include "../../common/cpp/exit_codes.hpp"
 
+namespace raster::gen {
+
 enum class Pattern { Gradient, Checker, Radial, Random };
 enum class ParseError { kNoArg, kBadNumber, kBadPattern, kBadSeed };
 enum class ParseRequest { kRun, kHelp, kVersion };
@@ -23,5 +25,7 @@ struct ParseResult {
 };
 
 std::expected<ParseResult, ParseError> parse_args(int, char**);
+
+} // namespace raster::gen
 
 #endif // KV_PARSE_ARGS_HPP

@@ -4,9 +4,13 @@
 
 #include "pixel_word.hpp"
 
-static int failed = 0;
+using namespace raster::passport;
 
-static void check(bool cond, std::string_view name) {
+namespace {
+
+int failed = 0;
+
+void check(bool cond, std::string_view name) {
     if (!cond) {
         std::println(stderr, "FAIL: {}", name);
         ++failed;
@@ -14,6 +18,8 @@ static void check(bool cond, std::string_view name) {
         std::println("PASS: {}", name);
     }
 }
+
+} // namespace
 
 int main() {
     std::println("--- pixel_word tests ---");

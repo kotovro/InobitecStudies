@@ -1,5 +1,7 @@
 #include "filter.hpp"
 
+#include "../../common/cpp/luma.hpp"
+
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -8,9 +10,14 @@
 #include <sstream>
 #include <string>
 
-static int failed = 0;
+using namespace raster::common;
+using namespace raster::filter;
 
-static void check(bool cond, const char* test_name) {
+namespace {
+
+int failed = 0;
+
+void check(bool cond, const char* test_name) {
     if (!cond) {
         std::println(stderr, "FAIL: {}", test_name);
         ++failed;
@@ -19,8 +26,7 @@ static void check(bool cond, const char* test_name) {
     }
 }
 
-static void check_pixel(const Pixel& pixel, uint8_t er, uint8_t eg, uint8_t eb,
-                        const char* test_name) {
+void check_pixel(const Pixel& pixel, uint8_t er, uint8_t eg, uint8_t eb, const char* test_name) {
     if (pixel.r != er || pixel.g != eg || pixel.b != eb) {
         std::println(stderr, "FAIL: {} -- got ({},{},{}) expected ({},{},{})", test_name, pixel.r,
                      pixel.g, pixel.b, er, eg, eb);
@@ -30,51 +36,47 @@ static void check_pixel(const Pixel& pixel, uint8_t er, uint8_t eg, uint8_t eb,
     }
 }
 
-static bool approx_eq(double a, double b, double eps = 1e-9) { return std::fabs(a - b) <= eps; }
+bool approx_eq(double a, double b, double eps = 1e-9) { return std::fabs(a - b) <= eps; }
 
 // -------------------------------------------------------------------
 // luma tests
 // -------------------------------------------------------------------
 
-static void test_luma_black() { check(approx_eq(luma(0, 0, 0), 0.0), "luma(0,0,0) == 0"); }
+void test_luma_black() { check(approx_eq(luma(0, 0, 0), 0.0), "luma(0,0,0) == 0"); }
 
-static void test_luma_white() {
-    check(approx_eq(luma(255, 255, 255), 255.0), "luma(255,255,255) == 255");
-}
+void test_luma_white() { check(approx_eq(luma(255, 255, 255), 255.0), "luma(255,255,255) == 255"); }
 
-static void test_luma_red() { check(approx_eq(luma(255, 0, 0), 76.245), "luma(255,0,0) ~ 76.245"); }
+void test_luma_red() { check(approx_eq(luma(255, 0, 0), 76.245), "luma(255,0,0) ~ 76.245"); }
 
-static void test_luma_green() {
-    check(approx_eq(luma(0, 255, 0), 149.685), "luma(0,255,0) ~ 149.685");
-}
+void test_luma_green() { check(approx_eq(luma(0, 255, 0), 149.685), "luma(0,255,0) ~ 149.685"); }
 
-static void test_luma_blue() { check(approx_eq(luma(0, 0, 255), 29.07), "luma(0,0,255) ~ 29.07"); }
+void test_luma_blue() { check(approx_eq(luma(0, 0, 255), 29.07), "luma(0,0,255) ~ 29.07"); }
 
 // -------------------------------------------------------------------
 // pixel_to_grayscale tests
 // -------------------------------------------------------------------
 
-static void test_grayscale_black() {
+void test_grayscale_black() {
     auto out = pixel_to_grayscale(Pixel{0, 0, 0});
     check_pixel(out, 0, 0, 0, "grayscale black");
 }
 
-static void test_grayscale_white() {
+void test_grayscale_white() {
     auto out = pixel_to_grayscale(Pixel{255, 255, 255});
     check_pixel(out, 255, 255, 255, "grayscale white");
 }
 
-static void test_grayscale_red() {
+void test_grayscale_red() {
     auto out = pixel_to_grayscale(Pixel{255, 0, 0});
     check_pixel(out, 76, 76, 76, "grayscale red -> 76");
 }
 
-static void test_grayscale_green() {
+void test_grayscale_green() {
     auto out = pixel_to_grayscale(Pixel{0, 255, 0});
     check_pixel(out, 150, 150, 150, "grayscale green -> 150");
 }
 
-static void test_grayscale_mixed() {
+void test_grayscale_mixed() {
     auto out = pixel_to_grayscale(Pixel{100, 150, 200});
     check_pixel(out, 141, 141, 141, "grayscale mixed -> 141");
 }
@@ -83,24 +85,24 @@ static void test_grayscale_mixed() {
 // pixel_threshold tests
 // -------------------------------------------------------------------
 
-static void test_threshold_above() {
+void test_threshold_above() {
     auto out = pixel_threshold(Pixel{255, 255, 255}, 100);
     check_pixel(out, 255, 255, 255, "threshold above (luma 255 > 100) -> white");
 }
 
-static void test_threshold_below() {
+void test_threshold_below() {
     auto out = pixel_threshold(Pixel{0, 0, 0}, 100);
     check_pixel(out, 0, 0, 0, "threshold below (luma 0 < 100) -> black");
 }
 
-static void test_threshold_exactly_at() {
+void test_threshold_exactly_at() {
     auto out_above = pixel_threshold(Pixel{77, 0, 0}, 23);
     check_pixel(out_above, 255, 255, 255, "threshold at boundary (above) -> white");
     auto out_below = pixel_threshold(Pixel{76, 0, 0}, 23);
     check_pixel(out_below, 0, 0, 0, "threshold at boundary (below) -> black");
 }
 
-static void test_threshold_edge() {
+void test_threshold_edge() {
     auto out = pixel_threshold(Pixel{0, 0, 0}, 0);
     check_pixel(out, 0, 0, 0, "threshold 0 with luma 0 -> black");
 }
@@ -109,14 +111,14 @@ static void test_threshold_edge() {
 // parse_filter_args tests
 // -------------------------------------------------------------------
 
-static void test_parse_no_args() {
+void test_parse_no_args() {
     char a0[] = "prog";
     char* argv[] = {a0};
     auto r = parse_filter_args(1, argv);
     check(!r.has_value(), "no args -> nullopt");
 }
 
-static void test_parse_grayscale() {
+void test_parse_grayscale() {
     char a0[] = "prog";
     char a1[] = "--grayscale";
     char* argv[] = {a0, a1};
@@ -126,7 +128,7 @@ static void test_parse_grayscale() {
         check(r->args.mode == FilterMode::kGrayscale, "--grayscale mode");
 }
 
-static void test_parse_grayscale_with_arg() {
+void test_parse_grayscale_with_arg() {
     char a0[] = "prog";
     char a1[] = "--grayscale";
     char a2[] = "extra";
@@ -135,7 +137,7 @@ static void test_parse_grayscale_with_arg() {
     check(!r.has_value(), "--grayscale extra -> error");
 }
 
-static void test_parse_threshold_ok() {
+void test_parse_threshold_ok() {
     char a0[] = "prog";
     char a1[] = "--threshold";
     char a2[] = "128";
@@ -148,7 +150,7 @@ static void test_parse_threshold_ok() {
     }
 }
 
-static void test_parse_threshold_edge_low() {
+void test_parse_threshold_edge_low() {
     char a0[] = "prog";
     char a1[] = "--threshold";
     char a2[] = "0";
@@ -159,7 +161,7 @@ static void test_parse_threshold_edge_low() {
         check(r->args.threshold == 0, "--threshold 0 value");
 }
 
-static void test_parse_threshold_edge_high() {
+void test_parse_threshold_edge_high() {
     char a0[] = "prog";
     char a1[] = "--threshold";
     char a2[] = "255";
@@ -170,7 +172,7 @@ static void test_parse_threshold_edge_high() {
         check(r->args.threshold == 255, "--threshold 255 value");
 }
 
-static void test_parse_threshold_no_arg() {
+void test_parse_threshold_no_arg() {
     char a0[] = "prog";
     char a1[] = "--threshold";
     char* argv[] = {a0, a1};
@@ -178,7 +180,7 @@ static void test_parse_threshold_no_arg() {
     check(!r.has_value(), "--threshold alone -> error");
 }
 
-static void test_parse_threshold_not_a_number() {
+void test_parse_threshold_not_a_number() {
     char a0[] = "prog";
     char a1[] = "--threshold";
     char a2[] = "abc";
@@ -187,7 +189,7 @@ static void test_parse_threshold_not_a_number() {
     check(!r.has_value(), "--threshold abc -> error");
 }
 
-static void test_parse_threshold_out_of_range_low() {
+void test_parse_threshold_out_of_range_low() {
     char a0[] = "prog";
     char a1[] = "--threshold";
     char a2[] = "-1";
@@ -196,7 +198,7 @@ static void test_parse_threshold_out_of_range_low() {
     check(!r.has_value(), "--threshold -1 -> error");
 }
 
-static void test_parse_threshold_out_of_range_high() {
+void test_parse_threshold_out_of_range_high() {
     char a0[] = "prog";
     char a1[] = "--threshold";
     char a2[] = "256";
@@ -205,7 +207,7 @@ static void test_parse_threshold_out_of_range_high() {
     check(!r.has_value(), "--threshold 256 -> error");
 }
 
-static void test_parse_unknown_arg() {
+void test_parse_unknown_arg() {
     char a0[] = "prog";
     char a1[] = "--blur";
     char* argv[] = {a0, a1};
@@ -213,7 +215,7 @@ static void test_parse_unknown_arg() {
     check(!r.has_value(), "--blur -> error");
 }
 
-static void test_parse_help() {
+void test_parse_help() {
     char a0[] = "prog";
     char a1[] = "--help";
     char* argv[] = {a0, a1};
@@ -223,7 +225,7 @@ static void test_parse_help() {
         check(r->request == FilterRequest::kHelp, "--help kHelp");
 }
 
-static void test_parse_version() {
+void test_parse_version() {
     char a0[] = "prog";
     char a1[] = "--version";
     char* argv[] = {a0, a1};
@@ -233,7 +235,7 @@ static void test_parse_version() {
         check(r->request == FilterRequest::kVersion, "--version kVersion");
 }
 
-static void test_parse_run_request() {
+void test_parse_run_request() {
     char a0[] = "prog";
     char a1[] = "--grayscale";
     char* argv[] = {a0, a1};
@@ -247,7 +249,7 @@ static void test_parse_run_request() {
 // run_filter integration tests
 // -------------------------------------------------------------------
 
-static void test_run_filter_grayscale() {
+void test_run_filter_grayscale() {
     auto input_stream = std::istringstream("P3\n2 2\n255\n"
                                            "0 0 0 255 0 0\n"
                                            "0 255 0 0 0 255\n");
@@ -274,7 +276,7 @@ static void test_run_filter_grayscale() {
     }
 }
 
-static void test_run_filter_threshold() {
+void test_run_filter_threshold() {
     auto input_stream = std::istringstream("P3\n2 1\n255\n"
                                            "0 0 0 128 128 128\n");
     auto output_stream = std::ostringstream();
@@ -297,7 +299,7 @@ static void test_run_filter_threshold() {
     }
 }
 
-static void test_run_filter_empty_input() {
+void test_run_filter_empty_input() {
     auto input_stream = std::istringstream("");
     auto output_stream = std::ostringstream();
     char a0[] = "prog";
@@ -308,7 +310,7 @@ static void test_run_filter_empty_input() {
     check(code == static_cast<int>(ExitCode::kNoInput), "run_filter empty input -> kNoInput");
 }
 
-static void test_run_filter_bad_ppm() {
+void test_run_filter_bad_ppm() {
     auto input_stream = std::istringstream("not a ppm");
     auto output_stream = std::ostringstream();
     char a0[] = "prog";
@@ -319,7 +321,7 @@ static void test_run_filter_bad_ppm() {
     check(code == static_cast<int>(ExitCode::kData), "run_filter bad ppm -> kData");
 }
 
-static void test_run_filter_bad_args() {
+void test_run_filter_bad_args() {
     auto input_stream = std::istringstream("P3\n1 1\n255\n0 0 0\n");
     auto output_stream = std::ostringstream();
     char a0[] = "prog";
@@ -330,7 +332,7 @@ static void test_run_filter_bad_args() {
     check(code == static_cast<int>(ExitCode::kUsage), "run_filter bad args -> kUsage");
 }
 
-static void test_run_filter_help() {
+void test_run_filter_help() {
     auto input_stream = std::istringstream("");
     auto output_stream = std::ostringstream();
     char a0[] = "prog";
@@ -343,7 +345,7 @@ static void test_run_filter_help() {
           "run_filter --help: usage in stdout");
 }
 
-static void test_run_filter_version() {
+void test_run_filter_version() {
     auto input_stream = std::istringstream("");
     auto output_stream = std::ostringstream();
     char a0[] = "prog";
@@ -359,6 +361,8 @@ static void test_run_filter_version() {
 // -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
+
+} // namespace
 
 int main() {
     std::println("--- luma tests ---");

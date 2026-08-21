@@ -6,6 +6,8 @@
 #include <iosfwd>
 #include <string>
 
+namespace raster::passport {
+
 enum class PassportErrorKind { kNoInput, kEmptyName, kBadCount, kNegativeCount, kIOError };
 
 struct PassportError {
@@ -19,5 +21,7 @@ struct PassportData {
 };
 
 std::expected<PassportData, PassportError> read_passport(std::istream& is);
+
+} // namespace raster::passport
 
 #endif

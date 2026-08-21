@@ -8,6 +8,11 @@
 #include <print>
 #include <random>
 
+using namespace raster::common;
+using namespace raster::gen;
+
+namespace {
+
 void generate_ppm(const Args& args) {
     PpmWriter writer(std::cout, args.size, args.size);
     std::mt19937 rng(args.seed ? args.seed : 42);
@@ -52,6 +57,8 @@ void print_usage() {
 }
 
 void print_version() { std::println("gen_image {}", kVersion); }
+
+} // namespace
 
 int main(int argc, char** argv) {
     auto result = parse_args(argc, argv);

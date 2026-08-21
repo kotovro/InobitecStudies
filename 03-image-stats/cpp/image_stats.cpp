@@ -8,6 +8,11 @@
 #include <print>
 #include <string_view>
 
+using namespace raster::common;
+using namespace raster::stats;
+
+namespace {
+
 void print_usage() {
     std::println("Использование: image_stats");
     std::println();
@@ -22,6 +27,8 @@ void print_usage() {
 }
 
 void print_version() { std::println("image_stats {}", kVersion); }
+
+} // namespace
 
 int main(int argc, char** argv) {
     if (argc >= 2 && std::string_view(argv[1]) == "--help") {

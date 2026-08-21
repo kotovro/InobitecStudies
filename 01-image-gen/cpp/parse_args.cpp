@@ -4,7 +4,11 @@
 #include <cstring>
 #include <string_view>
 
-static std::expected<Args, ParseError> parse_args_old(int argc, char** argv) {
+namespace raster::gen {
+
+namespace {
+
+std::expected<Args, ParseError> parse_args_old(int argc, char** argv) {
     if (argc < 2) [[unlikely]]
         return std::unexpected(ParseError::kNoArg);
 
@@ -27,7 +31,7 @@ static std::expected<Args, ParseError> parse_args_old(int argc, char** argv) {
     return Args{.size = size, .pattern = pattern};
 }
 
-static std::expected<Args, ParseError> parse_args_new(int argc, char** argv) {
+std::expected<Args, ParseError> parse_args_new(int argc, char** argv) {
     if (argc < 3) [[unlikely]]
         return std::unexpected(ParseError::kNoArg);
 
@@ -50,6 +54,8 @@ static std::expected<Args, ParseError> parse_args_new(int argc, char** argv) {
     return result;
 }
 
+} // namespace
+
 std::expected<ParseResult, ParseError> parse_args(int argc, char** argv) {
     if (argc >= 2 && std::string_view(argv[1]) == "--help")
         return ParseResult{.request = ParseRequest::kHelp};
@@ -69,3 +75,5 @@ std::expected<ParseResult, ParseError> parse_args(int argc, char** argv) {
         return std::unexpected(args.error());
     return ParseResult{.args = *args};
 }
+
+} // namespace raster::gen

@@ -10,6 +10,11 @@
 #include "pixel_word.hpp"
 #include "read_passport.hpp"
 
+using namespace raster::common;
+using namespace raster::passport;
+
+namespace {
+
 void print_usage() {
     std::println("Использование: read_passport");
     std::println();
@@ -22,6 +27,8 @@ void print_usage() {
 }
 
 void print_version() { std::println("read_passport {}", kVersion); }
+
+} // namespace
 
 int main(int argc, char** argv) {
     if (argc >= 2 && std::string_view(argv[1]) == "--help") {

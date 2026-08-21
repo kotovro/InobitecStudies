@@ -4,6 +4,8 @@
 // Семантика sysexits: машинный канал для скриптов-обёрток.
 // Двухканальность: exit-код — категория, stderr — детали человеку.
 
+namespace raster::common {
+
 enum class ExitCode : int {
     kOk = 0,
     kUsage = 64,   // битые аргументы / usage
@@ -11,5 +13,7 @@ enum class ExitCode : int {
     kNoInput = 66, // пустой ввод / нет данных
     kIOErr = 74,   // сбой ввода-вывода
 };
+
+} // namespace raster::common
 
 #endif

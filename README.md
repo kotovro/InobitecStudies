@@ -145,12 +145,12 @@ build/01-image-gen/cpp/ppm_test.exe
 ```
 
 
-Acceptance — ручной прогон с эталоном через `fc`:
+Acceptance — ручной прогон с эталоном через `cmd /c fc`:
 ```powershell
 # gradient 3x3
 build\01-image-gen\ref\ref_gradient.exe 3 > build\test_data\gradient_3x3.ppm
 build\01-image-gen\c\gen_image.exe 3 gradient > build\actual.ppm
-fc build\actual.ppm build\test_data\gradient_3x3.ppm
+cmd /c fc build\actual.ppm build\test_data\gradient_3x3.ppm
 
 # error-кейсы (только exit-код; stderr — для человека)
 build\01-image-gen\c\gen_image.exe; $LASTEXITCODE        # -> 64
@@ -225,12 +225,12 @@ build/02-image-passport/c/passport_tests.exe # C
 build/02-image-passport/cpp/passport_tests.exe # C++
 ```
 
-Acceptance — эталон `ref_passport.exe`, ручное сравнение через `fc`:
+Acceptance — эталон `ref_passport.exe`, ручное сравнение через `cmd /c fc`:
 ```powershell
 # success-кейс: два слова + 1920
 "морской закат`n1920" | build\02-image-passport\cpp\passport.exe > build\actual.txt
 build\02-image-passport\ref\ref_passport.exe basic > build\expected.txt
-fc build\actual.txt build\expected.txt
+cmd /c fc build\actual.txt build\expected.txt
 echo $LASTEXITCODE # -> 0
 
 # error: пустое имя
@@ -312,7 +312,7 @@ build/03-image-stats/c/ppm_stats_test.exe   # compute_stats, luma
 build/03-image-stats/cpp/ppm_stats_test.exe # C++
 ```
 
-Acceptance — ручной прогон (конвейер + `fc`):
+Acceptance — ручной прогон (конвейер + `cmd /c fc`):
 ```powershell
 # эталон: ref_gradient | ref_stats
 build\01-image-gen\ref\ref_gradient.exe 2 | build\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_2x2.txt
@@ -321,7 +321,7 @@ build\01-image-gen\ref\ref_gradient.exe 2 | build\03-image-stats\ref\ref_stats.e
 build\01-image-gen\c\gen_image.exe 2 gradient | build\03-image-stats\c\image_stats.exe > build\actual.txt
 
 # сравнение
-fc build\actual.txt build\test_data\stats_gradient_2x2.txt
+cmd /c fc build\actual.txt build\test_data\stats_gradient_2x2.txt
 
 # error-кейсы (только exit-код)
 echo "" | build\03-image-stats\c\image_stats.exe; $LASTEXITCODE # -> 66
