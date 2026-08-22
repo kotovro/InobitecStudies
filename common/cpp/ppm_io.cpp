@@ -202,6 +202,33 @@ PpmWriteResult PpmWriter::putHeader() {
     return PpmWriteResult{};
 }
 
+PpmWriteResult PpmWriter::putAll(std::stringstream pixels, bool finalize) {
+    char buffer[3];
+
+    PpmWriteResult putResult
+    while (pixels.read(buffer, sizeof(buffer)) || pixels.gcount() > 0) {
+        if (pixels.gcount != 3) {
+            return PpmWriteResult{std::unexpected(PpmWriteError::kIOError),
+                                  "в потоке меньше 3 байт"};
+        }
+        putResult = this.put(buffer[0], buffer[1], buffer[2]);
+	if (!putResult.value) {
+            return putResult;		
+        }
+    }
+    if (filnalize) {
+      if (_total < capacity) {
+	return PpmWriteResult{std::unexpected(PpmWriteError::kNotEnoughPixels),
+                              std::format("попытка записать {} пикселей при размере {}x{}",
+                                          _total, _width, _height)};
+      }
+    } else {
+      pixels.clear(); 
+    }
+    return PpmWriteResult{};
+}
+
+namespace {
 PpmWriteResult PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
     if (!_header_written)
         return PpmWriteResult{std::unexpected(PpmWriteError::kIOError), "вызван put до putHeader"};
@@ -230,5 +257,5 @@ PpmWriteResult PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
 
     return PpmWriteResult{};
 }
-
+} // namespace
 } // namespace raster::common

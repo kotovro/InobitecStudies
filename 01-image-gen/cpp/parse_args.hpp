@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <expected>
+#include <span>
+#include <string_view>
 
 #include "../../common/cpp/exit_codes.hpp"
 
@@ -24,7 +26,7 @@ struct ParseResult {
     Args args{};
 };
 
-std::expected<ParseResult, ParseError> parse_args(int, char**);
+std::expected<ParseResult, ParseError> parse_args(std::span<const std::string_view> args);
 
 } // namespace raster::gen
 

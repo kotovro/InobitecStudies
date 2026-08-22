@@ -2,8 +2,10 @@
 #include "parse_args.hpp"
 #include "patterns.hpp"
 
+#include <array>
 #include <print>
 #include <random>
+#include <string_view>
 
 using namespace raster::gen;
 
@@ -23,9 +25,7 @@ void check(bool cond, std::string_view name, std::string_view detail = {}) {
 // ---- parse_args tests ----
 
 void test_parse_args_no_args() {
-    char arg0[] = "prog";
-    char* argv[] = {arg0};
-    auto r = parse_args(1, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog"}));
     check(!r.has_value(), "no args");
     if (r.has_value())
         return;
@@ -33,10 +33,7 @@ void test_parse_args_no_args() {
 }
 
 void test_parse_args_bad_number() {
-    char arg0[] = "prog";
-    char arg1[] = "abc";
-    char* argv[] = {arg0, arg1};
-    auto r = parse_args(2, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "abc"}));
     check(!r.has_value(), "abc -> error");
     if (r.has_value())
         return;
@@ -44,10 +41,7 @@ void test_parse_args_bad_number() {
 }
 
 void test_parse_args_trailing_garbage() {
-    char arg0[] = "prog";
-    char arg1[] = "4abc";
-    char* argv[] = {arg0, arg1};
-    auto r = parse_args(2, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "4abc"}));
     check(!r.has_value(), "4abc - error");
     if (r.has_value())
         return;
@@ -55,10 +49,7 @@ void test_parse_args_trailing_garbage() {
 }
 
 void test_parse_args_negative_number() {
-    char arg0[] = "prog";
-    char arg1[] = "-5";
-    char* argv[] = {arg0, arg1};
-    auto r = parse_args(2, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "-5"}));
     check(r.has_value(), "-5 - accepted (parse_args only)");
     if (!r.has_value())
         return;
@@ -67,11 +58,7 @@ void test_parse_args_negative_number() {
 }
 
 void test_parse_args_bad_pattern() {
-    char arg0[] = "prog";
-    char arg1[] = "5";
-    char arg2[] = "invalid";
-    char* argv[] = {arg0, arg1, arg2};
-    auto r = parse_args(3, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "5", "invalid"}));
     check(!r.has_value(), "invalid pattern error");
     if (r.has_value())
         return;
@@ -79,10 +66,7 @@ void test_parse_args_bad_pattern() {
 }
 
 void test_parse_args_default_pattern() {
-    char arg0[] = "prog";
-    char arg1[] = "5";
-    char* argv[] = {arg0, arg1};
-    auto r = parse_args(2, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "5"}));
     check(r.has_value(), "5 -> ok");
     if (!r.has_value())
         return;
@@ -91,11 +75,7 @@ void test_parse_args_default_pattern() {
 }
 
 void test_parse_args_checker() {
-    char arg0[] = "prog";
-    char arg1[] = "10";
-    char arg2[] = "checker";
-    char* argv[] = {arg0, arg1, arg2};
-    auto r = parse_args(3, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "10", "checker"}));
     check(r.has_value(), "10 checker ok");
     if (!r.has_value())
         return;
@@ -104,11 +84,7 @@ void test_parse_args_checker() {
 }
 
 void test_parse_args_radial() {
-    char arg0[] = "prog";
-    char arg1[] = "7";
-    char arg2[] = "radial";
-    char* argv[] = {arg0, arg1, arg2};
-    auto r = parse_args(3, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "7", "radial"}));
     check(r.has_value(), "7 radial ok");
     if (!r.has_value())
         return;
@@ -119,10 +95,7 @@ void test_parse_args_radial() {
 // ---- new CLI (--size N [--seed S]) tests ----
 
 void test_new_no_args() {
-    char arg0[] = "prog";
-    char arg1[] = "--size";
-    char* argv[] = {arg0, arg1};
-    auto r = parse_args(2, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--size"}));
     check(!r.has_value(), "--size alone -> error");
     if (r.has_value())
         return;
@@ -130,11 +103,7 @@ void test_new_no_args() {
 }
 
 void test_new_bad_size() {
-    char arg0[] = "prog";
-    char arg1[] = "--size";
-    char arg2[] = "abc";
-    char* argv[] = {arg0, arg1, arg2};
-    auto r = parse_args(3, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--size", "abc"}));
     check(!r.has_value(), "--size abc -> error");
     if (r.has_value())
         return;
@@ -142,11 +111,7 @@ void test_new_bad_size() {
 }
 
 void test_new_ok_no_seed() {
-    char arg0[] = "prog";
-    char arg1[] = "--size";
-    char arg2[] = "10";
-    char* argv[] = {arg0, arg1, arg2};
-    auto r = parse_args(3, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--size", "10"}));
     check(r.has_value(), "--size 10 ok");
     if (!r.has_value())
         return;
@@ -156,13 +121,7 @@ void test_new_ok_no_seed() {
 }
 
 void test_new_with_seed() {
-    char arg0[] = "prog";
-    char arg1[] = "--size";
-    char arg2[] = "5";
-    char arg3[] = "--seed";
-    char arg4[] = "42";
-    char* argv[] = {arg0, arg1, arg2, arg3, arg4};
-    auto r = parse_args(5, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--size", "5", "--seed", "42"}));
     check(r.has_value(), "--size 5 --seed 42 ok");
     if (!r.has_value())
         return;
@@ -173,13 +132,7 @@ void test_new_with_seed() {
 }
 
 void test_new_bad_seed() {
-    char arg0[] = "prog";
-    char arg1[] = "--size";
-    char arg2[] = "5";
-    char arg3[] = "--seed";
-    char arg4[] = "abc";
-    char* argv[] = {arg0, arg1, arg2, arg3, arg4};
-    auto r = parse_args(5, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--size", "5", "--seed", "abc"}));
     check(!r.has_value(), "--size 5 --seed abc -> error");
     if (r.has_value())
         return;
@@ -189,10 +142,7 @@ void test_new_bad_seed() {
 // ---- --help / --version tests ----
 
 void test_help() {
-    char arg0[] = "prog";
-    char arg1[] = "--help";
-    char* argv[] = {arg0, arg1};
-    auto r = parse_args(2, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--help"}));
     check(r.has_value(), "--help ok");
     if (!r.has_value())
         return;
@@ -200,10 +150,7 @@ void test_help() {
 }
 
 void test_version() {
-    char arg0[] = "prog";
-    char arg1[] = "--version";
-    char* argv[] = {arg0, arg1};
-    auto r = parse_args(2, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--version"}));
     check(r.has_value(), "--version ok");
     if (!r.has_value())
         return;
@@ -211,10 +158,7 @@ void test_version() {
 }
 
 void test_run_request() {
-    char arg0[] = "prog";
-    char arg1[] = "5";
-    char* argv[] = {arg0, arg1};
-    auto r = parse_args(2, argv);
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "5"}));
     check(r.has_value(), "5 ok");
     if (!r.has_value())
         return;

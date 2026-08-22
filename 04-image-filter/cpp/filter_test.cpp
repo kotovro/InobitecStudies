@@ -2,6 +2,7 @@
 
 #include "../../common/cpp/luma.hpp"
 
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -9,6 +10,7 @@
 #include <print>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 using namespace raster::common;
@@ -113,37 +115,24 @@ void test_threshold_edge() {
 // -------------------------------------------------------------------
 
 void test_parse_no_args() {
-    char a0[] = "prog";
-    char* argv[] = {a0};
-    auto r = parse_filter_args(1, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog"}));
     check(!r.has_value(), "no args -> nullopt");
 }
 
 void test_parse_grayscale() {
-    char a0[] = "prog";
-    char a1[] = "--grayscale";
-    char* argv[] = {a0, a1};
-    auto r = parse_filter_args(2, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--grayscale"}));
     check(r.has_value(), "--grayscale -> ok");
     if (r.has_value())
         check(r->args.mode == FilterMode::kGrayscale, "--grayscale mode");
 }
 
 void test_parse_grayscale_with_arg() {
-    char a0[] = "prog";
-    char a1[] = "--grayscale";
-    char a2[] = "extra";
-    char* argv[] = {a0, a1, a2};
-    auto r = parse_filter_args(3, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--grayscale", "extra"}));
     check(!r.has_value(), "--grayscale extra -> error");
 }
 
 void test_parse_threshold_ok() {
-    char a0[] = "prog";
-    char a1[] = "--threshold";
-    char a2[] = "128";
-    char* argv[] = {a0, a1, a2};
-    auto r = parse_filter_args(3, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold", "128"}));
     check(r.has_value(), "--threshold 128 -> ok");
     if (r.has_value()) {
         check(r->args.mode == FilterMode::kThreshold, "--threshold 128 mode");
@@ -152,95 +141,60 @@ void test_parse_threshold_ok() {
 }
 
 void test_parse_threshold_edge_low() {
-    char a0[] = "prog";
-    char a1[] = "--threshold";
-    char a2[] = "0";
-    char* argv[] = {a0, a1, a2};
-    auto r = parse_filter_args(3, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold", "0"}));
     check(r.has_value(), "--threshold 0 -> ok");
     if (r.has_value())
         check(r->args.threshold == 0, "--threshold 0 value");
 }
 
 void test_parse_threshold_edge_high() {
-    char a0[] = "prog";
-    char a1[] = "--threshold";
-    char a2[] = "255";
-    char* argv[] = {a0, a1, a2};
-    auto r = parse_filter_args(3, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold", "255"}));
     check(r.has_value(), "--threshold 255 -> ok");
     if (r.has_value())
         check(r->args.threshold == 255, "--threshold 255 value");
 }
 
 void test_parse_threshold_no_arg() {
-    char a0[] = "prog";
-    char a1[] = "--threshold";
-    char* argv[] = {a0, a1};
-    auto r = parse_filter_args(2, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold"}));
     check(!r.has_value(), "--threshold alone -> error");
 }
 
 void test_parse_threshold_not_a_number() {
-    char a0[] = "prog";
-    char a1[] = "--threshold";
-    char a2[] = "abc";
-    char* argv[] = {a0, a1, a2};
-    auto r = parse_filter_args(3, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold", "abc"}));
     check(!r.has_value(), "--threshold abc -> error");
 }
 
 void test_parse_threshold_out_of_range_low() {
-    char a0[] = "prog";
-    char a1[] = "--threshold";
-    char a2[] = "-1";
-    char* argv[] = {a0, a1, a2};
-    auto r = parse_filter_args(3, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold", "-1"}));
     check(!r.has_value(), "--threshold -1 -> error");
 }
 
 void test_parse_threshold_out_of_range_high() {
-    char a0[] = "prog";
-    char a1[] = "--threshold";
-    char a2[] = "256";
-    char* argv[] = {a0, a1, a2};
-    auto r = parse_filter_args(3, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold", "256"}));
     check(!r.has_value(), "--threshold 256 -> error");
 }
 
 void test_parse_unknown_arg() {
-    char a0[] = "prog";
-    char a1[] = "--blur";
-    char* argv[] = {a0, a1};
-    auto r = parse_filter_args(2, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--blur"}));
     check(!r.has_value(), "--blur -> error");
 }
 
 void test_parse_help() {
-    char a0[] = "prog";
-    char a1[] = "--help";
-    char* argv[] = {a0, a1};
-    auto r = parse_filter_args(2, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--help"}));
     check(r.has_value(), "--help -> ok");
     if (r.has_value())
         check(r->request == FilterRequest::kHelp, "--help kHelp");
 }
 
 void test_parse_version() {
-    char a0[] = "prog";
-    char a1[] = "--version";
-    char* argv[] = {a0, a1};
-    auto r = parse_filter_args(2, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--version"}));
     check(r.has_value(), "--version -> ok");
     if (r.has_value())
         check(r->request == FilterRequest::kVersion, "--version kVersion");
 }
 
 void test_parse_run_request() {
-    char a0[] = "prog";
-    char a1[] = "--grayscale";
-    char* argv[] = {a0, a1};
-    auto r = parse_filter_args(2, argv);
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--grayscale"}));
     check(r.has_value(), "--grayscale -> ok");
     if (r.has_value())
         check(r->request == FilterRequest::kRun, "--grayscale kRun");
@@ -255,11 +209,9 @@ void test_run_filter_grayscale() {
                                            "0 0 0 255 0 0\n"
                                            "0 255 0 0 0 255\n");
     auto output_stream = std::ostringstream();
-    char a0[] = "prog";
-    char a1[] = "--grayscale";
-    char* argv[] = {a0, a1};
 
-    int code = run_filter(2, argv, input_stream, output_stream);
+    int code = run_filter(std::to_array<std::string_view>({"prog", "--grayscale"}), input_stream,
+                          output_stream);
     check(code == 0, "run_filter --grayscale -> exit 0");
 
     auto roundtrip_input = std::istringstream(output_stream.str());
@@ -281,12 +233,9 @@ void test_run_filter_threshold() {
     auto input_stream = std::istringstream("P3\n2 1\n255\n"
                                            "0 0 0 128 128 128\n");
     auto output_stream = std::ostringstream();
-    char a0[] = "prog";
-    char a1[] = "--threshold";
-    char a2[] = "100";
-    char* argv[] = {a0, a1, a2};
 
-    int code = run_filter(3, argv, input_stream, output_stream);
+    int code = run_filter(std::to_array<std::string_view>({"prog", "--threshold", "100"}),
+                          input_stream, output_stream);
     check(code == 0, "run_filter --threshold -> exit 0");
 
     auto roundtrip_input = std::istringstream(output_stream.str());
@@ -303,44 +252,36 @@ void test_run_filter_threshold() {
 void test_run_filter_empty_input() {
     auto input_stream = std::istringstream("");
     auto output_stream = std::ostringstream();
-    char a0[] = "prog";
-    char a1[] = "--grayscale";
-    char* argv[] = {a0, a1};
 
-    int code = run_filter(2, argv, input_stream, output_stream);
+    int code = run_filter(std::to_array<std::string_view>({"prog", "--grayscale"}), input_stream,
+                          output_stream);
     check(code == std::to_underlying(ExitCode::kNoInput), "run_filter empty input -> kNoInput");
 }
 
 void test_run_filter_bad_ppm() {
     auto input_stream = std::istringstream("not a ppm");
     auto output_stream = std::ostringstream();
-    char a0[] = "prog";
-    char a1[] = "--grayscale";
-    char* argv[] = {a0, a1};
 
-    int code = run_filter(2, argv, input_stream, output_stream);
+    int code = run_filter(std::to_array<std::string_view>({"prog", "--grayscale"}), input_stream,
+                          output_stream);
     check(code == std::to_underlying(ExitCode::kData), "run_filter bad ppm -> kData");
 }
 
 void test_run_filter_bad_args() {
     auto input_stream = std::istringstream("P3\n1 1\n255\n0 0 0\n");
     auto output_stream = std::ostringstream();
-    char a0[] = "prog";
-    char a1[] = "--invalid";
-    char* argv[] = {a0, a1};
 
-    int code = run_filter(2, argv, input_stream, output_stream);
+    int code = run_filter(std::to_array<std::string_view>({"prog", "--invalid"}), input_stream,
+                          output_stream);
     check(code == std::to_underlying(ExitCode::kUsage), "run_filter bad args -> kUsage");
 }
 
 void test_run_filter_help() {
     auto input_stream = std::istringstream("");
     auto output_stream = std::ostringstream();
-    char a0[] = "prog";
-    char a1[] = "--help";
-    char* argv[] = {a0, a1};
 
-    int code = run_filter(2, argv, input_stream, output_stream);
+    int code = run_filter(std::to_array<std::string_view>({"prog", "--help"}), input_stream,
+                          output_stream);
     check(code == std::to_underlying(ExitCode::kOk), "run_filter --help -> exit 0");
     check(output_stream.str().find("Использование:") != std::string::npos,
           "run_filter --help: usage in stdout");
@@ -349,11 +290,9 @@ void test_run_filter_help() {
 void test_run_filter_version() {
     auto input_stream = std::istringstream("");
     auto output_stream = std::ostringstream();
-    char a0[] = "prog";
-    char a1[] = "--version";
-    char* argv[] = {a0, a1};
 
-    int code = run_filter(2, argv, input_stream, output_stream);
+    int code = run_filter(std::to_array<std::string_view>({"prog", "--version"}), input_stream,
+                          output_stream);
     check(code == std::to_underlying(ExitCode::kOk), "run_filter --version -> exit 0");
     check(output_stream.str().find("filter") != std::string::npos,
           "run_filter --version: name in stdout");

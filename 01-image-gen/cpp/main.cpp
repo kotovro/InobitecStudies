@@ -7,7 +7,9 @@
 #include <iostream>
 #include <print>
 #include <random>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 using namespace raster::common;
 using namespace raster::gen;
@@ -69,7 +71,12 @@ void print_version() { std::println("gen_image {}", kVersion); }
 } // namespace
 
 int main(int argc, char** argv) {
-    auto result = parse_args(argc, argv);
+    std::vector<std::string_view> argv_views;
+    argv_views.reserve(argc);
+    for (int i = 0; i < argc; ++i)
+        argv_views.emplace_back(argv[i]);
+
+    auto result = parse_args(argv_views);
     if (!result) [[unlikely]] {
         switch (result.error()) {
         case ParseError::kNoArg:
