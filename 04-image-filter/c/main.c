@@ -2,6 +2,4 @@
 
 #include <stdlib.h>
 
-int main(int argc, char** argv) {
-    return run_filter(argc, argv, stdin, stdout);
-}
+int main(int argc, char** argv) { return run_filter(argc, argv, stdin, stdout); }

@@ -1,5 +1,6 @@
 #include "ppm_io.hpp"
 
+#include <array>
 #include <cstdlib>
 #include <print>
 #include <sstream>
@@ -193,10 +194,9 @@ void test_writer_basic() {
     {
         PpmWriter pw(ss, 2, 2);
         check(pw.putHeader().value.has_value(), "writer header ok");
-        pw.put(static_cast<uint8_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(0));
-        pw.put(static_cast<uint8_t>(255), static_cast<uint8_t>(0), static_cast<uint8_t>(0));
-        pw.put(static_cast<uint8_t>(0), static_cast<uint8_t>(255), static_cast<uint8_t>(0));
-        pw.put(static_cast<uint8_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(255));
+        auto pixels = std::to_array<Pixel>({{0, 0, 0}, {255, 0, 0}, {0, 255, 0}, {0, 0, 255}});
+        auto r = pw.putAll(pixels, /*finalize=*/true);
+        check(r.value.has_value(), "writer basic putAll ok");
     }
     auto out = ss.str();
     check(!out.empty(), "writer produced output");
@@ -210,10 +210,10 @@ void test_writer_read_roundtrip() {
     {
         PpmWriter pw(ss, 2, 2);
         check(pw.putHeader().value.has_value(), "roundtrip: header ok");
-        pw.put(static_cast<uint8_t>(10), static_cast<uint8_t>(20), static_cast<uint8_t>(30));
-        pw.put(static_cast<uint8_t>(40), static_cast<uint8_t>(50), static_cast<uint8_t>(60));
-        pw.put(static_cast<uint8_t>(70), static_cast<uint8_t>(80), static_cast<uint8_t>(90));
-        pw.put(static_cast<uint8_t>(100), static_cast<uint8_t>(110), static_cast<uint8_t>(120));
+        auto pixels =
+            std::to_array<Pixel>({{10, 20, 30}, {40, 50, 60}, {70, 80, 90}, {100, 110, 120}});
+        auto r = pw.putAll(pixels, /*finalize=*/true);
+        check(r.value.has_value(), "roundtrip: putAll ok");
     }
     auto written = ss.str();
 
@@ -237,9 +237,9 @@ void test_writer_format_no_trailing_space() {
     {
         PpmWriter pw(ss, 3, 1);
         check(pw.putHeader().value.has_value(), "format: header ok");
-        pw.put(static_cast<uint8_t>(1), static_cast<uint8_t>(2), static_cast<uint8_t>(3));
-        pw.put(static_cast<uint8_t>(4), static_cast<uint8_t>(5), static_cast<uint8_t>(6));
-        pw.put(static_cast<uint8_t>(7), static_cast<uint8_t>(8), static_cast<uint8_t>(9));
+        auto pixels = std::to_array<Pixel>({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}});
+        auto r = pw.putAll(pixels, /*finalize=*/true);
+        check(r.value.has_value(), "format: putAll ok");
     }
     auto out = ss.str();
     auto nl = out.rfind('\n');
@@ -257,20 +257,20 @@ void test_writer_format_no_trailing_space() {
 void test_writer_put_before_header() {
     auto ss = std::ostringstream();
     PpmWriter pw(ss, 2, 2);
-    auto r = pw.put(static_cast<uint8_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(0));
-    check(!r.value.has_value(), "put before header -> error");
+    auto pixels = std::to_array<Pixel>({{0, 0, 0}});
+    auto r = pw.putAll(pixels, /*finalize=*/true);
+    check(!r.value.has_value(), "putAll before header -> error");
     if (!r.value.has_value())
-        check(r.value.error() == PpmWriteError::kIOError, "put before header -> kIOError");
-    check(ss.str().empty(), "put before header -> nothing written");
+        check(r.value.error() == PpmWriteError::kIOError, "putAll before header -> kIOError");
+    check(ss.str().empty(), "putAll before header -> nothing written");
 }
 
 void test_writer_too_many_pixels() {
     auto ss = std::ostringstream();
     PpmWriter pw(ss, 2, 1);
     check(pw.putHeader().value.has_value(), "overflow: header ok");
-    pw.put(static_cast<uint8_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(0));
-    pw.put(static_cast<uint8_t>(1), static_cast<uint8_t>(1), static_cast<uint8_t>(1));
-    auto r = pw.put(static_cast<uint8_t>(2), static_cast<uint8_t>(2), static_cast<uint8_t>(2));
+    auto pixels = std::to_array<Pixel>({{0, 0, 0}, {1, 1, 1}, {2, 2, 2}});
+    auto r = pw.putAll(pixels, /*finalize=*/true);
     check(!r.value.has_value(), "overflow -> error");
     if (!r.value.has_value())
         check(r.value.error() == PpmWriteError::kTooManyPixels, "overflow -> kTooManyPixels");
@@ -281,15 +281,36 @@ void test_writer_1x1() {
     PpmWriter pw(ss, 1, 1);
     check(pw.putHeader().value.has_value(), "1x1: header ok");
 
-    auto first = pw.put(static_cast<uint8_t>(7), static_cast<uint8_t>(8), static_cast<uint8_t>(9));
+    auto pixels = std::to_array<Pixel>({{7, 8, 9}});
+    auto first = pw.putAll(pixels, /*finalize=*/true);
     check(first.value.has_value(), "1x1: first pixel ok");
     check(ss.str().find("  7   8   9") != std::string::npos, "1x1: pixel written");
 
-    auto second = pw.put(static_cast<uint8_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(0));
+    auto second = pw.putAll(pixels, /*finalize=*/true);
     check(!second.value.has_value(), "1x1: second pixel -> error");
     if (!second.value.has_value())
         check(second.value.error() == PpmWriteError::kTooManyPixels,
               "1x1: second pixel -> kTooManyPixels");
+}
+
+void test_writer_not_enough_pixels() {
+    auto ss = std::ostringstream();
+    PpmWriter pw(ss, 2, 2);
+    check(pw.putHeader().value.has_value(), "not enough: header ok");
+    auto pixels = std::to_array<Pixel>({{0, 0, 0}, {1, 1, 1}, {2, 2, 2}});
+    auto r = pw.putAll(pixels, /*finalize=*/true);
+    check(!r.value.has_value(), "not enough -> error");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmWriteError::kNotEnoughPixels, "not enough -> kNotEnoughPixels");
+}
+
+void test_writer_finalize_false_no_check() {
+    auto ss = std::ostringstream();
+    PpmWriter pw(ss, 2, 2);
+    check(pw.putHeader().value.has_value(), "finalize=false: header ok");
+    auto pixels = std::to_array<Pixel>({{0, 0, 0}, {1, 1, 1}, {2, 2, 2}});
+    auto r = pw.putAll(pixels, /*finalize=*/false);
+    check(r.value.has_value(), "finalize=false -> no error");
 }
 
 void test_writer_stream_error() {
@@ -337,6 +358,8 @@ int main() {
     test_writer_put_before_header();
     test_writer_too_many_pixels();
     test_writer_1x1();
+    test_writer_not_enough_pixels();
+    test_writer_finalize_false_no_check();
     test_writer_stream_error();
 
     std::println("---");

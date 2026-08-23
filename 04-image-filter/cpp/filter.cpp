@@ -144,16 +144,15 @@ int run_filter(std::span<const std::string_view> args, std::istream& input, std:
         std::println(stderr, "{}", header.diagnostic);
         return std::to_underlying(ExitCode::kIOErr);
     }
-    for (const auto& pixel : image.pixels()) {
-        auto res = writer.put(pixel.r, pixel.g, pixel.b);
-        if (!res.value) {
-            std::println(stderr, "{}", res.diagnostic);
-            switch (res.value.error()) {
-            case PpmWriteError::kIOError:
-                return std::to_underlying(ExitCode::kIOErr);
-            case PpmWriteError::kTooManyPixels:
-                return std::to_underlying(ExitCode::kData);
-            }
+    auto res = writer.putAll(image.pixels(), /*finalize=*/true);
+    if (!res.value) {
+        std::println(stderr, "{}", res.diagnostic);
+        switch (res.value.error()) {
+        case PpmWriteError::kIOError:
+            return std::to_underlying(ExitCode::kIOErr);
+        case PpmWriteError::kTooManyPixels:
+        case PpmWriteError::kNotEnoughPixels:
+            return std::to_underlying(ExitCode::kData);
         }
     }
 

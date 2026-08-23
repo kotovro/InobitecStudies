@@ -83,9 +83,11 @@ class KV_API PpmWriter {
   public:
     PpmWriter(std::ostream& os, int32_t width, int32_t height, uint16_t max_val = kMaxChannel);
     PpmWriteResult putHeader();
-  PpmWriteResult PpmWriter::putAll(std::stringstream pixels)
+    PpmWriteResult putAll(std::span<const Pixel> pixels, bool finalize = false);
 
-      private : std::ostream& _os;
+  private:
+    PpmWriteResult put(uint8_t r, uint8_t g, uint8_t b);
+    std::ostream& _os;
     int32_t _width;
     int32_t _height;
     uint16_t _max_val;
@@ -93,8 +95,6 @@ class KV_API PpmWriter {
     std::int64_t _total = 0;
     bool _header_written = false;
     int32_t _col = 0;
-
-    PpmWriteResult put(uint8_t r, uint8_t g, uint8_t b);
 };
 
 } // namespace raster::common

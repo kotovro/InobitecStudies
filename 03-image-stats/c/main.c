@@ -49,4 +49,4 @@ int main(int argc, char** argv) {
 
     ppm_image_free(&result.image);
     return EC_OK;
-}               
+}

@@ -22,6 +22,9 @@ PpmWriteResult generate_ppm(const Args& args) {
     if (!header.value)
         return header;
 
+    std::vector<Pixel> pixels;
+    pixels.reserve(static_cast<std::size_t>(args.size) * static_cast<std::size_t>(args.size));
+
     std::mt19937 rng(args.seed ? args.seed : 42);
     for (int32_t y = 0; y < args.size; ++y) {
         for (int32_t x = 0; x < args.size; ++x) {
@@ -41,11 +44,13 @@ PpmWriteResult generate_ppm(const Args& args) {
                 c = random_pixel(rng);
                 break;
             }
-            auto res = writer.put(c.r, c.g, c.b);
-            if (!res.value)
-                return res;
+            pixels.push_back({c.r, c.g, c.b});
         }
     }
+
+    auto res = writer.putAll(pixels, /*finalize=*/true);
+    if (!res.value)
+        return res;
     return PpmWriteResult{};
 }
 
@@ -125,6 +130,7 @@ int main(int argc, char** argv) {
         case PpmWriteError::kIOError:
             return std::to_underlying(ExitCode::kIOErr);
         case PpmWriteError::kTooManyPixels:
+        case PpmWriteError::kNotEnoughPixels:
             return std::to_underlying(ExitCode::kData);
         }
     }
