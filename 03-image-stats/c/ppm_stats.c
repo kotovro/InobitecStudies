@@ -53,11 +53,11 @@ void ppm_print_stats(const struct Stats* s, FILE* out) {
     int32_t avg_b = (int32_t)((double)s->total_b / s->pixel_count + 0.5);
 
     fprintf(out, "%dx%d\n", s->width, s->height);
-    fprintf(out, "ÔËÍÒÂÎÂÈ: %lld\n", s->pixel_count);
-    fprintf(out, "ÒÂ‰ÌËÈ ˆ‚ÂÚ: %3d %3d %3d\n", avg_r, avg_g, avg_b);
-    fprintf(out, "ÏËÌ. ˇÍÓÒÚ¸: %.1f\n", s->y_min);
-    fprintf(out, "Ï‡ÍÒ. ˇÍÓÒÚ¸: %.1f\n", s->y_max);
-    fprintf(out, "„ËÒÚÓ„‡ÏÏ‡ ˇÍÓÒÚË:\n");
+    fprintf(out, "–ø–∏–∫—Å–µ–ª–µ–π: %lld\n", s->pixel_count);
+    fprintf(out, "—Å—Ä–µ–¥–Ω–∏–π —Ü–≤–µ—Ç: %3d %3d %3d\n", avg_r, avg_g, avg_b);
+    fprintf(out, "–º–∏–Ω. —è—Ä–∫–æ—Å—Ç—å: %.1f\n", s->y_min);
+    fprintf(out, "–º–∞–∫—Å. —è—Ä–∫–æ—Å—Ç—å: %.1f\n", s->y_max);
+    fprintf(out, "–≥–∏—Å—Ç–æ–≥—Ä–∞–º–º–∞ —è—Ä–∫–æ—Å—Ç–∏:\n");
 
     for (int32_t i = 0; i < 8; ++i) {
         double bin_width = (double)(s->max_val + 1) / 8.0;

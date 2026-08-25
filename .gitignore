@@ -12,4 +12,6 @@
 *.png
 *.ppm
 *.txt
+!CMakeLists.txt
+
 build/

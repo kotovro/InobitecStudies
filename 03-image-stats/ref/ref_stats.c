@@ -1,5 +1,4 @@
 #include <errno.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,9 +9,7 @@ static char* line_buf = NULL;
 static size_t line_cap = 0;
 static char* line_pos = NULL;
 
-static int is_space(int c) {
-    return c == ' ' || c == '\t' || c == '\r' || c == '\n';
-}
+static int is_space(int c) { return c == ' ' || c == '\t' || c == '\r' || c == '\n'; }
 
 static int read_line(void) {
     size_t len = 0;
@@ -74,8 +71,6 @@ static int parse_int(const char* s, long long* out) {
 }
 
 int main(void) {
-    setlocale(LC_ALL, "Russian_Russia.1251");
-
     const char* magic = next_token();
     if (!magic) {
         fprintf(stderr, "no input\n");

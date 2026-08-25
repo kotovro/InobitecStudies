@@ -6,6 +6,8 @@
 
 #include "../../common/cpp/ppm_io.hpp"
 
+namespace raster::stats {
+
 struct Stats {
     int32_t width{};
     int32_t height{};
@@ -19,7 +21,9 @@ struct Stats {
     int32_t histogram[8]{};
 };
 
-Stats compute_stats(const Image& img);
+Stats compute_stats(const raster::common::Image& img);
 void ppm_print_stats(const Stats& s, std::ostream& os);
+
+} // namespace raster::stats
 
 #endif

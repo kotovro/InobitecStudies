@@ -5,8 +5,10 @@
 #include <print>
 #include <string>
 
+namespace raster::passport {
+
 std::expected<PassportData, PassportError> read_passport(std::istream& is) {
-    std::println("Введите название изображения: ");
+    std::println("Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ: ");
 
     std::string name;
     std::getline(is, name);
@@ -30,7 +32,7 @@ std::expected<PassportData, PassportError> read_passport(std::istream& is) {
     if (name.empty()) [[unlikely]]
         return std::unexpected(PassportError{PassportErrorKind::kEmptyName, {}});
 
-    std::println("Введите количество пикселей: ");
+    std::println("Р’РІРµРґРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№: ");
 
     std::string count_str;
     std::getline(is, count_str);
@@ -51,3 +53,5 @@ std::expected<PassportData, PassportError> read_passport(std::istream& is) {
 
     return PassportData{std::move(name), count};
 }
+
+} // namespace raster::passport

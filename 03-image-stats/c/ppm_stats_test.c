@@ -1,11 +1,10 @@
 #include "ppm_stats.h"
 
-#include <locale.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-// luma объявлена в ppm_stats.c
+// luma пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ ppm_stats.c
 double luma(int32_t r, int32_t g, int32_t b);
 
 static int failed = 0;
@@ -102,8 +101,6 @@ static void test_luma(void) {
 // main
 
 int main(void) {
-    setlocale(LC_ALL, "Russian_Russia.1251");
-
     printf("--- compute_stats tests ---\n");
     test_stats_known();
     test_stats_comments();

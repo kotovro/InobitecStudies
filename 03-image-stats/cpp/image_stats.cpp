@@ -5,36 +5,41 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <locale>
 #include <print>
 #include <string_view>
+#include <utility>
+
+using namespace raster::common;
+using namespace raster::stats;
+
+namespace {
 
 void print_usage() {
-    std::println("Èñïîëüçîâàíèå: image_stats");
+    std::println("Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ðµ: image_stats");
     std::println();
-    std::println("×èòàåò PPM P3 èç stdin äî EOF, âûâîäèò ñòàòèñòèêó:");
-    std::println("  ðàçìåðû, ÷èñëî ïèêñåëåé, ñðåäíèé öâåò, ÿðêîñòü, ãèñòîãðàììà");
+    std::println("Ð§Ð¸Ñ‚Ð°ÐµÑ‚ PPM P3 Ð¸Ð· stdin Ð´Ð¾ EOF, Ð²Ñ‹Ð²Ð¾Ð´Ð¸Ñ‚ ÑÑ‚Ð°Ñ‚Ð¸ÑÑ‚Ð¸ÐºÑƒ:");
+    std::println("  Ñ€Ð°Ð·Ð¼ÐµÑ€Ñ‹, Ñ‡Ð¸ÑÐ»Ð¾ Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹, ÑÑ€ÐµÐ´Ð½Ð¸Ð¹ Ñ†Ð²ÐµÑ‚, ÑÑ€ÐºÐ¾ÑÑ‚ÑŒ, Ð³Ð¸ÑÑ‚Ð¾Ð³Ñ€Ð°Ð¼Ð¼Ð°");
     std::println();
-    std::println("Ðàáîòàåò â êîíâåéåðå: gen_image | image_stats");
+    std::println("Ð Ð°Ð±Ð¾Ñ‚Ð°ÐµÑ‚ Ð² ÐºÐ¾Ð½Ð²ÐµÐ¹ÐµÑ€Ðµ: gen_image | image_stats");
     std::println();
-    std::println("Îïöèè:");
-    std::println("  --help      ïîêàçàòü ñïðàâêó");
-    std::println("  --version   ïîêàçàòü âåðñèþ");
+    std::println("ÐžÐ¿Ñ†Ð¸Ð¸:");
+    std::println("  --help      Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ ÑÐ¿Ñ€Ð°Ð²ÐºÑƒ");
+    std::println("  --version   Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð²ÐµÑ€ÑÐ¸ÑŽ");
 }
 
 void print_version() { std::println("image_stats {}", kVersion); }
 
-int main(int argc, char** argv) {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
+} // namespace
 
+int main(int argc, char** argv) {
     if (argc >= 2 && std::string_view(argv[1]) == "--help") {
         print_usage();
-        return (int)ExitCode::kOk;
+        return std::to_underlying(ExitCode::kOk);
     }
 
     if (argc >= 2 && std::string_view(argv[1]) == "--version") {
         print_version();
-        return (int)ExitCode::kOk;
+        return std::to_underlying(ExitCode::kOk);
     }
 
     auto result = Image::read(std::cin);
@@ -42,15 +47,15 @@ int main(int argc, char** argv) {
         std::println(stderr, "{}", result.diagnostic);
         switch (result.value.error()) {
         case PpmReadError::kEmptyInput:
-            return (int)ExitCode::kNoInput;
+            return std::to_underlying(ExitCode::kNoInput);
         case PpmReadError::kIOError:
-            return (int)ExitCode::kIOErr;
+            return std::to_underlying(ExitCode::kIOErr);
         default:
-            return (int)ExitCode::kData;
+            return std::to_underlying(ExitCode::kData);
         }
     }
 
     Stats stats = compute_stats(*result.value);
     ppm_print_stats(stats, std::cout);
-    return (int)ExitCode::kOk;
+    return std::to_underlying(ExitCode::kOk);
 }

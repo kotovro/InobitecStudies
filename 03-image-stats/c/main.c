@@ -3,29 +3,26 @@
 #include "../../common/c/exit_codes.h"
 #include "../../common/c/version.h"
 
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 void print_usage(void) {
-    printf("Èñïîëüçîâàíèå: image_stats\n");
+    printf("Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ðµ: image_stats\n");
     printf("\n");
-    printf("×èòàåò PPM P3 èç stdin äî EOF, âûâîäèò ñòàòèñòèêó:\n");
-    printf("  ðàçìåðû, ÷èñëî ïèêñåëåé, ñðåäíèé öâåò, ÿðêîñòü, ãèñòîãðàììà\n");
+    printf("Ð§Ð¸Ñ‚Ð°ÐµÑ‚ PPM P3 Ð¸Ð· stdin Ð´Ð¾ EOF, Ð²Ñ‹Ð²Ð¾Ð´Ð¸Ñ‚ ÑÑ‚Ð°Ñ‚Ð¸ÑÑ‚Ð¸ÐºÑƒ:\n");
+    printf("  Ñ€Ð°Ð·Ð¼ÐµÑ€Ñ‹, Ñ‡Ð¸ÑÐ»Ð¾ Ð¿Ð¸ÐºÑÐµÐ»ÐµÐ¹, ÑÑ€ÐµÐ´Ð½Ð¸Ð¹ Ñ†Ð²ÐµÑ‚, ÑÑ€ÐºÐ¾ÑÑ‚ÑŒ, Ð³Ð¸ÑÑ‚Ð¾Ð³Ñ€Ð°Ð¼Ð¼Ð°\n");
     printf("\n");
-    printf("Ðàáîòàåò â êîíâåéåðå: gen_image | image_stats\n");
+    printf("Ð Ð°Ð±Ð¾Ñ‚Ð°ÐµÑ‚ Ð² ÐºÐ¾Ð½Ð²ÐµÐ¹ÐµÑ€Ðµ: gen_image | image_stats\n");
     printf("\n");
-    printf("Îïöèè:\n");
-    printf("  --help      ïîêàçàòü ñïðàâêó\n");
-    printf("  --version   ïîêàçàòü âåðñèþ\n");
+    printf("ÐžÐ¿Ñ†Ð¸Ð¸:\n");
+    printf("  --help      Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ ÑÐ¿Ñ€Ð°Ð²ÐºÑƒ\n");
+    printf("  --version   Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð²ÐµÑ€ÑÐ¸ÑŽ\n");
 }
 
 void print_version(void) { printf("image_stats %s\n", KV_VERSION); }
 
 int main(int argc, char** argv) {
-    setlocale(LC_ALL, "Russian_Russia.1251");
-
     if (argc >= 2 && strcmp(argv[1], "--help") == 0) {
         print_usage();
         return EC_OK;

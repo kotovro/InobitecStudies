@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void print_prompt1(void) { printf("Введите название изображения: \n"); }
+static void print_prompt1(void) { printf("Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ: \n"); }
 
-static void print_prompt2(void) { printf("Введите количество пикселей: \n"); }
+static void print_prompt2(void) { printf("Р’РІРµРґРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№: \n"); }
 
 static void print_result(const char* name, int count, const char* word) {
-    printf("Изображение \xAB%s\xBB: %d %s.\n", name, count, word);
+    printf("РР·РѕР±СЂР°Р¶РµРЅРёРµ \xAB%s\xBB: %d %s.\n", name, count, word);
 }
 
 int main(int argc, char* argv[]) {
@@ -21,131 +21,131 @@ int main(int argc, char* argv[]) {
     if (strcmp(tc, "basic") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("морской закат", 1920, "пикселей");
+        print_result("РјРѕСЂСЃРєРѕР№ Р·Р°РєР°С‚", 1920, "РїРёРєСЃРµР»РµР№");
         return 0;
     }
     if (strcmp(tc, "single_1") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 1, "пиксель");
+        print_result("С‚РµСЃС‚", 1, "РїРёРєСЃРµР»СЊ");
         return 0;
     }
     if (strcmp(tc, "plural_2") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 2, "пикселя");
+        print_result("С‚РµСЃС‚", 2, "РїРёРєСЃРµР»СЏ");
         return 0;
     }
     if (strcmp(tc, "plural_3") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 3, "пикселя");
+        print_result("С‚РµСЃС‚", 3, "РїРёРєСЃРµР»СЏ");
         return 0;
     }
     if (strcmp(tc, "plural_4") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 4, "пикселя");
+        print_result("С‚РµСЃС‚", 4, "РїРёРєСЃРµР»СЏ");
         return 0;
     }
     if (strcmp(tc, "plural_5") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 5, "пикселей");
+        print_result("С‚РµСЃС‚", 5, "РїРёРєСЃРµР»РµР№");
         return 0;
     }
     if (strcmp(tc, "plural_10") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 10, "пикселей");
+        print_result("С‚РµСЃС‚", 10, "РїРёРєСЃРµР»РµР№");
         return 0;
     }
     if (strcmp(tc, "plural_11") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 11, "пикселей");
+        print_result("С‚РµСЃС‚", 11, "РїРёРєСЃРµР»РµР№");
         return 0;
     }
     if (strcmp(tc, "plural_12") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 12, "пикселей");
+        print_result("С‚РµСЃС‚", 12, "РїРёРєСЃРµР»РµР№");
         return 0;
     }
     if (strcmp(tc, "plural_14") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 14, "пикселей");
+        print_result("С‚РµСЃС‚", 14, "РїРёРєСЃРµР»РµР№");
         return 0;
     }
     if (strcmp(tc, "plural_20") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 20, "пикселей");
+        print_result("С‚РµСЃС‚", 20, "РїРёРєСЃРµР»РµР№");
         return 0;
     }
     if (strcmp(tc, "plural_21") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 21, "пиксель");
+        print_result("С‚РµСЃС‚", 21, "РїРёРєСЃРµР»СЊ");
         return 0;
     }
     if (strcmp(tc, "plural_22") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 22, "пикселя");
+        print_result("С‚РµСЃС‚", 22, "РїРёРєСЃРµР»СЏ");
         return 0;
     }
     if (strcmp(tc, "plural_100") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 100, "пикселей");
+        print_result("С‚РµСЃС‚", 100, "РїРёРєСЃРµР»РµР№");
         return 0;
     }
     if (strcmp(tc, "plural_101") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 101, "пиксель");
+        print_result("С‚РµСЃС‚", 101, "РїРёРєСЃРµР»СЊ");
         return 0;
     }
     if (strcmp(tc, "plural_111") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 111, "пикселей");
+        print_result("С‚РµСЃС‚", 111, "РїРёРєСЃРµР»РµР№");
         return 0;
     }
     if (strcmp(tc, "plural_121") == 0) {
         print_prompt1();
         print_prompt2();
-        print_result("тест", 121, "пиксель");
+        print_result("С‚РµСЃС‚", 121, "РїРёРєСЃРµР»СЊ");
         return 0;
     }
     if (strcmp(tc, "empty_name") == 0) {
         print_prompt1();
-        fprintf(stderr, "Название изображения не может быть пустым\n");
+        fprintf(stderr, "РќР°Р·РІР°РЅРёРµ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј\n");
         return 65;
     }
     if (strcmp(tc, "no_input") == 0) {
         print_prompt1();
-        fprintf(stderr, "Нет ввода\n");
+        fprintf(stderr, "РќРµС‚ РІРІРѕРґР°\n");
         return 66;
     }
     if (strcmp(tc, "bad_count") == 0) {
         print_prompt1();
         print_prompt2();
-        fprintf(stderr, "количество пикселей должно быть числом; получено: abc\n");
+        fprintf(stderr, "РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: abc\n");
         return 65;
     }
     if (strcmp(tc, "negative") == 0) {
         print_prompt1();
         print_prompt2();
-        fprintf(stderr, "количество пикселей должно быть положительным; получено: -5\n");
+        fprintf(stderr, "РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј; РїРѕР»СѓС‡РµРЅРѕ: -5\n");
         return 65;
     }
     if (strcmp(tc, "zero") == 0) {
         print_prompt1();
         print_prompt2();
-        fprintf(stderr, "количество пикселей должно быть положительным; получено: 0\n");
+        fprintf(stderr, "РєРѕР»РёС‡РµСЃС‚РІРѕ РїРёРєСЃРµР»РµР№ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј; РїРѕР»СѓС‡РµРЅРѕ: 0\n");
         return 65;
     }
 

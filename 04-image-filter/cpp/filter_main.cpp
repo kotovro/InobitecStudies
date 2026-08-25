@@ -2,9 +2,15 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <locale>
+#include <string_view>
+#include <vector>
+
+using namespace raster::filter;
 
 int main(int argc, char** argv) {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
-    return run_filter(argc, argv, std::cin, std::cout);
+    std::vector<std::string_view> args;
+    args.reserve(argc);
+    for (int i = 0; i < argc; ++i)
+        args.emplace_back(argv[i]);
+    return run_filter(args, std::cin, std::cout);
 }

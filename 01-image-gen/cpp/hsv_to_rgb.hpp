@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+namespace raster::gen {
+
 struct RGB {
     uint8_t r;
     uint8_t g;
@@ -11,4 +13,6 @@ struct RGB {
 
 RGB hsv_to_rgb(double hue, double saturation, double value);
 
-#endif // KV_HSV_TO_RGB_HPP
+} // namespace raster::gen
+
+#endif

@@ -1,19 +1,23 @@
 #include "ppm_stats.hpp"
 
+#include "../../common/cpp/luma.hpp"
+
 #include <cstdint>
 #include <cstdlib>
-#include <locale>
 #include <optional>
 #include <print>
 #include <sstream>
 #include <string>
 #include <string_view>
 
-double luma(int32_t r, int32_t g, int32_t b);
+using namespace raster::common;
+using namespace raster::stats;
 
-static int failed = 0;
+namespace {
 
-static void check(bool cond, std::string_view name) {
+int failed = 0;
+
+void check(bool cond, std::string_view name) {
     if (!cond) {
         std::println(stderr, "FAIL: {}", name);
         ++failed;
@@ -22,8 +26,8 @@ static void check(bool cond, std::string_view name) {
     }
 }
 
-static void check_stats(const Stats& s, int32_t w, int32_t h, int64_t px, int64_t tr, int64_t tg,
-                        int64_t tb) {
+void check_stats(const Stats& s, int32_t w, int32_t h, int64_t px, int64_t tr, int64_t tg,
+                 int64_t tb) {
     check(s.width == w, "width");
     check(s.height == h, "height");
     check(s.pixel_count == px, "pixel_count");
@@ -32,7 +36,7 @@ static void check_stats(const Stats& s, int32_t w, int32_t h, int64_t px, int64_
     check(s.total_b == tb, "total_b");
 }
 
-static std::optional<Stats> read_stats_from(std::string_view ppm) {
+std::optional<Stats> read_stats_from(std::string_view ppm) {
     auto ss = std::istringstream(std::string(ppm));
     auto r = Image::read(ss);
     if (!r.value.has_value())
@@ -42,7 +46,7 @@ static std::optional<Stats> read_stats_from(std::string_view ppm) {
 
 // Statistics accuracy
 
-static void test_stats_known() {
+void test_stats_known() {
     auto s = read_stats_from("P3\n2 2\n255\n"
                              "0 0 0 255 0 0\n"
                              "0 255 0 0 0 255\n");
@@ -58,7 +62,7 @@ static void test_stats_known() {
     check(s->histogram[4] == 1, "hist[4] == 1");
 }
 
-static void test_stats_comments() {
+void test_stats_comments() {
     auto s = read_stats_from("P3\n# width\n2 2\n# before maxval\n255\n"
                              "0 0 0\n0 0 0\n0 0 0\n0 0 0\n");
     check(s.has_value(), "comments in header -> ok");
@@ -68,7 +72,7 @@ static void test_stats_comments() {
 
 // ---- luma unit tests ----
 
-static void test_luma() {
+void test_luma() {
     auto y = ::luma(255, 0, 0);
     check(y >= 76.2 && y <= 76.3, "luma(255,0,0) ~ 76.245");
     y = ::luma(0, 255, 0);
@@ -79,15 +83,15 @@ static void test_luma() {
     check(y >= 254.9 && y <= 255.1, "luma(255,255,255) == 255.0");
     y = ::luma(0, 0, 0);
     check(y >= -0.1 && y <= 0.1, "luma(0,0,0) == 0.0");
-    y = ::luma(128, 128, 128);
+    y = luma(128, 128, 128);
     check(y >= 127.9 && y <= 128.1, "luma(128,128,128) ~ 128.0");
 }
 
 // ---- main ----
 
-int main() {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
+} // namespace
 
+int main() {
     std::println("--- compute_stats tests ---");
     test_stats_known();
     test_stats_comments();

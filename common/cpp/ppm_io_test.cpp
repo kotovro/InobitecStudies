@@ -1,14 +1,18 @@
 #include "ppm_io.hpp"
 
+#include <array>
 #include <cstdlib>
-#include <locale>
 #include <print>
 #include <sstream>
 #include <string_view>
 
-static int failed = 0;
+using namespace raster::common;
 
-static void check(bool cond, std::string_view name) {
+namespace {
+
+int failed = 0;
+
+void check(bool cond, std::string_view name) {
     if (!cond) {
         std::println(stderr, "FAIL: {}", name);
         ++failed;
@@ -17,7 +21,7 @@ static void check(bool cond, std::string_view name) {
     }
 }
 
-static void check_pixel(const Pixel& p, uint8_t er, uint8_t eg, uint8_t eb, std::string_view name) {
+void check_pixel(const Pixel& p, uint8_t er, uint8_t eg, uint8_t eb, std::string_view name) {
     if (p.r != er || p.g != eg || p.b != eb) {
         std::println(stderr, "FAIL: {} -- got ({},{},{}) expected ({},{},{})", name, p.r, p.g, p.b,
                      er, eg, eb);
@@ -31,7 +35,7 @@ static void check_pixel(const Pixel& p, uint8_t er, uint8_t eg, uint8_t eb, std:
 // Read tests
 // -------------------------------------------------------------------
 
-static void test_empty_input() {
+void test_empty_input() {
     auto ss = std::istringstream("");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "empty input -> error");
@@ -39,7 +43,7 @@ static void test_empty_input() {
         check(r.value.error() == PpmReadError::kEmptyInput, "empty input -> kEmptyInput");
 }
 
-static void test_magic_bad() {
+void test_magic_bad() {
     auto ss = std::istringstream("P5\n1 1\n255\n0 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "P5 -> error");
@@ -47,7 +51,7 @@ static void test_magic_bad() {
         check(r.value.error() == PpmReadError::kBadMagic, "P5 -> kBadMagic");
 }
 
-static void test_magic_truncated() {
+void test_magic_truncated() {
     auto ss = std::istringstream("P");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "just P -> error");
@@ -55,7 +59,7 @@ static void test_magic_truncated() {
         check(r.value.error() == PpmReadError::kBadMagic, "just P -> kBadMagic");
 }
 
-static void test_valid_1x1() {
+void test_valid_1x1() {
     auto ss = std::istringstream("P3\n1 1\n255\n128 128 128\n");
     auto r = Image::read(ss);
     check(r.value.has_value(), "valid 1x1 -> ok");
@@ -69,7 +73,7 @@ static void test_valid_1x1() {
     }
 }
 
-static void test_valid_2x2() {
+void test_valid_2x2() {
     auto ss = std::istringstream("P3\n2 2\n255\n"
                                  "0 0 0 255 0 0\n"
                                  "0 255 0 0 0 255\n");
@@ -87,7 +91,7 @@ static void test_valid_2x2() {
     }
 }
 
-static void test_comments_in_header() {
+void test_comments_in_header() {
     auto ss = std::istringstream("P3\n# width height\n2 2\n# before maxval\n255\n"
                                  "0 0 0\n0 0 0\n0 0 0\n0 0 0\n");
     auto r = Image::read(ss);
@@ -100,7 +104,7 @@ static void test_comments_in_header() {
     }
 }
 
-static void test_maxval_not_255() {
+void test_maxval_not_255() {
     auto ss = std::istringstream("P3\n1 1\n100\n0 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "maxval=100 -> error");
@@ -108,7 +112,7 @@ static void test_maxval_not_255() {
         check(r.value.error() == PpmReadError::kBadNumber, "maxval=100 -> kBadNumber");
 }
 
-static void test_width_zero() {
+void test_width_zero() {
     auto ss = std::istringstream("P3\n0 1\n255\n0 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "width=0 -> error");
@@ -116,7 +120,7 @@ static void test_width_zero() {
         check(r.value.error() == PpmReadError::kBadNumber, "width=0 -> kBadNumber");
 }
 
-static void test_channel_out_of_range() {
+void test_channel_out_of_range() {
     auto ss = std::istringstream("P3\n1 1\n255\n256 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "channel 256 -> error");
@@ -124,7 +128,7 @@ static void test_channel_out_of_range() {
         check(r.value.error() == PpmReadError::kChannelRange, "channel 256 -> kChannelRange");
 }
 
-static void test_channel_negative() {
+void test_channel_negative() {
     auto ss = std::istringstream("P3\n1 1\n255\n-1 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "channel -1 -> error");
@@ -132,7 +136,7 @@ static void test_channel_negative() {
         check(r.value.error() == PpmReadError::kChannelRange, "channel -1 -> kChannelRange");
 }
 
-static void test_not_a_number() {
+void test_not_a_number() {
     auto ss = std::istringstream("P3\n1 1\n255\nx 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "not a number -> error");
@@ -140,7 +144,7 @@ static void test_not_a_number() {
         check(r.value.error() == PpmReadError::kBadNumber, "not a number -> kBadNumber");
 }
 
-static void test_hash_in_data() {
+void test_hash_in_data() {
     auto ss = std::istringstream("P3\n1 1\n255\n0 0 0 # trailing\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "hash in data -> error");
@@ -148,7 +152,7 @@ static void test_hash_in_data() {
         check(r.value.error() == PpmReadError::kBadNumber, "hash in data -> kBadNumber");
 }
 
-static void test_too_many_pixels() {
+void test_too_many_pixels() {
     auto ss = std::istringstream("P3\n1 1\n255\n0 0 0 255 255 255\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "extra pixel -> error");
@@ -156,7 +160,7 @@ static void test_too_many_pixels() {
         check(r.value.error() == PpmReadError::kTooManyPixels, "extra -> kTooManyPixels");
 }
 
-static void test_too_few_pixels() {
+void test_too_few_pixels() {
     auto ss = std::istringstream("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "missing pixel -> error");
@@ -164,7 +168,7 @@ static void test_too_few_pixels() {
         check(r.value.error() == PpmReadError::kTooFewPixels, "missing -> kTooFewPixels");
 }
 
-static void test_error_line() {
+void test_error_line() {
     auto ss = std::istringstream("P3\n1 1\n255\nx 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "not a number -> error");
@@ -185,14 +189,14 @@ static void test_error_line() {
 // Writer tests
 // -------------------------------------------------------------------
 
-static void test_writer_basic() {
+void test_writer_basic() {
     auto ss = std::ostringstream();
     {
         PpmWriter pw(ss, 2, 2);
-        pw.put(static_cast<uint8_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(0));
-        pw.put(static_cast<uint8_t>(255), static_cast<uint8_t>(0), static_cast<uint8_t>(0));
-        pw.put(static_cast<uint8_t>(0), static_cast<uint8_t>(255), static_cast<uint8_t>(0));
-        pw.put(static_cast<uint8_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(255));
+        check(pw.putHeader().value.has_value(), "writer header ok");
+        auto pixels = std::to_array<Pixel>({{0, 0, 0}, {255, 0, 0}, {0, 255, 0}, {0, 0, 255}});
+        auto r = pw.putAll(pixels, /*finalize=*/true);
+        check(r.value.has_value(), "writer basic putAll ok");
     }
     auto out = ss.str();
     check(!out.empty(), "writer produced output");
@@ -201,14 +205,15 @@ static void test_writer_basic() {
     check(out.find("255") != std::string::npos, "writer contains maxval");
 }
 
-static void test_writer_read_roundtrip() {
+void test_writer_read_roundtrip() {
     auto ss = std::ostringstream();
     {
         PpmWriter pw(ss, 2, 2);
-        pw.put(static_cast<uint8_t>(10), static_cast<uint8_t>(20), static_cast<uint8_t>(30));
-        pw.put(static_cast<uint8_t>(40), static_cast<uint8_t>(50), static_cast<uint8_t>(60));
-        pw.put(static_cast<uint8_t>(70), static_cast<uint8_t>(80), static_cast<uint8_t>(90));
-        pw.put(static_cast<uint8_t>(100), static_cast<uint8_t>(110), static_cast<uint8_t>(120));
+        check(pw.putHeader().value.has_value(), "roundtrip: header ok");
+        auto pixels =
+            std::to_array<Pixel>({{10, 20, 30}, {40, 50, 60}, {70, 80, 90}, {100, 110, 120}});
+        auto r = pw.putAll(pixels, /*finalize=*/true);
+        check(r.value.has_value(), "roundtrip: putAll ok");
     }
     auto written = ss.str();
 
@@ -227,13 +232,14 @@ static void test_writer_read_roundtrip() {
     }
 }
 
-static void test_writer_format_no_trailing_space() {
+void test_writer_format_no_trailing_space() {
     auto ss = std::ostringstream();
     {
         PpmWriter pw(ss, 3, 1);
-        pw.put(static_cast<uint8_t>(1), static_cast<uint8_t>(2), static_cast<uint8_t>(3));
-        pw.put(static_cast<uint8_t>(4), static_cast<uint8_t>(5), static_cast<uint8_t>(6));
-        pw.put(static_cast<uint8_t>(7), static_cast<uint8_t>(8), static_cast<uint8_t>(9));
+        check(pw.putHeader().value.has_value(), "format: header ok");
+        auto pixels = std::to_array<Pixel>({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}});
+        auto r = pw.putAll(pixels, /*finalize=*/true);
+        check(r.value.has_value(), "format: putAll ok");
     }
     auto out = ss.str();
     auto nl = out.rfind('\n');
@@ -248,13 +254,82 @@ static void test_writer_format_no_trailing_space() {
           "format: aligned values");
 }
 
+void test_writer_put_before_header() {
+    auto ss = std::ostringstream();
+    PpmWriter pw(ss, 2, 2);
+    auto pixels = std::to_array<Pixel>({{0, 0, 0}});
+    auto r = pw.putAll(pixels, /*finalize=*/true);
+    check(!r.value.has_value(), "putAll before header -> error");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmWriteError::kIOError, "putAll before header -> kIOError");
+    check(ss.str().empty(), "putAll before header -> nothing written");
+}
+
+void test_writer_too_many_pixels() {
+    auto ss = std::ostringstream();
+    PpmWriter pw(ss, 2, 1);
+    check(pw.putHeader().value.has_value(), "overflow: header ok");
+    auto pixels = std::to_array<Pixel>({{0, 0, 0}, {1, 1, 1}, {2, 2, 2}});
+    auto r = pw.putAll(pixels, /*finalize=*/true);
+    check(!r.value.has_value(), "overflow -> error");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmWriteError::kTooManyPixels, "overflow -> kTooManyPixels");
+}
+
+void test_writer_1x1() {
+    auto ss = std::ostringstream();
+    PpmWriter pw(ss, 1, 1);
+    check(pw.putHeader().value.has_value(), "1x1: header ok");
+
+    auto pixels = std::to_array<Pixel>({{7, 8, 9}});
+    auto first = pw.putAll(pixels, /*finalize=*/true);
+    check(first.value.has_value(), "1x1: first pixel ok");
+    check(ss.str().find("  7   8   9") != std::string::npos, "1x1: pixel written");
+
+    auto second = pw.putAll(pixels, /*finalize=*/true);
+    check(!second.value.has_value(), "1x1: second pixel -> error");
+    if (!second.value.has_value())
+        check(second.value.error() == PpmWriteError::kTooManyPixels,
+              "1x1: second pixel -> kTooManyPixels");
+}
+
+void test_writer_not_enough_pixels() {
+    auto ss = std::ostringstream();
+    PpmWriter pw(ss, 2, 2);
+    check(pw.putHeader().value.has_value(), "not enough: header ok");
+    auto pixels = std::to_array<Pixel>({{0, 0, 0}, {1, 1, 1}, {2, 2, 2}});
+    auto r = pw.putAll(pixels, /*finalize=*/true);
+    check(!r.value.has_value(), "not enough -> error");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmWriteError::kNotEnoughPixels, "not enough -> kNotEnoughPixels");
+}
+
+void test_writer_finalize_false_no_check() {
+    auto ss = std::ostringstream();
+    PpmWriter pw(ss, 2, 2);
+    check(pw.putHeader().value.has_value(), "finalize=false: header ok");
+    auto pixels = std::to_array<Pixel>({{0, 0, 0}, {1, 1, 1}, {2, 2, 2}});
+    auto r = pw.putAll(pixels, /*finalize=*/false);
+    check(r.value.has_value(), "finalize=false -> no error");
+}
+
+void test_writer_stream_error() {
+    auto ss = std::ostringstream();
+    ss.setstate(std::ios::badbit);
+    PpmWriter pw(ss, 2, 2);
+    auto r = pw.putHeader();
+    check(!r.value.has_value(), "bad stream header -> error");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmWriteError::kIOError, "bad stream header -> kIOError");
+}
+
 // -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
 
-int main() {
-    std::setlocale(LC_ALL, "Russian_Russia.1251");
+} // namespace
 
+int main() {
     std::println("--- ppm_read tests ---");
 
     std::println("-- header errors --");
@@ -280,6 +355,12 @@ int main() {
     test_writer_basic();
     test_writer_read_roundtrip();
     test_writer_format_no_trailing_space();
+    test_writer_put_before_header();
+    test_writer_too_many_pixels();
+    test_writer_1x1();
+    test_writer_not_enough_pixels();
+    test_writer_finalize_false_no_check();
+    test_writer_stream_error();
 
     std::println("---");
     if (failed > 0)

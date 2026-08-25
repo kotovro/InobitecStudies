@@ -1,12 +1,17 @@
 #include "filter.hpp"
 
+#include "../../common/cpp/luma.hpp"
 #include "../../common/cpp/version.hpp"
 
 #include <charconv>
-#include <cstring>
 #include <ostream>
 #include <print>
 #include <string_view>
+#include <utility>
+
+using namespace raster::common;
+
+namespace raster::filter {
 
 Pixel pixel_to_grayscale(const Pixel& p) {
     double y = luma(p.r, p.g, p.b);
@@ -29,13 +34,13 @@ void apply_threshold(Image& img, int threshold) {
         pixel = pixel_threshold(pixel, threshold);
 }
 
-std::optional<FilterParseResult> parse_filter_args(int argc, char** argv) {
-    if (argc < 2) {
-        std::println(stderr, "использование: image_filter --grayscale | --threshold T");
+std::optional<FilterParseResult> parse_filter_args(std::span<const std::string_view> args) {
+    if (args.size() < 2) {
+        std::println(stderr, "РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: filter --grayscale | --threshold T");
         return std::nullopt;
     }
 
-    std::string_view arg(argv[1]);
+    std::string_view arg = args[1];
 
     if (arg == "--help")
         return FilterParseResult{.request = FilterRequest::kHelp};
@@ -44,99 +49,114 @@ std::optional<FilterParseResult> parse_filter_args(int argc, char** argv) {
         return FilterParseResult{.request = FilterRequest::kVersion};
 
     if (arg == "--grayscale") {
-        if (argc > 2) {
-            std::println(stderr, "--grayscale не принимает аргументов");
+        if (args.size() > 2) {
+            std::println(stderr, "--grayscale РЅРµ РїСЂРёРЅРёРјР°РµС‚ Р°СЂРіСѓРјРµРЅС‚РѕРІ");
             return std::nullopt;
         }
         return FilterParseResult{.args = FilterArgs{FilterMode::kGrayscale}};
     }
 
     if (arg == "--threshold") {
-        if (argc < 3) {
-            std::println(stderr, "--threshold требует аргумента T");
+        if (args.size() < 3) {
+            std::println(stderr, "--threshold С‚СЂРµР±СѓРµС‚ Р°СЂРіСѓРјРµРЅС‚Р° T");
             return std::nullopt;
         }
 
         int t{};
-        const char* val = argv[2];
-        auto [ptr, ec] = std::from_chars(val, val + std::strlen(val), t);
-        if (ec != std::errc{} || *ptr != '\0') {
-            std::println(stderr, "T должен быть целым числом; получено: {}", val);
+        auto [ptr, ec] = std::from_chars(args[2].data(), args[2].data() + args[2].size(), t);
+        if (ec != std::errc{} || ptr != args[2].data() + args[2].size()) {
+            std::println(stderr, "T РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ С†РµР»С‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: {}", args[2]);
             return std::nullopt;
         }
 
         if (t < 0 || t > 255) {
-            std::println(stderr, "T должен быть в [0; 255]; получено: {}", t);
+            std::println(stderr, "T РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІ [0; 255]; РїРѕР»СѓС‡РµРЅРѕ: {}", t);
             return std::nullopt;
         }
 
         return FilterParseResult{.args = FilterArgs{FilterMode::kThreshold, t}};
     }
 
-    std::println(stderr, "неизвестный аргумент: {}. используйте --grayscale или --threshold T",
+    std::println(stderr, "РЅРµРёР·РІРµСЃС‚РЅС‹Р№ Р°СЂРіСѓРјРµРЅС‚: {}. РёСЃРїРѕР»СЊР·СѓР№С‚Рµ --grayscale РёР»Рё --threshold T",
                  arg);
     return std::nullopt;
 }
 
 void print_filter_usage(std::ostream& os) {
-    std::println(os, "Использование: image_filter --grayscale | --threshold T");
+    std::println(os, "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ: filter --grayscale | --threshold T");
     std::println(os);
-    std::println(os, "Читает PPM P3 из stdin, пишет валидный PPM в stdout.");
+    std::println(os, "Р§РёС‚Р°РµС‚ PPM P3 РёР· stdin, РїРёС€РµС‚ РІР°Р»РёРґРЅС‹Р№ PPM РІ stdout.");
     std::println(os);
-    std::println(os, "Режимы:");
-    std::println(os, "  --grayscale     конверсия в оттенки серого по luma");
-    std::println(os, "  --threshold T   бинаризация по порогу яркости (0 <= T <= 255)");
+    std::println(os, "Р РµР¶РёРјС‹:");
+    std::println(os, "  --grayscale     РєРѕРЅРІРµСЂСЃРёСЏ РІ РѕС‚С‚РµРЅРєРё СЃРµСЂРѕРіРѕ РїРѕ luma");
+    std::println(os, "  --threshold T   Р±РёРЅР°СЂРёР·Р°С†РёСЏ РїРѕ РїРѕСЂРѕРіСѓ СЏСЂРєРѕСЃС‚Рё (0 <= T <= 255)");
     std::println(os);
-    std::println(os, "Опции:");
-    std::println(os, "  --help          показать справку");
-    std::println(os, "  --version       показать версию");
+    std::println(os, "РћРїС†РёРё:");
+    std::println(os, "  --help          РїРѕРєР°Р·Р°С‚СЊ СЃРїСЂР°РІРєСѓ");
+    std::println(os, "  --version       РїРѕРєР°Р·Р°С‚СЊ РІРµСЂСЃРёСЋ");
 }
 
-void print_filter_version(std::ostream& os) { std::println(os, "image_filter {}", kVersion); }
+void print_filter_version(std::ostream& os) { std::println(os, "filter {}", kVersion); }
 
-int run_filter(int argc, char** argv, std::istream& input, std::ostream& output) {
-    auto parsed = parse_filter_args(argc, argv);
+int run_filter(std::span<const std::string_view> args, std::istream& input, std::ostream& output) {
+    auto parsed = parse_filter_args(args);
     if (!parsed)
-        return static_cast<int>(ExitCode::kUsage);
+        return std::to_underlying(ExitCode::kUsage);
 
     if (parsed->request == FilterRequest::kHelp) {
         print_filter_usage(output);
-        return static_cast<int>(ExitCode::kOk);
+        return std::to_underlying(ExitCode::kOk);
     }
 
     if (parsed->request == FilterRequest::kVersion) {
         print_filter_version(output);
-        return static_cast<int>(ExitCode::kOk);
+        return std::to_underlying(ExitCode::kOk);
     }
 
-    const FilterArgs& args = parsed->args;
+    const FilterArgs& filter_args = parsed->args;
     auto result = Image::read(input);
     if (!result.value.has_value()) {
         std::println(stderr, "{}", result.diagnostic);
         switch (result.value.error()) {
         case PpmReadError::kEmptyInput:
-            return static_cast<int>(ExitCode::kNoInput);
+            return std::to_underlying(ExitCode::kNoInput);
         case PpmReadError::kIOError:
-            return static_cast<int>(ExitCode::kIOErr);
+            return std::to_underlying(ExitCode::kIOErr);
         default:
-            return static_cast<int>(ExitCode::kData);
+            return std::to_underlying(ExitCode::kData);
         }
     }
 
     auto& image = *result.value;
 
-    switch (args.mode) {
+    switch (filter_args.mode) {
     case FilterMode::kGrayscale:
         apply_grayscale(image);
         break;
     case FilterMode::kThreshold:
-        apply_threshold(image, args.threshold);
+        apply_threshold(image, filter_args.threshold);
         break;
     }
 
     PpmWriter writer(output, image.width(), image.height());
-    for (const auto& pixel : image.pixels())
-        writer.put(pixel.r, pixel.g, pixel.b);
+    auto header = writer.putHeader();
+    if (!header.value) {
+        std::println(stderr, "{}", header.diagnostic);
+        return std::to_underlying(ExitCode::kIOErr);
+    }
+    auto res = writer.putAll(image.pixels(), /*finalize=*/true);
+    if (!res.value) {
+        std::println(stderr, "{}", res.diagnostic);
+        switch (res.value.error()) {
+        case PpmWriteError::kIOError:
+            return std::to_underlying(ExitCode::kIOErr);
+        case PpmWriteError::kTooManyPixels:
+        case PpmWriteError::kNotEnoughPixels:
+            return std::to_underlying(ExitCode::kData);
+        }
+    }
 
-    return static_cast<int>(ExitCode::kOk);
+    return std::to_underlying(ExitCode::kOk);
 }
+
+} // namespace raster::filter

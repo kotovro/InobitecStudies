@@ -5,8 +5,11 @@
 #include <limits>
 #include <memory>
 #include <print>
+#include <span>
 #include <system_error>
 #include <vector>
+
+namespace raster::common {
 
 struct Image::Impl {
     int32_t width{};
@@ -68,17 +71,17 @@ PpmResult Image::read(std::istream& is) {
 
     // ---- 1. Magic ----
     if (!skip_ws())
-        return err(PpmReadError::kEmptyInput, line_num, "нет входных данных");
+        return err(PpmReadError::kEmptyInput, line_num, "РЅРµС‚ РІС…РѕРґРЅС‹С… РґР°РЅРЅС‹С…");
 
     std::string magic;
     is >> magic;
     if (is.fail())
         return err(PpmReadError::kIOError, line_num,
-                   std::format("сбой чтения: {}", std::generic_category().message(errno)));
+                   std::format("СЃР±РѕР№ С‡С‚РµРЅРёСЏ: {}", std::generic_category().message(errno)));
 
     if (magic != "P3")
         return err(PpmReadError::kBadMagic, line_num,
-                   std::format("строка {}: ожидалось 'P3', получено: '{}'", line_num, magic));
+                   std::format("СЃС‚СЂРѕРєР° {}: РѕР¶РёРґР°Р»РѕСЃСЊ 'P3', РїРѕР»СѓС‡РµРЅРѕ: '{}'", line_num, magic));
 
     // ---- 2. Width, Height, Maxval ----
     auto read_int = [&](long long& out) -> bool {
@@ -92,29 +95,29 @@ PpmResult Image::read(std::istream& is) {
         long long w, h, m;
         if (!read_int(w))
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: не удалось прочитать ширину", line_num));
+                       std::format("СЃС‚СЂРѕРєР° {}: РЅРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ С€РёСЂРёРЅСѓ", line_num));
         if (w <= 0)
             return err(
                 PpmReadError::kBadNumber, line_num,
-                std::format("строка {}: ширина должна быть положительным числом; получено: {}",
+                std::format("СЃС‚СЂРѕРєР° {}: С€РёСЂРёРЅР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: {}",
                             line_num, w));
         if (!read_int(h))
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: не удалось прочитать высоту", line_num));
+                       std::format("СЃС‚СЂРѕРєР° {}: РЅРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ РІС‹СЃРѕС‚Сѓ", line_num));
         if (h <= 0)
             return err(
                 PpmReadError::kBadNumber, line_num,
-                std::format("строка {}: высота должна быть положительным числом; получено: {}",
+                std::format("СЃС‚СЂРѕРєР° {}: РІС‹СЃРѕС‚Р° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј С‡РёСЃР»РѕРј; РїРѕР»СѓС‡РµРЅРѕ: {}",
                             line_num, h));
         if (!read_int(m))
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: не удалось прочитать максимальное значение канала",
+                       std::format("СЃС‚СЂРѕРєР° {}: РЅРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РєР°РЅР°Р»Р°",
                                    line_num));
-        if (m != 255)
+        if (m != kMaxChannel)
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: максимальное значение канала должно быть 255; "
-                                   "получено: {}",
-                                   line_num, m));
+                       std::format("СЃС‚СЂРѕРєР° {}: РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РєР°РЅР°Р»Р° РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ {}; "
+                                   "РїРѕР»СѓС‡РµРЅРѕ: {}",
+                                   line_num, kMaxChannel, m));
 
         img._impl->width = static_cast<int32_t>(w);
         img._impl->height = static_cast<int32_t>(h);
@@ -130,33 +133,33 @@ PpmResult Image::read(std::istream& is) {
         skip_ws();
         if (is.eof())
             return err(PpmReadError::kTooFewPixels, line_num,
-                       std::format("строка {}: получено только {} пикселей (ожидалось {})",
+                       std::format("СЃС‚СЂРѕРєР° {}: РїРѕР»СѓС‡РµРЅРѕ С‚РѕР»СЊРєРѕ {} РїРёРєСЃРµР»РµР№ (РѕР¶РёРґР°Р»РѕСЃСЊ {})",
                                    line_num, img._impl->pixels.size(), total_pixels));
 
         if (is.peek() == '#')
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: символ '#' не допускается в данных", line_num));
+                       std::format("СЃС‚СЂРѕРєР° {}: СЃРёРјРІРѕР» '#' РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ РІ РґР°РЅРЅС‹С…", line_num));
 
         int r, g, b;
         is >> r;
         if (is.fail())
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: нечисловое значение", line_num));
+                       std::format("СЃС‚СЂРѕРєР° {}: РЅРµС‡РёСЃР»РѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ", line_num));
         skip_ws();
         is >> g;
         if (is.fail())
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: нечисловое значение", line_num));
+                       std::format("СЃС‚СЂРѕРєР° {}: РЅРµС‡РёСЃР»РѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ", line_num));
         skip_ws();
         is >> b;
         if (is.fail())
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: нечисловое значение", line_num));
+                       std::format("СЃС‚СЂРѕРєР° {}: РЅРµС‡РёСЃР»РѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ", line_num));
         if (r < 0 || r > img._impl->max_val || g < 0 || g > img._impl->max_val || b < 0 ||
             b > img._impl->max_val)
             return err(PpmReadError::kChannelRange, line_num,
-                       std::format("строка {}: значение канала должно быть в [0; {}]; "
-                                   "получено: {} {} {}",
+                       std::format("СЃС‚СЂРѕРєР° {}: Р·РЅР°С‡РµРЅРёРµ РєР°РЅР°Р»Р° РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІ [0; {}]; "
+                                   "РїРѕР»СѓС‡РµРЅРѕ: {} {} {}",
                                    line_num, img._impl->max_val, r, g, b));
 
         img._impl->pixels.push_back(
@@ -168,30 +171,60 @@ PpmResult Image::read(std::istream& is) {
     if (!is.eof()) {
         if (is.peek() == '#')
             return err(PpmReadError::kBadNumber, line_num,
-                       std::format("строка {}: символ '#' не допускается в данных", line_num));
+                       std::format("СЃС‚СЂРѕРєР° {}: СЃРёРјРІРѕР» '#' РЅРµ РґРѕРїСѓСЃРєР°РµС‚СЃСЏ РІ РґР°РЅРЅС‹С…", line_num));
 
         char extra;
         is >> extra;
         if (!is.eof())
             return err(PpmReadError::kTooManyPixels, line_num,
-                       std::format("строка {}: лишние данные после {} пикселей", line_num,
+                       std::format("СЃС‚СЂРѕРєР° {}: Р»РёС€РЅРёРµ РґР°РЅРЅС‹Рµ РїРѕСЃР»Рµ {} РїРёРєСЃРµР»РµР№", line_num,
                                    img._impl->pixels.size()));
     }
 
     if (is.bad())
         return err(PpmReadError::kIOError, line_num,
-                   std::format("сбой чтения: {}", std::generic_category().message(errno)));
+                   std::format("СЃР±РѕР№ С‡С‚РµРЅРёСЏ: {}", std::generic_category().message(errno)));
 
     return PpmResult{std::move(img), 0, {}};
 }
 
-PpmWriter::PpmWriter(std::ostream& os, int32_t width, int32_t height) : _os(os), _width(width) {
+PpmWriter::PpmWriter(std::ostream& os, int32_t width, int32_t height, uint16_t max_val)
+    : _os(os), _width(width), _height(height), _max_val(max_val),
+      _capacity(static_cast<std::int64_t>(width) * height) {}
+
+PpmWriteResult PpmWriter::putHeader() {
     std::println(_os, "P3");
-    std::println(_os, "{} {}", width, height);
-    std::println(_os, "255");
+    std::println(_os, "{} {}", _width, _height);
+    std::println(_os, "{}", _max_val);
+    if (_os.bad() || _os.fail())
+        return PpmWriteResult{std::unexpected(PpmWriteError::kIOError),
+                              "СЃР±РѕР№ Р·Р°РїРёСЃРё Р·Р°РіРѕР»РѕРІРєР° РІ РїРѕС‚РѕРє"};
+    _header_written = true;
+    return PpmWriteResult{};
 }
 
-void PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
+PpmWriteResult PpmWriter::putAll(std::span<const Pixel> pixels, bool finalize) {
+    for (const auto& p : pixels) {
+        auto r = put(p.r, p.g, p.b);
+        if (!r.value)
+            return r;
+    }
+    if (finalize && _total < _capacity)
+        return PpmWriteResult{
+            std::unexpected(PpmWriteError::kNotEnoughPixels),
+            std::format("Р·Р°РїРёСЃР°РЅРѕ {} РїРёРєСЃРµР»РµР№ РїСЂРё СЂР°Р·РјРµСЂРµ {}x{}", _total, _width, _height)};
+    return PpmWriteResult{};
+}
+
+PpmWriteResult PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
+    if (!_header_written)
+        return PpmWriteResult{std::unexpected(PpmWriteError::kIOError), "РІС‹Р·РІР°РЅ put РґРѕ putHeader"};
+
+    if (_total >= _capacity)
+        return PpmWriteResult{std::unexpected(PpmWriteError::kTooManyPixels),
+                              std::format("РїРѕРїС‹С‚РєР° Р·Р°РїРёСЃР°С‚СЊ {} РїРёРєСЃРµР»РµР№ РїСЂРё СЂР°Р·РјРµСЂРµ {}x{}",
+                                          _total + 1, _width, _height)};
+
     if (_col == 0) {
         std::print(_os, "{:3d} {:3d} {:3d}", static_cast<int>(r), static_cast<int>(g),
                    static_cast<int>(b));
@@ -200,8 +233,16 @@ void PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
                    static_cast<int>(b));
     }
     ++_col;
+    ++_total;
     if (_col >= _width) {
         std::println(_os);
         _col = 0;
     }
+    if (_os.bad() || _os.fail())
+        return PpmWriteResult{std::unexpected(PpmWriteError::kIOError),
+                              "СЃР±РѕР№ Р·Р°РїРёСЃРё РїРёРєСЃРµР»СЏ РІ РїРѕС‚РѕРє"};
+
+    return PpmWriteResult{};
 }
+
+} // namespace raster::common

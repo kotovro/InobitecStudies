@@ -1,3 +1,7 @@
 #pragma once
 
-inline constexpr const char* kVersion = "0.1.1";
+namespace raster::common {
+
+inline constexpr const char* kVersion = "0.1.2";
+
+}

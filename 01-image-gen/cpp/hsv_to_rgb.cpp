@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+namespace raster::gen {
+
 RGB hsv_to_rgb(double h, double s, double v) {
     double c = v * s;
     double x = c * (1 - std::abs(std::fmod(h / 60.0, 2) - 1));
@@ -46,3 +48,5 @@ RGB hsv_to_rgb(double h, double s, double v) {
             static_cast<uint8_t>(std::clamp(static_cast<int>((g1 + m) * 255), 0, 255)),
             static_cast<uint8_t>(std::clamp(static_cast<int>((b1 + m) * 255), 0, 255))};
 }
+
+} // namespace raster::gen

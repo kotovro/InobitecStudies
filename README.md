@@ -18,15 +18,17 @@ common/
     ppm_io.hpp(.cpp) — модуль ввода-вывода PPM (PIMPL, экспорт в DLL)
 build/
   test_data/       — сгенерированные тестовые PPM (в .gitignore)
+  {task}/{c,cpp,ref}/ — артефакты сборки по задачам (объекты, exe, эталоны)
 dialog_logs/       — сырые логи диалогов с DeepSeek
 00-intro-hello/    — hello world
  01-image-gen/      — задача 1: генератор PPM
-   c/               — реализация на C (включая ref_*.c — эталоны)
+   c/               — реализация на C
    cpp/             — реализация на C++
+   ref/             — генераторы эталонных изображений(реализованы на С, используются для acceptance тестов)
  02-image-passport/ — задача 2: паспорт изображения
    c/               — реализация на C
    cpp/             — реализация на C++
-   ref_passport.c   — эталон для acceptance-тестов
+   ref/             — эталон для acceptance-тестов
  03-image-stats/    — задача 3: статистика изображения
    c/
    cpp/
@@ -44,7 +46,7 @@ dialog_logs/       — сырые логи диалогов с DeepSeek
 - **OS:** Windows
 - **Toolchain:** MSVC (Visual Studio Build Tools, `vcvars64.bat`)
 - **Сборка:** из консоли, `cl /c` + `link`, без IDE
-- **Консоль:** PowerShell / FAR Manager
+- **Консоль:** PowerShell / FAR Manager, кодировка UTF-8 (`chcp 65001`)
 - **Просмотр PPM:** IrfanView, GIMP, ImageMagick (`magick out.ppm out.png`)
 
 ---
@@ -56,39 +58,27 @@ dialog_logs/       — сырые логи диалогов с DeepSeek
 vcvars64.bat
 ```
 
-Раздельные этапы (пример для задачи 1, C):
-```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c parse_args.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c gen.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c ../../common/c/ppm_io.c
-link /DEBUG parse_args.obj hsv_to_rgb.obj gen.obj ppm_io.obj /OUT:gen_image.exe
-```
+Все команды выполняются из корня репозитория; cd внутри команд не используется. Сборка содержит раздельные этапы.
 
-Для C++:
-```
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c gen.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c ../../common/cpp/ppm_io.cpp
-link /DEBUG parse_args.obj hsv_to_rgb.obj gen.obj ppm_io.obj /OUT:gen_image.exe
+Создать каталоги артефактов (один раз; `-Force` — повторный запуск безопасен):
+```powershell
+New-Item -ItemType Directory -Force -Path build/test_data, build/common/cpp, build/01-image-gen/c, build/01-image-gen/cpp, build/01-image-gen/ref, build/02-image-passport/c, build/02-image-passport/cpp, build/02-image-passport/ref, build/03-image-stats/c, build/03-image-stats/cpp, build/03-image-stats/ref, build/04-image-filter/c, build/04-image-filter/cpp
 ```
 
 Флаги: `Debug + ASan` (`/Od /Zi /MDd /fsanitize=address`).
 
 ### Эталонные программы
 
-Независимые реализации для acceptance-тестов. Собираются одними командами:
+Эталонные программы представляют из себя независимые реализации для acceptance-тестов
 
-```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd ref_gradient.c
-link /DEBUG ref_gradient.obj /OUT:ref_gradient.exe
-```
 
 | Программа | Файл | Назначение |
 |---|---|---|
-| `ref_gradient N` | `01-image-gen/c/ref_gradient.c` | ППМ gradient N x N |
-| `ref_checker N` | `01-image-gen/c/ref_checker.c` | ППМ checker N x N |
-| `ref_radial N` | `01-image-gen/c/ref_radial.c` | ППМ radial N x N |
-| `ref_stats` | `03-image-stats/c/ref_stats.c` | Статистика ППМ из stdin |
-| `ref_passport <case>` | `02-image-passport/ref_passport.c` | Паспорт: эталонный вывод по кейсу |
+| `ref_gradient N` | `01-image-gen/ref/ref_gradient.c` | PPM gradient N x N |
+| `ref_checker N` | `01-image-gen/ref/ref_checker.c` | PPM checker N x N |
+| `ref_radial N` | `01-image-gen/ref/ref_radial.c` | PPM radial N x N |
+| `ref_stats` | `03-image-stats/c/ref_stats.c` | Статистика PPM из stdin |
+| `ref_passport <case>` | `02-image-passport/ref/ref_passport.c` | Паспорт: эталонный вывод по кейсу |
 
 Все бинарники — в `build/`.
 
@@ -134,27 +124,63 @@ gen_image --version    -> "gen_image 0.1.0", exit 0
 - Успех -> exit 0, PPM в stdout
 
 ### Тесты
+Для С:
 ```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c ppm_test.c
-link /DEBUG parse_args.obj hsv_to_rgb.obj ppm_test.obj /OUT:ppm_test.exe
-ppm_test.exe
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/patterns.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/parse_args.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/hsv_to_rgb.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/ppm_test.c
+link /DEBUG build/01-image-gen/c/patterns.obj build/01-image-gen/c/parse_args.obj build/01-image-gen/c/hsv_to_rgb.obj build/01-image-gen/c/ppm_test.obj /OUT:build/01-image-gen/c/ppm_test.exe
+build/01-image-gen/c/ppm_test.exe
 ```
 
-Acceptance — ручной прогон с эталоном через `fc`:
+Для С++:
+```
+cl /std:c++latest /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/patterns.cpp
+cl /std:c++latest /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/parse_args.cpp
+cl /std:c++latest /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/hsv_to_rgb.cpp
+cl /std:c++latest /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/ppm_test.cpp
+link /DEBUG build/01-image-gen/cpp/patterns.obj build/01-image-gen/cpp/parse_args.obj build/01-image-gen/cpp/hsv_to_rgb.obj build/01-image-gen/cpp/ppm_test.obj /OUT:build/01-image-gen/cpp/ppm_test.exe
+build/01-image-gen/cpp/ppm_test.exe
+```
+
+
+Acceptance — ручной прогон с эталоном через `cmd /c fc`:
 ```powershell
 # gradient 3x3
-ref_gradient 3 > build\etalons\gradient_3x3.ppm
-gen_image 3 gradient > build\actual.ppm
-fc build\actual.ppm build\etalons\gradient_3x3.ppm
+build\01-image-gen\ref\ref_gradient.exe 3 > build\test_data\gradient_3x3.ppm
+build\01-image-gen\c\gen_image.exe 3 gradient > build\actual.ppm
+cmd /c fc build\actual.ppm build\test_data\gradient_3x3.ppm
 
 # error-кейсы (только exit-код; stderr — для человека)
-gen_image; $LASTEXITCODE        # -> 64
-gen_image abc; $LASTEXITCODE    # -> 64
-gen_image 0; $LASTEXITCODE      # -> 64
+build\01-image-gen\c\gen_image.exe; $LASTEXITCODE        # -> 64
+build\01-image-gen\c\gen_image.exe abc; $LASTEXITCODE    # -> 64
+build\01-image-gen\c\gen_image.exe 0; $LASTEXITCODE      # -> 64
 
 # справка и версия
-gen_image --help; $LASTEXITCODE     # -> 0, usage в stdout
-gen_image --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.0"
+build\01-image-gen\c\gen_image.exe --help; $LASTEXITCODE     # -> 0, usage в stdout
+build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.0"
+```
+
+### Сборка основного приложения
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/parse_args.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/hsv_to_rgb.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/patterns.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/main.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ common/c/ppm_io.c
+link /DEBUG build/01-image-gen/c/parse_args.obj build/01-image-gen/c/patterns.obj build/01-image-gen/c/hsv_to_rgb.obj build/01-image-gen/c/main.obj build/01-image-gen/c/ppm_io.obj /OUT:build/01-image-gen/c/gen_image.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/parse_args.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/hsv_to_rgb.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/patterns.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/main.cpp 
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ common/cpp/ppm_io.cpp
+link /DEBUG build/01-image-gen/cpp/patterns.obj build/01-image-gen/cpp/parse_args.obj build/01-image-gen/cpp/hsv_to_rgb.obj build/01-image-gen/cpp/main.obj build/01-image-gen/cpp/ppm_io.obj /OUT:build/01-image-gen/cpp/gen_image.exe
 ```
 
 ---
@@ -166,9 +192,9 @@ gen_image --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.0"
 
 ```
 read_passport
-  -> Введите название изображения: морской закат
-  -> Введите количество пикселей: 1920
-  -> Изображение «морской закат»: 1920 пикселей.
+> Введите название изображения: морской закат
+> Введите количество пикселей: 1920
+> Изображение «морской закат»: 1920 пикселей.
 ```
 
 ### Классы ошибок
@@ -178,29 +204,66 @@ read_passport
 
 ### Тесты
 
+Сборка тестов
+Для С:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/read_passport_test.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/pixel_word.c
+link /DEBUG build/02-image-passport/c/read_passport_test.obj build/02-image-passport/c/pixel_word.obj /OUT:build/02-image-passport/c/passport_tests.exe  
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/read_passport_test.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/pixel_word.cpp
+link /DEBUG build/02-image-passport/cpp/read_passport_test.obj build/02-image-passport/cpp/pixel_word.obj /OUT:build/02-image-passport/cpp/passport_tests.exe  
+```
+
 Юнит-тесты (склонение «пиксель/пикселя/пикселей»):
 ```
-read_passport_test.exe   (C и C++)
+build/02-image-passport/c/passport_tests.exe # C
+build/02-image-passport/cpp/passport_tests.exe # C++
 ```
 
-Acceptance — эталон `ref_passport.exe` в `build/`, ручное сравнение через `fc`:
+Acceptance — эталон `ref_passport.exe`, ручное сравнение через `cmd /c fc`:
 ```powershell
-# сборка эталона
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd 02-image-passport/ref_passport.c
-link /DEBUG ref_passport.obj /OUT:build/ref_passport.exe
-
 # success-кейс: два слова + 1920
-"морской закат`n1920" | .\02-image-passport\cpp\read_passport.exe > build\actual.txt
-.\build\ref_passport.exe basic > build\expected.txt
-fc build\actual.txt build\expected.txt
-echo $LASTEXITCODE              # -> 0
+"морской закат`n1920" | build\02-image-passport\cpp\passport.exe > build\actual.txt
+build\02-image-passport\ref\ref_passport.exe basic > build\expected.txt
+cmd /c fc build\actual.txt build\expected.txt
+echo $LASTEXITCODE # -> 0
 
 # error: пустое имя
-"`n1920" | .\02-image-passport\c\read_passport.exe 2> build\actual_stderr.txt
-$LASTEXITCODE                   # -> 65
+"`n1920" | build\02-image-passport\cpp\passport.exe 2> build\actual_stderr.txt
+echo $LASTEXITCODE # -> 65
 ```
 
 Доступные кейсы: `basic`, `single_1`, `plural_2`–`101`–`111`, `empty_name`, `no_input`, `bad_count`, `negative`, `zero`.
+
+### Эталоны
+Cборка эталонов (написаны на C)
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/ref/ 02-image-passport/ref/ref_passport.c 
+link /DEBUG build/02-image-passport/ref/ref_passport.obj /OUT:build/02-image-passport/ref/ref_passport.exe
+```
+
+### Сборка основного приложения
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/read_passport.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/pixel_word.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/read_passport_main.c
+link /DEBUG build/02-image-passport/c/read_passport_main.obj build/02-image-passport/c/read_passport.obj build/02-image-passport/c/pixel_word.obj /OUT:build/02-image-passport/c/passport.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/read_passport.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/pixel_word.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/read_passport_main.cpp
+link /DEBUG build/02-image-passport/cpp/read_passport_main.obj build/02-image-passport/cpp/read_passport.obj build/02-image-passport/cpp/pixel_word.obj /OUT:build/02-image-passport/cpp/passport.exe
+```
 
 ---
 
@@ -215,8 +278,8 @@ $LASTEXITCODE                   # -> 65
 
 Работает в конвейере:
 ```
-gen_image 64 gradient | image_stats
-gen_image --size 1024 --seed 42 | image_stats > report.txt
+build\01-image-gen\c\gen_image.exe 64 gradient | build\03-image-stats\c\image_stats.exe
+build\01-image-gen\c\gen_image.exe --size 1024 --seed 42 | build\03-image-stats\c\image_stats.exe > report.txt
 ```
 
 ### Классы ошибок
@@ -226,25 +289,67 @@ gen_image --size 1024 --seed 42 | image_stats > report.txt
 
 ### Тесты
 
+Сборка тестов
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/ppm_stats.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/ppm_stats_test.c
+link /DEBUG build/03-image-stats/c/ppm_io.obj build/03-image-stats/c/ppm_stats.obj build/03-image-stats/c/ppm_stats_test.obj /OUT:build/03-image-stats/c/ppm_stats_test.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ common/cpp/ppm_io.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ 03-image-stats/cpp/ppm_stats.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ 03-image-stats/cpp/ppm_stats_test.cpp
+link /DEBUG build/03-image-stats/cpp/ppm_io.obj build/03-image-stats/cpp/ppm_stats.obj build/03-image-stats/cpp/ppm_stats_test.obj /OUT:build/03-image-stats/cpp/ppm_stats_test.exe
+```
+
 Юнит-тесты (luma, статистика через общий `ppm_io`):
 ```
-ppm_stats_test.exe   # compute_stats, luma
+build/03-image-stats/c/ppm_stats_test.exe   # compute_stats, luma
+build/03-image-stats/cpp/ppm_stats_test.exe # C++
 ```
 
-Acceptance — ручной прогон (конвейер + `fc`):
+Acceptance — ручной прогон (конвейер + `cmd /c fc`):
 ```powershell
 # эталон: ref_gradient | ref_stats
-ref_gradient 2 | ref_stats > build\etalons\stats_gradient_2x2.txt
+build\01-image-gen\ref\ref_gradient.exe 2 | build\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_2x2.txt
 
 # прогон: gen_image | image_stats
-gen_image 2 gradient | image_stats > build\actual.txt
+build\01-image-gen\c\gen_image.exe 2 gradient | build\03-image-stats\c\image_stats.exe > build\actual.txt
 
 # сравнение
-fc build\actual.txt build\etalons\stats_gradient_2x2.txt
+cmd /c fc build\actual.txt build\test_data\stats_gradient_2x2.txt
 
 # error-кейсы (только exit-код)
-echo "" | image_stats; $LASTEXITCODE           # -> 66
-echo P5 | image_stats; $LASTEXITCODE           # -> 65
+echo "" | build\03-image-stats\c\image_stats.exe; $LASTEXITCODE # -> 66
+echo P5 | build\03-image-stats\c\image_stats.exe; $LASTEXITCODE # -> 65
+```
+
+### Эталоны 
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/ref/ 03-image-stats/c/ref_stats.c
+link /DEBUG build/03-image-stats/ref/ref_stats.obj /OUT:build/03-image-stats/ref/ref_stats.exe
+```
+
+### Сборка приложения
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/ppm_stats.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/main.c
+link /DEBUG build/03-image-stats/c/ppm_io.obj build/03-image-stats/c/ppm_stats.obj build/03-image-stats/c/main.obj /OUT:build/03-image-stats/c/image_stats.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ common/cpp/ppm_io.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ 03-image-stats/cpp/ppm_stats.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ 03-image-stats/cpp/image_stats.cpp
+link /DEBUG build/03-image-stats/cpp/ppm_io.obj build/03-image-stats/cpp/ppm_stats.obj build/03-image-stats/cpp/image_stats.obj /OUT:build/03-image-stats/cpp/image_stats.exe
 ```
 
 ---
@@ -257,15 +362,15 @@ echo P5 | image_stats; $LASTEXITCODE           # -> 65
 
 Работает в конвейере:
 ```
-gen_image 64 gradient | image_filter --grayscale
-gen_image 4 gradient | image_filter --threshold 128 | image_stats
+build\01-image-gen\c\gen_image.exe 64 gradient | build\04-image-filter\c\filter.exe --grayscale
+build\01-image-gen\c\gen_image.exe 4 gradient | build\04-image-filter\c\filter.exe --threshold 128 | build\03-image-stats\c\image_stats.exe
 ```
 
 ### Режимы
 
 ```
-image_filter --grayscale      -> конверсия в оттенки серого по luma
-image_filter --threshold T    -> бинаризация по порогу яркости (0 <= T <= 255)
+filter --grayscale      -> конверсия в оттенки серого по luma
+filter --threshold T    -> бинаризация по порогу яркости (0 <= T <= 255)
 ```
 
 - `--grayscale`: `y = round(0.299·R + 0.587·G + 0.114·B)`, пиксель -> `(y, y, y)`
@@ -273,8 +378,8 @@ image_filter --threshold T    -> бинаризация по порогу ярк
 
 ### Справка и версия
 ```
-image_filter --help       -> usage в stdout, exit 0 (stdin не читается)
-image_filter --version    -> "image_filter 0.1.0", exit 0
+filter --help       -> usage в stdout, exit 0 (stdin не читается)
+filter --version    -> "filter 0.1.0", exit 0
 ```
 
 ### Классы ошибок
@@ -289,19 +394,40 @@ image_filter --version    -> "image_filter 0.1.0", exit 0
 Юнит-тесты (luma, grayscale, threshold, парсинг аргументов) и integration
 (полный конвейер `argv -> stdin -> stdout` через `run_filter`):
 ```
-build/filter_test.exe      # C++
-build/filter_test_c.exe    # C
+build/04-image-filter/c/filter_tests.exe    # C
+build/04-image-filter/cpp/filter_tests.exe  # C++
+```
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter_test.c 
+link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj /OUT:build/04-image-filter/c/filter_tests.exe
 ```
 
-Сборка (пример C++):
+Для C++:
 ```
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /c common/cpp/ppm_io.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c 04-image-filter/cpp/filter.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /source-charset:utf-8 /c 04-image-filter/cpp/filter_test.cpp
-link /DEBUG ppm_io.obj filter.obj filter_test.obj /OUT:build/filter_test.exe
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ common/cpp/ppm_io.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter_test.cpp 
+link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj /OUT:build/04-image-filter/cpp/filter_tests.exe
+```
+### Сборка основного приложения
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter.c 
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/main.c
+link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/main.obj /OUT:build/04-image-filter/c/filter.exe
 ```
 
-
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ common/cpp/ppm_io.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter_main.cpp
+link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_main.obj /OUT:build/04-image-filter/cpp/filter.exe
+```
 ### Модуль `common/ppm_io` и сборка DLL
 
 Задачи 1/3/4 используют общий модуль ввода-вывода PPM. Он собирается тремя
@@ -312,10 +438,10 @@ link /DEBUG ppm_io.obj filter.obj filter_test.obj /OUT:build/filter_test.exe
 
 ```
 # C++ DLL + import-lib
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /D KV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/ppm_io.dll /IMPLIB:build/ppm_io.lib
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/common/cpp/ppm_io.dll /IMPLIB:build/common/cpp/ppm_io.lib
 
 # линковка потребителя через import-lib (вместо ppm_io.obj)
-link /DEBUG filter.obj filter_test.obj build/ppm_io.lib /OUT:build/filter_test_dll.exe
+link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe
 ```
 
 - **Linux / macOS** — флаг игнорируется, символы `.so` экспортируются по умолчанию
@@ -345,14 +471,14 @@ link /DEBUG filter.obj filter_test.obj build/ppm_io.lib /OUT:build/filter_test_d
 через `gen_image` с seed:
 
 ```
-gen_image --size 2 --seed 42 > build/test_data/random_2x2_seed42.ppm
-gen_image --size 1024 --seed 9999 > build/test_data/random_1024x1024_seed9999.ppm
+build\01-image-gen\c\gen_image.exe --size 2 --seed 42 > build/test_data/random_2x2_seed42.ppm
+build\01-image-gen\c\gen_image.exe --size 1024 --seed 9999 > build/test_data/random_1024x1024_seed9999.ppm
 ```
 
 Эталонные файлы — через ref-генераторы:
 
 ```
-ref_gradient 4 > build/test_data/gradient_4x4.ppm
+build\01-image-gen\ref\ref_gradient.exe 4 > build/test_data/gradient_4x4.ppm
 ```
 
 Итого 15 файлов: random (2×2, 64×64, 1024×1024 × 3 seed) + reference

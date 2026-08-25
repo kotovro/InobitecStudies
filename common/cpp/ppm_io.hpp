@@ -18,6 +18,10 @@
 #define KV_API
 #endif
 
+namespace raster::common {
+
+inline constexpr uint16_t kMaxChannel = 255;
+
 struct Pixel {
     uint8_t r{}, g{}, b{};
 };
@@ -64,15 +68,35 @@ struct PpmResult {
     std::string diagnostic;
 };
 
+enum class PpmWriteError {
+    kIOError,
+    kNotEnoughPixels,
+    kTooManyPixels,
+};
+
+struct PpmWriteResult {
+    std::expected<void, PpmWriteError> value;
+    std::string diagnostic;
+};
+
 class KV_API PpmWriter {
   public:
-    PpmWriter(std::ostream& os, int32_t width, int32_t height);
-    void put(uint8_t r, uint8_t g, uint8_t b);
+    PpmWriter(std::ostream& os, int32_t width, int32_t height, uint16_t max_val = kMaxChannel);
+    PpmWriteResult putHeader();
+    PpmWriteResult putAll(std::span<const Pixel> pixels, bool finalize = false);
 
   private:
+    PpmWriteResult put(uint8_t r, uint8_t g, uint8_t b);
     std::ostream& _os;
     int32_t _width;
+    int32_t _height;
+    uint16_t _max_val;
+    std::int64_t _capacity = 0;
+    std::int64_t _total = 0;
+    bool _header_written = false;
     int32_t _col = 0;
 };
+
+} // namespace raster::common
 
 #endif
