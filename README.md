@@ -113,7 +113,7 @@ gen_image --size 1024 --seed 42 > big_random.ppm
 ### Справка и версия
 ```
 gen_image --help       -> usage в stdout, exit 0
-gen_image --version    -> "gen_image 0.1.0", exit 0
+gen_image --version    -> "gen_image 0.1.3", exit 0
 ```
 
 ### Поведение при ошибках
@@ -159,7 +159,17 @@ build\01-image-gen\c\gen_image.exe 0; $LASTEXITCODE      # -> 64
 
 # справка и версия
 build\01-image-gen\c\gen_image.exe --help; $LASTEXITCODE     # -> 0, usage в stdout
-build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.0"
+build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.3"
+```
+
+### Эталоны 
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/ref/ 01-image-gen/ref/ref_gradient.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/ref/ 01-image-gen/ref/ref_checker.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/ref/ 01-image-gen/ref/ref_radial.c
+link /DEBUG build/01-image-gen/ref/ref_gradient.obj /OUT:build/01-image-gen/ref/ref_gradient.exe
+link /DEBUG build/01-image-gen/ref/ref_checker.obj /OUT:build/01-image-gen/ref/ref_checker.exe
+link /DEBUG build/01-image-gen/ref/ref_radial.obj /OUT:build/01-image-gen/ref/ref_radial.exe
 ```
 
 ### Сборка основного приложения
@@ -330,7 +340,7 @@ echo P5 | build\03-image-stats\c\image_stats.exe; $LASTEXITCODE # -> 65
 
 ### Эталоны 
 ```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/ref/ 03-image-stats/c/ref_stats.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/ref/ 03-image-stats/ref/ref_stats.c
 link /DEBUG build/03-image-stats/ref/ref_stats.obj /OUT:build/03-image-stats/ref/ref_stats.exe
 ```
 
