@@ -1,11 +1,12 @@
 #include "filter.h"
 
-#include "../../common/c/version.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../../common/c/luma.h"
+#include "../../common/c/version.h"
 
 void pixel_to_grayscale(const struct Pixel* src, struct Pixel* dst) {
     double y = luma(src->r, src->g, src->b);

@@ -4,8 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// luma ��������� � ppm_stats.c
-double luma(int32_t r, int32_t g, int32_t b);
+#include "../../common/c/luma.h"
 
 static int failed = 0;
 

@@ -4,15 +4,9 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 
-static void safe_strerror(int errnum, char* buf, size_t bufsz) {
-#ifdef _WIN32
-    strerror_s(buf, bufsz, errnum);
-#else
-    strerror_r(errnum, buf, bufsz); // POSIX версия
-#endif
-}
+#include "strerror.h"
+
 // -------------------------------------------------------------------
 // Helper: skip whitespace and optional #-comments.
 // allow_hash: 1 = skip #-lines (header phase), 0 = return '#' to caller

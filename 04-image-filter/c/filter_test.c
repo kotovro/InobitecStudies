@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../../common/c/luma.h"
+
 static int failed = 0;
 
 static void check(int cond, const char* test_name) {
