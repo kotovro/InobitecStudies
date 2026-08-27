@@ -4,8 +4,10 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <new>
 #include <print>
 #include <span>
+#include <stdexcept>
 #include <system_error>
 #include <vector>
 
@@ -45,6 +47,11 @@ PpmResult Image::read(std::istream& is) {
 
     auto err = [&](PpmReadError e, int32_t line, std::string msg) -> PpmResult {
         return PpmResult{std::unexpected(e), line, std::move(msg)};
+    };
+
+    auto alloc_err = [&](long long count) {
+        return err(PpmReadError::kAllocError, line_num,
+                   std::format("не удалось выделить память для {} пикселей", count));
     };
 
     auto skip_ws = [&]() -> bool {
@@ -122,7 +129,13 @@ PpmResult Image::read(std::istream& is) {
         img._impl->width = static_cast<int32_t>(w);
         img._impl->height = static_cast<int32_t>(h);
         img._impl->max_val = static_cast<uint16_t>(m);
-        img._impl->pixels.reserve(static_cast<std::size_t>(w) * static_cast<std::size_t>(h));
+        try {
+            img._impl->pixels.reserve(static_cast<std::size_t>(w) * static_cast<std::size_t>(h));
+        } catch (const std::bad_alloc&) {
+            return alloc_err(w * h);
+        } catch (const std::length_error&) {
+            return alloc_err(w * h);
+        }
     }
 
     // ---- 3. Pixel data ----
@@ -162,8 +175,14 @@ PpmResult Image::read(std::istream& is) {
                                    "получено: {} {} {}",
                                    line_num, img._impl->max_val, r, g, b));
 
-        img._impl->pixels.push_back(
-            Pixel{static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b)});
+        try {
+            img._impl->pixels.push_back(
+                Pixel{static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b)});
+        } catch (const std::bad_alloc&) {
+            return alloc_err(total_pixels);
+        } catch (const std::length_error&) {
+            return alloc_err(total_pixels);
+        }
     }
 
     // ---- 4. Check for trailing data ----

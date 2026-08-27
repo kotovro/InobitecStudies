@@ -34,6 +34,7 @@ enum class PpmReadError {
     kTooFewPixels,
     kTooManyPixels,
     kIOError,
+    kAllocError,
 };
 
 struct PpmResult;

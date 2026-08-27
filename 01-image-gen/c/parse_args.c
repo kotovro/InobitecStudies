@@ -65,7 +65,7 @@ static struct ParseResult parse_args_new(int argc, char** argv) {
     if (argc >= 5 && strcmp(argv[3], "--seed") == 0) {
         errno = 0;
         long s = strtol(argv[4], &end, 10);
-        if (errno == ERANGE || end == argv[4] || *end != '\0') {
+        if (errno == ERANGE || end == argv[4] || *end != '\0' || s < 0 || s > UINT32_MAX) {
             result.error = PE_BADSEED;
             return result;
         }

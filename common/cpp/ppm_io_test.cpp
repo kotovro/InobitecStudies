@@ -185,6 +185,14 @@ void test_error_line() {
     check(r.line == 3, "maxval reported on line 3");
 }
 
+void test_alloc_error() {
+    auto ss = std::istringstream("P3\n3000000000 3000000000\n255\n0 0 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "huge dims -> error, not crash");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmReadError::kAllocError, "huge dims -> kAllocError");
+}
+
 // -------------------------------------------------------------------
 // Writer tests
 // -------------------------------------------------------------------
@@ -350,6 +358,7 @@ int main() {
     test_too_few_pixels();
     test_valid_2x2();
     test_error_line();
+    test_alloc_error();
 
     std::println("-- writer --");
     test_writer_basic();

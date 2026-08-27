@@ -122,6 +122,8 @@ int run_filter(std::span<const std::string_view> args, std::istream& input, std:
             return std::to_underlying(ExitCode::kNoInput);
         case PpmReadError::kIOError:
             return std::to_underlying(ExitCode::kIOErr);
+        case PpmReadError::kAllocError:
+            return std::to_underlying(ExitCode::kData);
         default:
             return std::to_underlying(ExitCode::kData);
         }

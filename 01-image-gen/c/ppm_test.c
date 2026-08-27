@@ -125,6 +125,12 @@ static void test_new_bad_seed(void) {
     check(r.error == PE_BADSEED, "--seed abc -> PE_BADSEED");
 }
 
+static void test_new_negative_seed(void) {
+    char* argv[] = {"prog", "--size", "5", "--seed", "-5"};
+    struct ParseResult r = parse_args(5, argv);
+    check(r.error == PE_BADSEED, "--seed -5 -> PE_BADSEED");
+}
+
 // ---- --help / --version tests ----
 
 static void test_help(void) {
@@ -299,6 +305,7 @@ int main(void) {
     test_new_ok_no_seed();
     test_new_with_seed();
     test_new_bad_seed();
+    test_new_negative_seed();
 
     printf("--- help/version tests ---\n");
     test_help();

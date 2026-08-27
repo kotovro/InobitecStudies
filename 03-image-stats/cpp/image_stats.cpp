@@ -50,6 +50,8 @@ int main(int argc, char** argv) {
             return std::to_underlying(ExitCode::kNoInput);
         case PpmReadError::kIOError:
             return std::to_underlying(ExitCode::kIOErr);
+        case PpmReadError::kAllocError:
+            return std::to_underlying(ExitCode::kData);
         default:
             return std::to_underlying(ExitCode::kData);
         }
