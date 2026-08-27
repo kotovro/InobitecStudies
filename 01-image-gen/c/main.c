@@ -54,7 +54,9 @@ int main(int argc, char** argv) {
                     argc >= 3 ? argv[2] : "");
             return EC_USAGE;
         case PE_BADSEED:
-            fprintf(stderr, "seed должно быть целым числом; получено: %s\n",
+            fprintf(stderr,
+                    "seed должно быть целым числом в диапазоне [0; 4294967295]; "
+                    "получено: %s\n",
                     argc >= 5 ? argv[4] : "");
             return EC_USAGE;
         }

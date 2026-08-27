@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "luma.h"
+
 static int failed = 0;
 
 static void check(int cond, const char* name) {
@@ -237,6 +239,21 @@ static void test_image_free_null(void) {
 }
 
 // -------------------------------------------------------------------
+// luma tests
+// -------------------------------------------------------------------
+
+static void test_luma(void) {
+    check(luma(255, 0, 0) >= 76.2 && luma(255, 0, 0) <= 76.3, "luma(255,0,0) ~ 76.245");
+    check(luma(0, 255, 0) >= 149.6 && luma(0, 255, 0) <= 149.7, "luma(0,255,0) ~ 149.685");
+    check(luma(0, 0, 255) >= 29.0 && luma(0, 0, 255) <= 29.1, "luma(0,0,255) ~ 29.07");
+    check(luma(255, 255, 255) >= 254.9 && luma(255, 255, 255) <= 255.1,
+          "luma(255,255,255) == 255.0");
+    check(luma(0, 0, 0) >= -0.1 && luma(0, 0, 0) <= 0.1, "luma(0,0,0) == 0.0");
+    check(luma(128, 128, 128) >= 127.9 && luma(128, 128, 128) <= 128.1,
+          "luma(128,128,128) ~ 128.0");
+}
+
+// -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
 
@@ -265,6 +282,9 @@ int main(void) {
     printf("-- writer --\n");
     test_writer_basic();
     test_image_free_null();
+
+    printf("-- luma --\n");
+    test_luma();
 
     printf("---\n");
     if (failed > 0)

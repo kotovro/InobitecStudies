@@ -6,6 +6,8 @@
 #include <sstream>
 #include <string_view>
 
+#include "luma.hpp"
+
 using namespace raster::common;
 
 namespace {
@@ -194,6 +196,25 @@ void test_alloc_error() {
 }
 
 // -------------------------------------------------------------------
+// luma tests
+// -------------------------------------------------------------------
+
+void test_luma() {
+    auto y = luma(255, 0, 0);
+    check(y >= 76.2 && y <= 76.3, "luma(255,0,0) ~ 76.245");
+    y = luma(0, 255, 0);
+    check(y >= 149.6 && y <= 149.7, "luma(0,255,0) ~ 149.685");
+    y = luma(0, 0, 255);
+    check(y >= 29.0 && y <= 29.1, "luma(0,0,255) ~ 29.07");
+    y = luma(255, 255, 255);
+    check(y >= 254.9 && y <= 255.1, "luma(255,255,255) == 255.0");
+    y = luma(0, 0, 0);
+    check(y >= -0.1 && y <= 0.1, "luma(0,0,0) == 0.0");
+    y = luma(128, 128, 128);
+    check(y >= 127.9 && y <= 128.1, "luma(128,128,128) ~ 128.0");
+}
+
+// -------------------------------------------------------------------
 // Writer tests
 // -------------------------------------------------------------------
 
@@ -359,6 +380,9 @@ int main() {
     test_valid_2x2();
     test_error_line();
     test_alloc_error();
+
+    std::println("-- luma --");
+    test_luma();
 
     std::println("-- writer --");
     test_writer_basic();

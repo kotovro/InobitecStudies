@@ -96,7 +96,9 @@ int main(int argc, char** argv) {
                          argc >= 3 ? argv[2] : "");
             return std::to_underlying(ExitCode::kUsage);
         case ParseError::kBadSeed:
-            std::println(stderr, "seed должно быть целым числом; получено: {}",
+            std::println(stderr,
+                         "seed должно быть целым числом в диапазоне [0; 4294967295]; "
+                         "получено: {}",
                          argc >= 5 ? argv[4] : "");
             return std::to_underlying(ExitCode::kUsage);
         }
