@@ -11,7 +11,9 @@
 *.xml
 *.png
 *.ppm
-*.txt
-!CMakeLists.txt
+*/c/**/*.txt
+*/cpp/**/*.txt
+*/ref/**/*.txt
+
 
 build/
