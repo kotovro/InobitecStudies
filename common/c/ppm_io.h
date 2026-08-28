@@ -57,5 +57,6 @@ struct PpmWriter {
 
 void KV_API ppm_writer_init(struct PpmWriter* w, FILE* f, int32_t width, int32_t height);
 void KV_API ppm_writer_put(struct PpmWriter* w, uint8_t r, uint8_t g, uint8_t b);
+int KV_API ppm_writer_finish(struct PpmWriter* w);
 
 #endif

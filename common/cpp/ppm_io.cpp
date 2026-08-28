@@ -235,6 +235,14 @@ PpmWriteResult PpmWriter::putAll(std::span<const Pixel> pixels, bool finalize) {
     return PpmWriteResult{};
 }
 
+PpmWriteResult PpmWriter::flush() {
+    _os.flush();
+    if (_os.bad() || _os.fail())
+        return PpmWriteResult{std::unexpected(PpmWriteError::kIOError),
+                              "сбой записи при сбросе потока"};
+    return PpmWriteResult{};
+}
+
 PpmWriteResult PpmWriter::put(uint8_t r, uint8_t g, uint8_t b) {
     if (!_header_written)
         return PpmWriteResult{std::unexpected(PpmWriteError::kIOError), "вызван put до putHeader"};

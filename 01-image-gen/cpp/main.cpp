@@ -51,6 +51,9 @@ PpmWriteResult generate_ppm(const Args& args) {
     auto res = writer.putAll(pixels, /*finalize=*/true);
     if (!res.value)
         return res;
+    auto f = writer.flush();
+    if (!f.value)
+        return f;
     return PpmWriteResult{};
 }
 

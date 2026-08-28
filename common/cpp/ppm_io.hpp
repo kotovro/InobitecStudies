@@ -85,6 +85,7 @@ class KV_API PpmWriter {
     PpmWriter(std::ostream& os, int32_t width, int32_t height, uint16_t max_val = kMaxChannel);
     PpmWriteResult putHeader();
     PpmWriteResult putAll(std::span<const Pixel> pixels, bool finalize = false);
+    PpmWriteResult flush();
 
   private:
     PpmWriteResult put(uint8_t r, uint8_t g, uint8_t b);

@@ -158,6 +158,12 @@ int run_filter(std::span<const std::string_view> args, std::istream& input, std:
         }
     }
 
+    auto f = writer.flush();
+    if (!f.value) {
+        std::println(stderr, "{}", f.diagnostic);
+        return std::to_underlying(ExitCode::kIOErr);
+    }
+
     return std::to_underlying(ExitCode::kOk);
 }
 

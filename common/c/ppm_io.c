@@ -1,5 +1,3 @@
-#define DLL_EXPORTS
-
 #include "ppm_io.h"
 
 #include <errno.h>
@@ -339,3 +337,5 @@ void ppm_writer_put(struct PpmWriter* w, uint8_t r, uint8_t g, uint8_t b) {
         w->col = 0;
     }
 }
+
+int ppm_writer_finish(struct PpmWriter* w) { return (fflush(w->f) != 0 || ferror(w->f)) ? -1 : 0; }
