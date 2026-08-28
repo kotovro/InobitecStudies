@@ -2,8 +2,11 @@
 
 #include <array>
 #include <cstdlib>
+#include <ostream>
 #include <print>
 #include <sstream>
+#include <streambuf>
+#include <string>
 #include <string_view>
 
 #include "luma.hpp"
@@ -352,6 +355,36 @@ void test_writer_stream_error() {
         check(r.value.error() == PpmWriteError::kIOError, "bad stream header -> kIOError");
 }
 
+// Buffers all writes but fails at flush (sync() -> -1): emulates a pipe that
+// closed while the output was still buffered.
+class BrokenPipeBuf : public std::streambuf {
+  public:
+    int_type overflow(int_type c) override {
+        if (c != traits_type::eof())
+            data_ += static_cast<char>(c);
+        return traits_type::not_eof(c);
+    }
+    int sync() override { return -1; }
+
+  private:
+    std::string data_;
+};
+
+void test_writer_flush_error() {
+    BrokenPipeBuf sbuf;
+    std::ostream os(&sbuf);
+    PpmWriter pw(os, 1, 1);
+    auto h = pw.putHeader();
+    check(h.value.has_value(), "flush error: header ok");
+    auto pixels = std::to_array<Pixel>({{1, 2, 3}});
+    auto r = pw.putAll(pixels, /*finalize=*/true);
+    check(r.value.has_value(), "flush error: putAll ok while buffered");
+    auto f = pw.flush();
+    check(!f.value.has_value(), "flush error: flush detects broken stream");
+    if (!f.value.has_value())
+        check(f.value.error() == PpmWriteError::kIOError, "flush error -> kIOError");
+}
+
 // -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
@@ -394,6 +427,7 @@ int main() {
     test_writer_not_enough_pixels();
     test_writer_finalize_false_no_check();
     test_writer_stream_error();
+    test_writer_flush_error();
 
     std::println("---");
     if (failed > 0)
