@@ -17,6 +17,7 @@ common/
   cpp/             — общие модули (C++)
     exit_codes.hpp — именованные exit-коды
     version.hpp    — версия программ (`kVersion`)
+    luma.hpp       — яркость (luma) по каналам (header-only)
     ppm_io.hpp(.cpp) — модуль ввода-вывода PPM (PIMPL, экспорт в DLL)
 build/
   test_data/       — сгенерированные тестовые PPM (в .gitignore)
@@ -34,6 +35,7 @@ dialog_logs/       — сырые логи диалогов с DeepSeek
  03-image-stats/    — задача 3: статистика изображения
    c/
    cpp/
+   ref/
  04-image-filter/   — задача 4: фильтр изображения
    c/               — реализация на C
    cpp/             — реализация на C++
@@ -76,10 +78,10 @@ New-Item -ItemType Directory -Force -Path build/test_data, build/common/c, build
 
 | Программа | Файл | Назначение |
 |---|---|---|
-| `ref_gradient` | `01-image-gen/ref/ref_gradient.c` | PPM gradient 3 x 3 |
-| `ref_checker` | `01-image-gen/ref/ref_checker.c` | PPM checker 3 x 3 |
-| `ref_radial` | `01-image-gen/ref/ref_radial.c` | PPM radial 3 x 3 |
-| `ref_stats` | `03-image-stats/c/ref_stats.c` | Статистика PPM из stdin |
+| `ref_gradient` | `01-image-gen/ref/ref_gradient.c` | PPM gradient 3x3 |
+| `ref_checker` | `01-image-gen/ref/ref_checker.c` | PPM checker 3x3 |
+| `ref_radial` | `01-image-gen/ref/ref_radial.c` | PPM radial 3x3 |
+| `ref_stats` | `03-image-stats/ref/ref_stats.c` | Статистика PPM из stdin |
 | `ref_passport <case>` | `02-image-passport/ref/ref_passport.c` | Паспорт: эталонный вывод по кейсу |
 
 Все бинарники — в `build/`.
@@ -183,7 +185,8 @@ cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/patterns.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/main.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ common/c/ppm_io.c
-link /DEBUG build/01-image-gen/c/parse_args.obj build/01-image-gen/c/patterns.obj build/01-image-gen/c/hsv_to_rgb.obj build/01-image-gen/c/main.obj build/01-image-gen/c/ppm_io.obj /OUT:build/01-image-gen/c/gen_image.exe
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ common/c/strerror.c
+link /DEBUG build/01-image-gen/c/parse_args.obj build/01-image-gen/c/patterns.obj build/01-image-gen/c/hsv_to_rgb.obj build/01-image-gen/c/main.obj build/01-image-gen/c/ppm_io.obj build/01-image-gen/c/strerror.obj /OUT:build/01-image-gen/c/gen_image.exe
 ```
 
 Для C++:
@@ -307,9 +310,10 @@ build\01-image-gen\c\gen_image.exe --size 1024 --seed 42 | build\03-image-stats\
 Для C:
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/strerror.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/ppm_stats.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/ppm_stats_test.c
-link /DEBUG build/03-image-stats/c/ppm_io.obj build/03-image-stats/c/ppm_stats.obj build/03-image-stats/c/ppm_stats_test.obj /OUT:build/03-image-stats/c/ppm_stats_test.exe
+link /DEBUG build/03-image-stats/c/ppm_io.obj build/03-image-stats/c/strerror.obj build/03-image-stats/c/ppm_stats.obj build/03-image-stats/c/ppm_stats_test.obj /OUT:build/03-image-stats/c/ppm_stats_test.exe
 ```
 
 Для C++:
@@ -353,9 +357,10 @@ link /DEBUG build/03-image-stats/ref/ref_stats.obj /OUT:build/03-image-stats/ref
 Для C:
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/strerror.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/ppm_stats.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/main.c
-link /DEBUG build/03-image-stats/c/ppm_io.obj build/03-image-stats/c/ppm_stats.obj build/03-image-stats/c/main.obj /OUT:build/03-image-stats/c/image_stats.exe
+link /DEBUG build/03-image-stats/c/ppm_io.obj build/03-image-stats/c/strerror.obj build/03-image-stats/c/ppm_stats.obj build/03-image-stats/c/main.obj /OUT:build/03-image-stats/c/image_stats.exe
 ```
 
 Для C++:
@@ -414,9 +419,10 @@ build/04-image-filter/cpp/filter_tests.exe  # C++
 Для C:
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/strerror.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter_test.c 
-link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj /OUT:build/04-image-filter/c/filter_tests.exe
+link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/strerror.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj /OUT:build/04-image-filter/c/filter_tests.exe
 ```
 
 Для C++:
@@ -432,9 +438,10 @@ link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filte
 Для C:
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/strerror.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter.c 
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/main.c
-link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/main.obj /OUT:build/04-image-filter/c/filter.exe
+link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/strerror.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/main.obj /OUT:build/04-image-filter/c/filter.exe
 ```
 
 Для C++:
@@ -456,13 +463,13 @@ link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filte
 Сборка для C (DLL + import-lib):
 ```
 cl /std:c17 /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib 
-link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe -> пример линковки с фильтром изображений
+link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe -> пример линковки с тестами на фильтр изображений
 ```
 
 Сборка для C++ (DLL + import-lib):
 ```
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/common/cpp/ppm_io.dll /IMPLIB:build/common/cpp/ppm_io.lib
-link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe -> пример линковки с фильтром изображений
+cl /std:c17 /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib
+link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe -> пример линковки с тестами на фильтр изображений
 ```
 
 - **Linux / macOS** — флаг игнорируется, символы `.so` экспортируются по умолчанию
