@@ -9,6 +9,7 @@
 AGENTS.md          — журнал работы и память агента
 common/
   c/               — общие модули (C)
+    api.h          — макрос для сборки общего модуля в формате библиотеки(lib/imp lib + dll)
     exit_codes.h   — именованные exit-коды
     version.h      — версия программ (`KV_VERSION`)
     ppm_io.h(.c)   — модуль ввода-вывода PPM (парсинг/запись, экспорт в DLL)
@@ -152,7 +153,7 @@ build/01-image-gen/cpp/ppm_test.exe
 Acceptance — ручной прогон с эталоном через `cmd /c fc`:
 ```powershell
 # gradient 3x3
-build\01-image-gen\ref\ref_gradient.exe 3 > build\test_data\gradient_3x3.ppm
+build\01-image-gen\ref\ref_gradient.exe > build\test_data\gradient_3x3.ppm
 build\01-image-gen\c\gen_image.exe 3 gradient > build\actual.ppm
 cmd /c fc build\actual.ppm build\test_data\gradient_3x3.ppm
 
@@ -333,13 +334,13 @@ build/03-image-stats/cpp/ppm_stats_test.exe # C++
 Acceptance — ручной прогон (конвейер + `cmd /c fc`):
 ```powershell
 # эталон: ref_gradient | ref_stats
-build\01-image-gen\ref\ref_gradient.exe 2 | build\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_2x2.txt
+build\01-image-gen\ref\ref_gradient.exe | build\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_3x3.txt
 
 # прогон: gen_image | image_stats
-build\01-image-gen\c\gen_image.exe 2 gradient | build\03-image-stats\c\image_stats.exe > build\actual.txt
+build\01-image-gen\c\gen_image.exe 3 gradient | build\03-image-stats\c\image_stats.exe > build\actual.txt
 
 # сравнение
-cmd /c fc build\actual.txt build\test_data\stats_gradient_2x2.txt
+cmd /c fc build\actual.txt build\test_data\stats_gradient_3x3.txt
 
 # error-кейсы (только exit-код)
 echo "" | build\03-image-stats\c\image_stats.exe; $LASTEXITCODE # -> 66
@@ -462,14 +463,14 @@ link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filte
 
 Сборка для C (DLL + import-lib):
 ```
-cl /std:c17 /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib 
-link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe -> пример линковки с тестами на фильтр изображений
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib 
+link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe # пример линковки с тестами на фильтр изображений
 ```
 
 Сборка для C++ (DLL + import-lib):
 ```
-cl /std:c17 /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib
-link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe -> пример линковки с тестами на фильтр изображений
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/common/cpp/ppm_io.dll /IMPLIB:build/common/cpp/ppm_io.lib
+link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe # пример линковки с тестами на фильтр изображений
 ```
 
 - **Linux / macOS** — флаг игнорируется, символы `.so` экспортируются по умолчанию
@@ -539,8 +540,8 @@ build\01-image-gen\c\gen_image.exe --size 1024 --seed 9999 > build/test_data/ran
 build\01-image-gen\ref\ref_gradient.exe > build/test_data/gradient_3x3.ppm
 ```
 
-Итого 15 файлов: random (2×2, 64×64, 1024×1024 × 3 seed) + reference
-(gradient/checker/radial 2×2, 3×3).
+Итого 12 файлов: random (2×2, 64×64, 1024×1024 × 3 seed) + reference
+(gradient/checker/radial 3×3).
 
 ---
 
