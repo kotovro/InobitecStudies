@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "luma.h"
+
 static int failed = 0;
 
 static void check(int cond, const char* name) {
@@ -236,6 +238,48 @@ static void test_image_free_null(void) {
     check(1, "ppm_image_free(zeroed Image) -> no crash");
 }
 
+static void test_writer_finish_error(void) {
+    // Writing to a read-only FILE* fails (fprintf < 0) and sets ferror;
+    // ppm_writer_finish must surface the failure.
+    FILE* wf = fopen("_ppm_io_finish_test.tmp", "w");
+    if (!wf) {
+        check(0, "finish error: cannot create temp file");
+        return;
+    }
+    fputs("x", wf);
+    fclose(wf);
+
+    FILE* ro = fopen("_ppm_io_finish_test.tmp", "r");
+    if (!ro) {
+        check(0, "finish error: cannot reopen temp file for read");
+        remove("_ppm_io_finish_test.tmp");
+        return;
+    }
+
+    struct PpmWriter w;
+    ppm_writer_init(&w, ro, 1, 1);
+    ppm_writer_put(&w, (uint8_t)1, (uint8_t)2, (uint8_t)3);
+    check(ppm_writer_finish(&w) != 0, "finish detects write failure");
+
+    fclose(ro);
+    remove("_ppm_io_finish_test.tmp");
+}
+
+// -------------------------------------------------------------------
+// luma tests
+// -------------------------------------------------------------------
+
+static void test_luma(void) {
+    check(luma(255, 0, 0) >= 76.2 && luma(255, 0, 0) <= 76.3, "luma(255,0,0) ~ 76.245");
+    check(luma(0, 255, 0) >= 149.6 && luma(0, 255, 0) <= 149.7, "luma(0,255,0) ~ 149.685");
+    check(luma(0, 0, 255) >= 29.0 && luma(0, 0, 255) <= 29.1, "luma(0,0,255) ~ 29.07");
+    check(luma(255, 255, 255) >= 254.9 && luma(255, 255, 255) <= 255.1,
+          "luma(255,255,255) == 255.0");
+    check(luma(0, 0, 0) >= -0.1 && luma(0, 0, 0) <= 0.1, "luma(0,0,0) == 0.0");
+    check(luma(128, 128, 128) >= 127.9 && luma(128, 128, 128) <= 128.1,
+          "luma(128,128,128) ~ 128.0");
+}
+
 // -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
@@ -265,6 +309,10 @@ int main(void) {
     printf("-- writer --\n");
     test_writer_basic();
     test_image_free_null();
+    test_writer_finish_error();
+
+    printf("-- luma --\n");
+    test_luma();
 
     printf("---\n");
     if (failed > 0)

@@ -17,8 +17,8 @@ static struct ParseResult parse_args_old(int argc, char** argv) {
 
     char* end;
     errno = 0;
-    long n = strtol(argv[1], &end, 10);
-    if (errno == ERANGE || end == argv[1] || *end != '\0') {
+    long long n = strtoll(argv[1], &end, 10);
+    if (errno == ERANGE || end == argv[1] || *end != '\0' || n < INT32_MIN || n > INT32_MAX) {
         result.error = PE_BADNUMBER;
         return result;
     }
@@ -55,8 +55,8 @@ static struct ParseResult parse_args_new(int argc, char** argv) {
 
     char* end;
     errno = 0;
-    long n = strtol(argv[2], &end, 10);
-    if (errno == ERANGE || end == argv[2] || *end != '\0') {
+    long long n = strtoll(argv[2], &end, 10);
+    if (errno == ERANGE || end == argv[2] || *end != '\0' || n < INT32_MIN || n > INT32_MAX) {
         result.error = PE_BADNUMBER;
         return result;
     }
@@ -64,8 +64,8 @@ static struct ParseResult parse_args_new(int argc, char** argv) {
 
     if (argc >= 5 && strcmp(argv[3], "--seed") == 0) {
         errno = 0;
-        long s = strtol(argv[4], &end, 10);
-        if (errno == ERANGE || end == argv[4] || *end != '\0') {
+        long long s = strtoll(argv[4], &end, 10);
+        if (errno == ERANGE || end == argv[4] || *end != '\0' || s < 0 || s > UINT32_MAX) {
             result.error = PE_BADSEED;
             return result;
         }

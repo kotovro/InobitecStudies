@@ -1,9 +1,12 @@
 #include "parse_args.h"
 #include "patterns.h"
 
-#include "../../common/c/ppm_io.h"
+#include <errno.h>
 
-static void generate_ppm(const struct ParseResult* args) {
+#include "../../common/c/ppm_io.h"
+#include "../../common/c/strerror.h"
+
+static int generate_ppm(const struct ParseResult* args) {
     struct PpmWriter writer;
     ppm_writer_init(&writer, stdout, args->size, args->size);
     uint32_t state = args->seed;
@@ -26,6 +29,14 @@ static void generate_ppm(const struct ParseResult* args) {
             }
             ppm_writer_put(&writer, c.r, c.g, c.b);
         }
+
+    if (ppm_writer_finish(&writer) != 0) {
+        char errbuf[256];
+        safe_strerror(errno, errbuf, sizeof errbuf);
+        fprintf(stderr, "сбой записи в поток: %s (errno %d)\n", errbuf, errno);
+        return EC_IOERR;
+    }
+    return EC_OK;
 }
 
 int main(int argc, char** argv) {
@@ -53,6 +64,12 @@ int main(int argc, char** argv) {
             fprintf(stderr, "Неизвестный паттерн: %s. Допустимые: gradient, checker, radial\n",
                     argc >= 3 ? argv[2] : "");
             return EC_USAGE;
+        case PE_BADSEED:
+            fprintf(stderr,
+                    "seed должно быть целым числом в диапазоне [0; 4294967295]; "
+                    "получено: %s\n",
+                    argc >= 5 ? argv[4] : "");
+            return EC_USAGE;
         }
     }
 
@@ -66,6 +83,5 @@ int main(int argc, char** argv) {
         return EC_USAGE;
     }
 
-    generate_ppm(&args);
-    return EC_OK;
+    return generate_ppm(&args);
 }

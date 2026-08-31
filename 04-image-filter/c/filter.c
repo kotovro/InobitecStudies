@@ -1,11 +1,13 @@
 #include "filter.h"
 
-#include "../../common/c/version.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../../common/c/luma.h"
+#include "../../common/c/strerror.h"
+#include "../../common/c/version.h"
 
 void pixel_to_grayscale(const struct Pixel* src, struct Pixel* dst) {
     double y = luma(src->r, src->g, src->b);
@@ -147,6 +149,14 @@ int run_filter(int argc, char** argv, FILE* input, FILE* output) {
     ppm_writer_init(&writer, output, image->width, image->height);
     for (long long i = 0; i < (long long)image->width * image->height; ++i)
         ppm_writer_put(&writer, image->pixels[i].r, image->pixels[i].g, image->pixels[i].b);
+
+    if (ppm_writer_finish(&writer) != 0) {
+        char errbuf[256];
+        safe_strerror(errno, errbuf, sizeof errbuf);
+        fprintf(stderr, "сбой записи в поток: %s (errno %d)\n", errbuf, errno);
+        ppm_image_free(image);
+        return EC_IOERR;
+    }
 
     ppm_image_free(image);
     return EC_OK;

@@ -1,9 +1,6 @@
 #include "filter.hpp"
 
-#include "../../common/cpp/luma.hpp"
-
 #include <array>
-#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -38,22 +35,6 @@ void check_pixel(const Pixel& pixel, uint8_t er, uint8_t eg, uint8_t eb, const c
         std::println("PASS: {}", test_name);
     }
 }
-
-bool approx_eq(double a, double b, double eps = 1e-9) { return std::fabs(a - b) <= eps; }
-
-// -------------------------------------------------------------------
-// luma tests
-// -------------------------------------------------------------------
-
-void test_luma_black() { check(approx_eq(luma(0, 0, 0), 0.0), "luma(0,0,0) == 0"); }
-
-void test_luma_white() { check(approx_eq(luma(255, 255, 255), 255.0), "luma(255,255,255) == 255"); }
-
-void test_luma_red() { check(approx_eq(luma(255, 0, 0), 76.245), "luma(255,0,0) ~ 76.245"); }
-
-void test_luma_green() { check(approx_eq(luma(0, 255, 0), 149.685), "luma(0,255,0) ~ 149.685"); }
-
-void test_luma_blue() { check(approx_eq(luma(0, 0, 255), 29.07), "luma(0,0,255) ~ 29.07"); }
 
 // -------------------------------------------------------------------
 // pixel_to_grayscale tests
@@ -305,13 +286,6 @@ void test_run_filter_version() {
 } // namespace
 
 int main() {
-    std::println("--- luma tests ---");
-    test_luma_black();
-    test_luma_white();
-    test_luma_red();
-    test_luma_green();
-    test_luma_blue();
-
     std::println("--- grayscale tests ---");
     test_grayscale_black();
     test_grayscale_white();

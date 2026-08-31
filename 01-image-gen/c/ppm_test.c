@@ -125,6 +125,34 @@ static void test_new_bad_seed(void) {
     check(r.error == PE_BADSEED, "--seed abc -> PE_BADSEED");
 }
 
+static void test_new_negative_seed(void) {
+    char* argv[] = {"prog", "--size", "5", "--seed", "-5"};
+    struct ParseResult r = parse_args(5, argv);
+    check(r.error == PE_BADSEED, "--seed -5 -> PE_BADSEED");
+}
+
+static void test_new_size_overflow(void) {
+    char* argv[] = {"prog", "--size", "3000000000"};
+    struct ParseResult r = parse_args(3, argv);
+    check(r.error == PE_BADNUMBER, "--size 3000000000 -> PE_BADNUMBER");
+}
+
+static void test_new_seed_max(void) {
+    char* argv[] = {"prog", "--size", "5", "--seed", "4294967295"};
+    struct ParseResult r = parse_args(5, argv);
+    check(r.error == PE_OK, "--seed 4294967295 -> PE_OK");
+    if (r.error == PE_OK) {
+        check(r.seed == (uint32_t)4294967295, "--seed 4294967295 -> seed value");
+        check(r.seed_provided == 1, "--seed 4294967295 -> seed provided");
+    }
+}
+
+static void test_new_seed_overflow(void) {
+    char* argv[] = {"prog", "--size", "5", "--seed", "4294967296"};
+    struct ParseResult r = parse_args(5, argv);
+    check(r.error == PE_BADSEED, "--seed 4294967296 -> PE_BADSEED");
+}
+
 // ---- --help / --version tests ----
 
 static void test_help(void) {
@@ -299,6 +327,10 @@ int main(void) {
     test_new_ok_no_seed();
     test_new_with_seed();
     test_new_bad_seed();
+    test_new_negative_seed();
+    test_new_size_overflow();
+    test_new_seed_max();
+    test_new_seed_overflow();
 
     printf("--- help/version tests ---\n");
     test_help();

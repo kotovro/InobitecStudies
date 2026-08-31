@@ -1,7 +1,5 @@
 #include "ppm_stats.hpp"
 
-#include "../../common/cpp/luma.hpp"
-
 #include <cstdint>
 #include <cstdlib>
 #include <optional>
@@ -70,23 +68,6 @@ void test_stats_comments() {
         check_stats(*s, 2, 2, 4, 0, 0, 0);
 }
 
-// ---- luma unit tests ----
-
-void test_luma() {
-    auto y = ::luma(255, 0, 0);
-    check(y >= 76.2 && y <= 76.3, "luma(255,0,0) ~ 76.245");
-    y = ::luma(0, 255, 0);
-    check(y >= 149.6 && y <= 149.7, "luma(0,255,0) ~ 149.685");
-    y = ::luma(0, 0, 255);
-    check(y >= 29.0 && y <= 29.1, "luma(0,0,255) ~ 29.07");
-    y = ::luma(255, 255, 255);
-    check(y >= 254.9 && y <= 255.1, "luma(255,255,255) == 255.0");
-    y = ::luma(0, 0, 0);
-    check(y >= -0.1 && y <= 0.1, "luma(0,0,0) == 0.0");
-    y = luma(128, 128, 128);
-    check(y >= 127.9 && y <= 128.1, "luma(128,128,128) ~ 128.0");
-}
-
 // ---- main ----
 
 } // namespace
@@ -95,9 +76,6 @@ int main() {
     std::println("--- compute_stats tests ---");
     test_stats_known();
     test_stats_comments();
-
-    std::println("-- luma --");
-    test_luma();
 
     std::println("---");
     if (failed > 0)

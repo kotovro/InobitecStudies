@@ -139,6 +139,41 @@ void test_new_bad_seed() {
     check(r.error() == ParseError::kBadSeed, "--seed abc kBadSeed");
 }
 
+void test_new_negative_seed() {
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--size", "5", "--seed", "-5"}));
+    check(!r.has_value(), "--size 5 --seed -5 -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadSeed, "--seed -5 kBadSeed");
+}
+
+void test_new_size_overflow() {
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--size", "3000000000"}));
+    check(!r.has_value(), "--size 3000000000 -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadNumber, "--size 3000000000 kBadNumber");
+}
+
+void test_new_seed_max() {
+    auto r = parse_args(
+        std::to_array<std::string_view>({"prog", "--size", "5", "--seed", "4294967295"}));
+    check(r.has_value(), "--size 5 --seed 4294967295 -> ok");
+    if (!r.has_value())
+        return;
+    check(r->args.seed == 4294967295U, "--seed 4294967295 seed value");
+    check(r->args.seed_provided, "--seed 4294967295 seed provided");
+}
+
+void test_new_seed_overflow() {
+    auto r = parse_args(
+        std::to_array<std::string_view>({"prog", "--size", "5", "--seed", "4294967296"}));
+    check(!r.has_value(), "--seed 4294967296 -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadSeed, "--seed 4294967296 kBadSeed");
+}
+
 // ---- --help / --version tests ----
 
 void test_help() {
@@ -360,6 +395,10 @@ int main() {
     test_new_ok_no_seed();
     test_new_with_seed();
     test_new_bad_seed();
+    test_new_negative_seed();
+    test_new_size_overflow();
+    test_new_seed_max();
+    test_new_seed_overflow();
 
     std::println("--- help/version tests ---");
     test_help();

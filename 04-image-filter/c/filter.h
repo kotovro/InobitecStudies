@@ -28,10 +28,6 @@ struct FilterParseResult {
     struct FilterArgs args;
 };
 
-static inline double luma(uint8_t r, uint8_t g, uint8_t b) {
-    return 0.299 * r + 0.587 * g + 0.114 * b;
-}
-
 void pixel_to_grayscale(const struct Pixel* src, struct Pixel* dst);
 void pixel_threshold(const struct Pixel* src, int threshold, struct Pixel* dst);
 void apply_grayscale(struct Image* img);

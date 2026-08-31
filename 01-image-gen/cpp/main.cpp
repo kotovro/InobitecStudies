@@ -51,6 +51,9 @@ PpmWriteResult generate_ppm(const Args& args) {
     auto res = writer.putAll(pixels, /*finalize=*/true);
     if (!res.value)
         return res;
+    auto f = writer.flush();
+    if (!f.value)
+        return f;
     return PpmWriteResult{};
 }
 
@@ -96,7 +99,9 @@ int main(int argc, char** argv) {
                          argc >= 3 ? argv[2] : "");
             return std::to_underlying(ExitCode::kUsage);
         case ParseError::kBadSeed:
-            std::println(stderr, "seed должно быть целым числом; получено: {}",
+            std::println(stderr,
+                         "seed должно быть целым числом в диапазоне [0; 4294967295]; "
+                         "получено: {}",
                          argc >= 5 ? argv[4] : "");
             return std::to_underlying(ExitCode::kUsage);
         }

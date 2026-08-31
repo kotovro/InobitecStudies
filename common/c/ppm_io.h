@@ -1,20 +1,12 @@
 #ifndef KV_PPM_IO_H
 #define KV_PPM_IO_H
 
+#include "api.h"
+
 #include <stdint.h>
 #include <stdio.h>
 
 enum { PPM_DIAG_SIZE = 256 };
-
-#if defined(_WIN32)
-#if defined(KV_DYNAMIC_LINK)
-#define KV_API __declspec(dllexport)
-#else
-#define KV_API
-#endif
-#else
-#define KV_API
-#endif
 
 struct Pixel {
     uint8_t r, g, b;
@@ -57,5 +49,6 @@ struct PpmWriter {
 
 void KV_API ppm_writer_init(struct PpmWriter* w, FILE* f, int32_t width, int32_t height);
 void KV_API ppm_writer_put(struct PpmWriter* w, uint8_t r, uint8_t g, uint8_t b);
+int KV_API ppm_writer_finish(struct PpmWriter* w);
 
 #endif

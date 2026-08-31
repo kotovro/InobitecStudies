@@ -2,9 +2,14 @@
 
 #include <array>
 #include <cstdlib>
+#include <ostream>
 #include <print>
 #include <sstream>
+#include <streambuf>
+#include <string>
 #include <string_view>
+
+#include "luma.hpp"
 
 using namespace raster::common;
 
@@ -185,6 +190,33 @@ void test_error_line() {
     check(r.line == 3, "maxval reported on line 3");
 }
 
+void test_alloc_error() {
+    auto ss = std::istringstream("P3\n3000000000 3000000000\n255\n0 0 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "huge dims -> error, not crash");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmReadError::kAllocError, "huge dims -> kAllocError");
+}
+
+// -------------------------------------------------------------------
+// luma tests
+// -------------------------------------------------------------------
+
+void test_luma() {
+    auto y = luma(255, 0, 0);
+    check(y >= 76.2 && y <= 76.3, "luma(255,0,0) ~ 76.245");
+    y = luma(0, 255, 0);
+    check(y >= 149.6 && y <= 149.7, "luma(0,255,0) ~ 149.685");
+    y = luma(0, 0, 255);
+    check(y >= 29.0 && y <= 29.1, "luma(0,0,255) ~ 29.07");
+    y = luma(255, 255, 255);
+    check(y >= 254.9 && y <= 255.1, "luma(255,255,255) == 255.0");
+    y = luma(0, 0, 0);
+    check(y >= -0.1 && y <= 0.1, "luma(0,0,0) == 0.0");
+    y = luma(128, 128, 128);
+    check(y >= 127.9 && y <= 128.1, "luma(128,128,128) ~ 128.0");
+}
+
 // -------------------------------------------------------------------
 // Writer tests
 // -------------------------------------------------------------------
@@ -323,6 +355,36 @@ void test_writer_stream_error() {
         check(r.value.error() == PpmWriteError::kIOError, "bad stream header -> kIOError");
 }
 
+// Buffers all writes but fails at flush (sync() -> -1): emulates a pipe that
+// closed while the output was still buffered.
+class BrokenPipeBuf : public std::streambuf {
+  public:
+    int_type overflow(int_type c) override {
+        if (c != traits_type::eof())
+            data_ += static_cast<char>(c);
+        return traits_type::not_eof(c);
+    }
+    int sync() override { return -1; }
+
+  private:
+    std::string data_;
+};
+
+void test_writer_flush_error() {
+    BrokenPipeBuf sbuf;
+    std::ostream os(&sbuf);
+    PpmWriter pw(os, 1, 1);
+    auto h = pw.putHeader();
+    check(h.value.has_value(), "flush error: header ok");
+    auto pixels = std::to_array<Pixel>({{1, 2, 3}});
+    auto r = pw.putAll(pixels, /*finalize=*/true);
+    check(r.value.has_value(), "flush error: putAll ok while buffered");
+    auto f = pw.flush();
+    check(!f.value.has_value(), "flush error: flush detects broken stream");
+    if (!f.value.has_value())
+        check(f.value.error() == PpmWriteError::kIOError, "flush error -> kIOError");
+}
+
 // -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
@@ -350,6 +412,10 @@ int main() {
     test_too_few_pixels();
     test_valid_2x2();
     test_error_line();
+    test_alloc_error();
+
+    std::println("-- luma --");
+    test_luma();
 
     std::println("-- writer --");
     test_writer_basic();
@@ -361,6 +427,7 @@ int main() {
     test_writer_not_enough_pixels();
     test_writer_finalize_false_no_check();
     test_writer_stream_error();
+    test_writer_flush_error();
 
     std::println("---");
     if (failed > 0)

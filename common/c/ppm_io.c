@@ -1,18 +1,10 @@
-#define DLL_EXPORTS
-
 #include "ppm_io.h"
 
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 
-static void safe_strerror(int errnum, char* buf, size_t bufsz) {
-#ifdef _WIN32
-    strerror_s(buf, bufsz, errnum);
-#else
-    strerror_r(errnum, buf, bufsz); // POSIX версия
-#endif
-}
+#include "strerror.h"
+
 // -------------------------------------------------------------------
 // Helper: skip whitespace and optional #-comments.
 // allow_hash: 1 = skip #-lines (header phase), 0 = return '#' to caller
@@ -345,3 +337,5 @@ void ppm_writer_put(struct PpmWriter* w, uint8_t r, uint8_t g, uint8_t b) {
         w->col = 0;
     }
 }
+
+int ppm_writer_finish(struct PpmWriter* w) { return (fflush(w->f) != 0 || ferror(w->f)) ? -1 : 0; }

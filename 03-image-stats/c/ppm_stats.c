@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 
-double luma(int32_t r, int32_t g, int32_t b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
+#include "../../common/c/luma.h"
 
 void compute_stats(const struct Image* img, struct Stats* out) {
     struct Stats s = {0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, {0}};

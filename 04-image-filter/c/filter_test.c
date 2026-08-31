@@ -1,6 +1,5 @@
 #include "filter.h"
 
-#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,9 +27,6 @@ static void check_pixel(const struct Pixel* pixel, uint8_t er, uint8_t eg, uint8
     }
 }
 
-#define LUMA_EPS 1e-9
-static int approx_eq(double a, double b) { return fabs(a - b) <= LUMA_EPS; }
-
 static FILE* make_ppm(const char* data) {
     FILE* f = tmpfile();
     if (!f) {
@@ -40,20 +36,6 @@ static FILE* make_ppm(const char* data) {
     fputs(data, f);
     rewind(f);
     return f;
-}
-
-// -------------------------------------------------------------------
-// luma tests
-// -------------------------------------------------------------------
-
-static void test_luma_black(void) { check(approx_eq(luma(0, 0, 0), 0.0), "luma(0,0,0) == 0"); }
-
-static void test_luma_red(void) {
-    check(approx_eq(luma(255, 0, 0), 76.245), "luma(255,0,0) ~ 76.245");
-}
-
-static void test_luma_green(void) {
-    check(approx_eq(luma(0, 255, 0), 149.685), "luma(0,255,0) ~ 149.685");
 }
 
 // -------------------------------------------------------------------
@@ -286,11 +268,6 @@ static void test_run_filter_version(void) {
 // -------------------------------------------------------------------
 
 int main(void) {
-    printf("--- luma tests (C) ---\n");
-    test_luma_black();
-    test_luma_red();
-    test_luma_green();
-
     printf("--- grayscale tests (C) ---\n");
     test_grayscale_black();
     test_grayscale_red();
