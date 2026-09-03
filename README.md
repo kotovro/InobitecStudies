@@ -459,18 +459,22 @@ link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filte
 способами:
 
 - **Объектный файл / статическая библиотека** — по умолчанию, без флагов
-- **Динамическая библиотека (DLL / .so)** — с флагом `KV_DYNAMIC_LINK`:
+- **Динамическая библиотека (DLL / .so)** — с флагом `KV_DYNAMIC_LINK`. При этом, в  случае сборки с созданием динамической библиотеки, необходимо скопировать DLL(so на Linux/Mac) в папку с приложением-потребителем, иначе оно при запуске выдаст ошибку
 
 Сборка для C (DLL + import-lib):
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib 
 link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe # пример линковки с тестами на фильтр изображений
+Copy-Item -Path build/common/c/ppm_io.dll -Destination build/04-image-filter/c/ # копирование dll в папку с исполняемым приложением для того, чтобы оно запсутилось
 ```
 
 Сборка для C++ (DLL + import-lib):
 ```
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/common/cpp/ppm_io.dll /IMPLIB:build/common/cpp/ppm_io.lib
 link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe # пример линковки с тестами на фильтр изображений
+Copy-Item -Path build/common/cpp/ppm_io.dll -Destination build/04-image-filter/cpp/ # для PowerShell
+copy /Y build/common/cpp/ppm_io.dll build/04-image-filter/cpp/ #cmd
+cp build/common/cpp/ppm_io.dll -Destination build/04-image-filter/cpp/ # Linux shell
 ```
 
 - **Linux / macOS** — флаг игнорируется, символы `.so` экспортируются по умолчанию
@@ -558,3 +562,10 @@ build\01-image-gen\ref\ref_gradient.exe > build/test_data/gradient_3x3.ppm
 | `EC_IOERR` | 74 | Сбой ввода-вывода |
 
 Код — машинный канал для скриптов-обёрток; stderr — детали для человека.
+
+## Выпуск релиза
+Перед тем, как присвоить тег по semversion коду, реализуется следующая последовательность действий:
+1. Полная проверка по сценарию README (начиная с чистого клона репозитория): сборка и выполнение всех тестов (включая примеры для задачи 1 и модуль common/ppm_io) - без частичных или инкрементальных запусков.
+2. Проверка идентичности поведения при сбоях: выполнение сборок на C и C++ с использованием фиксированного набора входных данных, провоцирующих ошибки (например, заголовки чрезмерного размера или потребитель, преждевременно закрывающий канал), и подтверждение того, что обе реализации завершаются одинаково (совпадение класса кода возврата и наличие непустого диагностического сообщения), а не просто совпадение результатов при успешном выполнении.
+3. Сверка CHANGELOG на основе diff: поочередный анализ коммитов в диапазоне git log <last-tag>..HEAD и сопоставление их с записями в CHANGELOG для подтверждения того, что каждое изменение отражено в файле.
+4. Проверка согласованности версий: подтверждение того, что вывод команды --version совпадает с создаваемым тегом и версией, указанной в заголовке CHANGELOG
