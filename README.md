@@ -118,7 +118,7 @@ gen_image --size 1024 --seed 42 > big_random.ppm
 ### Справка и версия
 ```
 gen_image --help       -> usage в stdout, exit 0
-gen_image --version    -> "gen_image 0.1.3", exit 0
+gen_image --version    -> "gen_image 0.1.4", exit 0
 ```
 
 ### Поведение при ошибках
@@ -164,7 +164,7 @@ build\01-image-gen\c\gen_image.exe 0; $LASTEXITCODE      # -> 64
 
 # справка и версия
 build\01-image-gen\c\gen_image.exe --help; $LASTEXITCODE     # -> 0, usage в stdout
-build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.3"
+build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.4"
 ```
 
 ### Эталоны 
@@ -399,7 +399,7 @@ filter --threshold T    -> бинаризация по порогу яркост
 ### Справка и версия
 ```
 filter --help       -> usage в stdout, exit 0 (stdin не читается)
-filter --version    -> "filter 0.1.3", exit 0
+filter --version    -> "filter 0.1.4", exit 0
 ```
 
 ### Классы ошибок
@@ -461,20 +461,22 @@ link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filte
 - **Объектный файл / статическая библиотека** — по умолчанию, без флагов
 - **Динамическая библиотека (DLL / .so)** — с флагом `KV_DYNAMIC_LINK`. При этом, в  случае сборки с созданием динамической библиотеки, необходимо скопировать DLL(so на Linux/Mac) в папку с приложением-потребителем, иначе оно при запуске выдаст ошибку
 
-Сборка для C (DLL + import-lib):
+Сборка для C (DLL + import-lib), линковка - с тестами для С реализации фильтров:
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib 
-link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe # пример линковки с тестами на фильтр изображений
-Copy-Item -Path build/common/c/ppm_io.dll -Destination build/04-image-filter/c/ # копирование dll в папку с исполняемым приложением для того, чтобы оно запсутилось
+link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe
+Copy-Item -Path build/common/c/ppm_io.dll -Destination build/04-image-filter/c/
+copy /Y build/common/c/ppm_io.dll build/04-image-filter/c/ 
+cp build/common/c/ppm_io.dll -Destination build/04-image-filter/c/
 ```
 
-Сборка для C++ (DLL + import-lib):
+Сборка для C++ (DLL + import-lib), линковка - с тестами для С++ реализации фильтров:
 ```
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/common/cpp/ppm_io.dll /IMPLIB:build/common/cpp/ppm_io.lib
-link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe # пример линковки с тестами на фильтр изображений
-Copy-Item -Path build/common/cpp/ppm_io.dll -Destination build/04-image-filter/cpp/ # для PowerShell
-copy /Y build/common/cpp/ppm_io.dll build/04-image-filter/cpp/ #cmd
-cp build/common/cpp/ppm_io.dll -Destination build/04-image-filter/cpp/ # Linux shell
+link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe
+Copy-Item -Path build/common/cpp/ppm_io.dll -Destination build/04-image-filter/cpp/
+copy /Y build/common/cpp/ppm_io.dll build/04-image-filter/cpp/
+cp build/common/cpp/ppm_io.dll -Destination build/04-image-filter/cpp/
 ```
 
 - **Linux / macOS** — флаг игнорируется, символы `.so` экспортируются по умолчанию
