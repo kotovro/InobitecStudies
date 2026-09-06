@@ -40,6 +40,7 @@ dialog_logs/       — сырые логи диалогов с DeepSeek
  04-image-filter/   — задача 4: фильтр изображения
    c/               — реализация на C
    cpp/             — реализация на C++
+   ref/             — эталоны для acceptance-тестов(предполагается сравнение результатов запуска acceptance тестов с прогоном фильтра на эталонах из первой задачи) 
 ```
 
 Все задачи решаются дважды: C (C17) и C++ (C++23).
@@ -67,7 +68,7 @@ vcvars64.bat
 
 Создать каталоги артефактов (один раз; `-Force` — повторный запуск безопасен):
 ```powershell
-New-Item -ItemType Directory -Force -Path build/test_data, build/common/c, build/common/cpp, build/01-image-gen/c, build/01-image-gen/cpp, build/01-image-gen/ref, build/02-image-passport/c, build/02-image-passport/cpp, build/02-image-passport/ref, build/03-image-stats/c, build/03-image-stats/cpp, build/03-image-stats/ref, build/04-image-filter/c, build/04-image-filter/cpp
+New-Item -ItemType Directory -Force -Path build/test_data, build/common/c, build/common/cpp, build/01-image-gen/c, build/01-image-gen/cpp, build/01-image-gen/ref, build/02-image-passport/c, build/02-image-passport/cpp, build/02-image-passport/ref, build/03-image-stats/c, build/03-image-stats/cpp, build/03-image-stats/ref, build/04-image-filter/c, build/04-image-filter/cpp, build/04-image-filter/ref
 ```
 
 Флаги: `Debug + ASan` (`/Od /Zi /MDd /fsanitize=address`).
@@ -409,6 +410,7 @@ filter --version    -> "filter 0.1.4", exit 0
 - Битый формат PPM (из `ppm_io`) -> exit 65
 - IO-сбой -> exit 74
 
+
 ### Тесты
 
 Юнит-тесты (grayscale, threshold, парсинг аргументов) и integration
@@ -433,6 +435,34 @@ cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter_test.cpp 
 link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj /OUT:build/04-image-filter/cpp/filter_tests.exe
 ```
+
+### Эталоны 
+Для того чтобы проверить корректность работы самого фильтра, требуется собрать эталоны для первой задачи, а затем прогнать их под фильтром и сравнить с эталонным ответом фильтра. 
+Подразумевается, что команды исполняются в cmd.
+
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_checker_3_3_grayscale.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_checker_3_3_threshold_128.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_gradient_3_3_grayscale.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_gradient_3_3_threshold_128.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_radial_3_3_grayscale.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_radial_3_3_threshold_128.c
+link /DEBUG build/04-image-filter/ref/ref_checker_3_3_grayscale.obj /OUT:build/04-image-filter/ref/ref_checker_3_3_grayscale.exe
+link /DEBUG build/04-image-filter/ref/ref_checker_3_3_threshold_128.obj /OUT:build/04-image-filter/ref/ref_checker_3_3_threshold_128.exe
+link /DEBUG build/04-image-filter/ref/ref_gradient_3_3_grayscale.obj /OUT:build/04-image-filter/ref/ref_gradient_3_3_grayscale.exe
+link /DEBUG build/04-image-filter/ref/ref_gradient_3_3_threshold_128.obj /OUT:build/04-image-filter/ref/ref_gradient_3_3_threshold_128.exe
+link /DEBUG build/04-image-filter/ref/ref_radial_3_3_grayscale.obj /OUT:build/04-image-filter/ref/ref_radial_3_3_grayscale.exe
+link /DEBUG build/04-image-filter/ref/ref_radial_3_3_threshold_128.obj /OUT:build/04-image-filter/ref/ref_radial_3_3_threshold_128.exe
+```
+
+Пример для ref_checher_3_3_grayscale(при условии собранных эталонов для первой задачи)
+```
+build\01-image-gen\ref\ref_radial.exe > build\test_data\ref_radial_3_3.ppm
+build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\ref_filter_grayscale.ppm
+build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\ref_radial_3_3.ppm > build\test_data\radial_filtered_grayscale.ppm
+fc /c  build/test_data/radial_filtered_grayscale.ppm build/test_data/ref_filter_grayscale.ppm
+```
+
 
 ### Сборка основного приложения
 
