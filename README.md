@@ -55,6 +55,20 @@ dialog_logs/       — сырые логи диалогов с DeepSeek
 - **Консоль:** PowerShell / FAR Manager, кодировка UTF-8 (`chcp 65001`)
 - **Просмотр PPM:** IrfanView, GIMP, ImageMagick (`magick out.ppm out.png`)
 
+**Важно для Windows:** команды, использующие перенаправление стандартного ввода или вывода (`<`, `>`), следует выполнять через **Command Prompt (cmd.exe)**, а не через PowerShell.
+Это связано с особенностями обработки текстового вывода и кодировки в PowerShell. При создании эталонных файлов через перенаправление вывода использование PowerShell может привести к получению файлов в формате, отличном от ожидаемого программой.
+При этом обычное сравнение файлов может не обнаружить такую проблему: если эталонный и полученный файлы были созданы с одинаковым некорректным преобразованием, они будут побитово совпадать, несмотря на то, что оба файла имеют неверный формат.
+Поэтому для команд генерации эталонных данных и проверки программ с использованием `<` и `>` рекомендуется использовать **cmd.exe**.
+
+---
+
+## Выпуск релиза
+Перед тем, как присвоить тег по semversion коду, реализуется следующая последовательность действий:
+1. Полная проверка по сценарию README (начиная с чистого клона репозитория): сборка и выполнение всех тестов (включая примеры для задачи 1 и модуль common/ppm_io) - без частичных или инкрементальных запусков.
+2. Проверка идентичности поведения при сбоях: выполнение сборок на C и C++ с использованием фиксированного набора входных данных, провоцирующих ошибки (например, заголовки чрезмерного размера или потребитель, преждевременно закрывающий канал), и подтверждение того, что обе реализации завершаются одинаково (совпадение класса кода возврата и наличие непустого диагностического сообщения), а не просто совпадение результатов при успешном выполнении.
+3. Сверка CHANGELOG на основе diff: поочередный анализ коммитов в диапазоне git log <last-tag>..HEAD и сопоставление их с записями в CHANGELOG для подтверждения того, что каждое изменение отражено в файле.
+4. Проверка согласованности версий: подтверждение того, что вывод команды --version совпадает с создаваемым тегом и версией, указанной в заголовке CHANGELOG
+
 ---
 
 ## Сборка
@@ -83,6 +97,12 @@ New-Item -ItemType Directory -Force -Path build/test_data, build/common/c, build
 | `ref_gradient` | `01-image-gen/ref/ref_gradient.c` | PPM gradient 3x3 |
 | `ref_checker` | `01-image-gen/ref/ref_checker.c` | PPM checker 3x3 |
 | `ref_radial` | `01-image-gen/ref/ref_radial.c` | PPM radial 3x3 |
+| `ref_gradient_3_3_grayscale` | `04-image-filter/ref/ref_gradient_3_3_grayscale.c` | PPM gradient 3×3, `--grayscale` |
+| `ref_gradient_3_3_threshold_128` | `04-image-filter/ref/ref_gradient_3_3_threshold_128.c` | PPM gradient 3×3, `--threshold 128` |
+| `ref_checker_3_3_grayscale` | `04-image-filter/ref/ref_checker_3_3_grayscale.c` | PPM checker 3×3, `--grayscale` |
+| `ref_checker_3_3_threshold_128` | `04-image-filter/ref/ref_checker_3_3_threshold_128.c` | PPM checker 3×3, `--threshold 128` |
+| `ref_radial_3_3_grayscale` | `04-image-filter/ref/ref_radial_3_3_grayscale.c` | PPM radial 3×3, `--grayscale` |
+| `ref_radial_3_3_threshold_128` | `04-image-filter/ref/ref_radial_3_3_threshold_128.c` | PPM radial 3×3, `--threshold 128` |
 | `ref_stats` | `03-image-stats/ref/ref_stats.c` | Статистика PPM из stdin |
 | `ref_passport <case>` | `02-image-passport/ref/ref_passport.c` | Паспорт: эталонный вывод по кейсу |
 
@@ -152,7 +172,7 @@ build/01-image-gen/cpp/ppm_test.exe
 
 
 Acceptance — ручной прогон с эталоном через `cmd /c fc`:
-```powershell
+```
 # gradient 3x3
 build\01-image-gen\ref\ref_gradient.exe > build\test_data\gradient_3x3.ppm
 build\01-image-gen\c\gen_image.exe 3 gradient > build\actual.ppm
@@ -244,7 +264,7 @@ build/02-image-passport/cpp/passport_tests.exe # C++
 ```
 
 Acceptance — эталон `ref_passport.exe`, ручное сравнение через `cmd /c fc`:
-```powershell
+```
 # success-кейс: два слова + 1920
 "морской закат`n1920" | build\02-image-passport\cpp\passport.exe > build\actual.txt
 build\02-image-passport\ref\ref_passport.exe basic > build\expected.txt
@@ -333,7 +353,7 @@ build/03-image-stats/cpp/ppm_stats_test.exe # C++
 ```
 
 Acceptance — ручной прогон (конвейер + `cmd /c fc`):
-```powershell
+```
 # эталон: ref_gradient | ref_stats
 build\01-image-gen\ref\ref_gradient.exe | build\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_3x3.txt
 
@@ -455,14 +475,13 @@ link /DEBUG build/04-image-filter/ref/ref_radial_3_3_grayscale.obj /OUT:build/04
 link /DEBUG build/04-image-filter/ref/ref_radial_3_3_threshold_128.obj /OUT:build/04-image-filter/ref/ref_radial_3_3_threshold_128.exe
 ```
 
-Пример для ref_checher_3_3_grayscale(при условии собранных эталонов для первой задачи)
-```
-build\01-image-gen\ref\ref_radial.exe > build\test_data\ref_radial_3_3.ppm
-build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\ref_filter_grayscale.ppm
-build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\ref_radial_3_3.ppm > build\test_data\radial_filtered_grayscale.ppm
-fc /c  build/test_data/radial_filtered_grayscale.ppm build/test_data/ref_filter_grayscale.ppm
-```
+### Пример для ref_radial_3_3_grayscale (при условии собранных эталонов первой задачи (базовая картинка `radial_3x3.ppm` уже сгенерирована в `build/test_data`)
 
+```
+build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\ref_radial_3_3_grayscale.ppm
+build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial3x3.ppm > build\actual_filter.ppm
+fc /c  build\actual_filter.ppm build\test_data\ref_radial_3_3_grayscale.ppm
+```
 
 ### Сборка основного приложения
 
@@ -496,8 +515,8 @@ link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filte
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib 
 link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe
 Copy-Item -Path build/common/c/ppm_io.dll -Destination build/04-image-filter/c/
-copy /Y build/common/c/ppm_io.dll build/04-image-filter/c/ 
-cp build/common/c/ppm_io.dll -Destination build/04-image-filter/c/
+copy /Y build\common\c\ppm_io.dll build\04-image-filter\c\ 
+cp build/common/c/ppm_io.dll build/04-image-filter/c/
 ```
 
 Сборка для C++ (DLL + import-lib), линковка - с тестами для С++ реализации фильтров:
@@ -505,8 +524,8 @@ cp build/common/c/ppm_io.dll -Destination build/04-image-filter/c/
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/common/cpp/ppm_io.dll /IMPLIB:build/common/cpp/ppm_io.lib
 link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe
 Copy-Item -Path build/common/cpp/ppm_io.dll -Destination build/04-image-filter/cpp/
-copy /Y build/common/cpp/ppm_io.dll build/04-image-filter/cpp/
-cp build/common/cpp/ppm_io.dll -Destination build/04-image-filter/cpp/
+copy /Y build\common\cpp\ppm_io.dll build\04-image-filter\cpp\
+cp build/common/cpp/ppm_io.dll build/04-image-filter/cpp/
 ```
 
 - **Linux / macOS** — флаг игнорируется, символы `.so` экспортируются по умолчанию
@@ -562,22 +581,48 @@ build/common/cpp/ppm_io_test.exe
 
 ## Массовые тестовые данные
 
-Данные в `build/test_data/` (каталог в `.gitignore`) генерируются вручную
-через `gen_image` с seed:
+Каталог `build/test_data/` (в `.gitignore`) — данные для acceptance-тестов:
+тестовые входы и эталонные файлы. Генерируются на лету командами ниже,
+в репозиторий не хранятся.
+
+### Тестовые входы (random)
+
+Случайные изображения для задач 3/4 (паттерн `random`). 6 файлов:
+`N = {2, 64, 1024}` × `seed = {42, 9999}`.
 
 ```
-build\01-image-gen\c\gen_image.exe --size 2 --seed 42 > build/test_data/random_2x2_seed42.ppm
-build\01-image-gen\c\gen_image.exe --size 1024 --seed 9999 > build/test_data/random_1024x1024_seed9999.ppm
+build\01-image-gen\c\gen_image.exe --size 2 --seed 42 > build/test_data/random2x2_seed42.ppm
+build\01-image-gen\c\gen_image.exe --size 2 --seed 9999 > build/test_data/random2x2_seed9999.ppm
+build\01-image-gen\c\gen_image.exe --size 64 --seed 42 > build/test_data/random64x64_seed42.ppm
+build\01-image-gen\c\gen_image.exe --size 64 --seed 9999 > build/test_data/random64x64_seed9999.ppm
+build\01-image-gen\c\gen_image.exe --size 1024 --seed 42 > build/test_data/random1024x1024_seed42.ppm
+build\01-image-gen\c\gen_image.exe --size 1024 --seed 9999 > build/test_data/random1024x1024_seed9999.ppm
 ```
 
-Эталонные файлы — через ref-генераторы:
+### Эталонные файлы
+
+Независимые reference-выходы, с которыми сравнивается фактический вывод.
+
+Задача 1 (3 файла, 3×3) — через ref-генераторы:
 
 ```
 build\01-image-gen\ref\ref_gradient.exe > build/test_data/gradient_3x3.ppm
+build\01-image-gen\ref\ref_checker.exe > build/test_data/checker3x3.ppm
+build\01-image-gen\ref\ref_radial.exe > build/test_data/radial3x3.ppm
+```
+Задача 4 (6 файлов, 3×3) — 3 паттерна × {grayscale, threshold 128}:
+
+```
+build\04-image-filter\ref\ref_gradient_3_3_grayscale.exe > build/test_data/ref_gradient_3_3_grayscale.ppm
+build\04-image-filter\ref\ref_gradient_3_3_threshold_128.exe > build/test_data/ref_gradient_3_3_threshold_128.ppm
+build\04-image-filter\ref\ref_checker_3_3_grayscale.exe > build/test_data/ref_checker_3_3_grayscale.ppm
+build\04-image-filter\ref\ref_checker_3_3_threshold_128.exe > build/test_data/ref_checker_3_3_threshold_128.ppm
+build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build/test_data/ref_radial_3_3_grayscale.ppm
+build\04-image-filter\ref\ref_radial_3_3_threshold_128.exe > build/test_data/ref_radial_3_3_threshold_128.ppm
 ```
 
-Итого 12 файлов: random (2×2, 64×64, 1024×1024 × 3 seed) + reference
-(gradient/checker/radial 3×3).
+Итого 15 файлов: 6 тестовых входов (random) + 9 эталонов
+(3 базовых для задачи 1, 6 для задачи 4). Эталоны задач 2 и 3
 
 ---
 
@@ -595,9 +640,3 @@ build\01-image-gen\ref\ref_gradient.exe > build/test_data/gradient_3x3.ppm
 
 Код — машинный канал для скриптов-обёрток; stderr — детали для человека.
 
-## Выпуск релиза
-Перед тем, как присвоить тег по semversion коду, реализуется следующая последовательность действий:
-1. Полная проверка по сценарию README (начиная с чистого клона репозитория): сборка и выполнение всех тестов (включая примеры для задачи 1 и модуль common/ppm_io) - без частичных или инкрементальных запусков.
-2. Проверка идентичности поведения при сбоях: выполнение сборок на C и C++ с использованием фиксированного набора входных данных, провоцирующих ошибки (например, заголовки чрезмерного размера или потребитель, преждевременно закрывающий канал), и подтверждение того, что обе реализации завершаются одинаково (совпадение класса кода возврата и наличие непустого диагностического сообщения), а не просто совпадение результатов при успешном выполнении.
-3. Сверка CHANGELOG на основе diff: поочередный анализ коммитов в диапазоне git log <last-tag>..HEAD и сопоставление их с записями в CHANGELOG для подтверждения того, что каждое изменение отражено в файле.
-4. Проверка согласованности версий: подтверждение того, что вывод команды --version совпадает с создаваемым тегом и версией, указанной в заголовке CHANGELOG
