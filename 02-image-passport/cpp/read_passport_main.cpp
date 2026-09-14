@@ -1,9 +1,7 @@
-#include <cerrno>
 #include <cstdlib>
 #include <iostream>
 #include <print>
 #include <string_view>
-#include <system_error>
 #include <utility>
 
 #include "../../common/cpp/exit_codes.hpp"
@@ -44,24 +42,15 @@ int main(int argc, char** argv) {
 
     auto result = read_passport(std::cin);
     if (!result) [[unlikely]] {
+        std::println(stderr, "{}", passport_error_message(result.error()));
         switch (result.error().kind) {
         case PassportErrorKind::kNoInput:
-            std::println(stderr, "Нет ввода");
             return std::to_underlying(ExitCode::kNoInput);
         case PassportErrorKind::kEmptyName:
-            std::println(stderr, "Название изображения не может быть пустым");
-            return std::to_underlying(ExitCode::kData);
         case PassportErrorKind::kBadCount:
-            std::println(stderr, "количество пикселей должно быть числом; получено: {}",
-                         result.error().bad_value);
-            return std::to_underlying(ExitCode::kData);
         case PassportErrorKind::kNegativeCount:
-            std::println(stderr, "количество пикселей должно быть положительным; получено: {}",
-                         result.error().bad_value);
             return std::to_underlying(ExitCode::kData);
         case PassportErrorKind::kIOError:
-            std::println(stderr, "Сбой ввода: {} (errno {})",
-                         std::generic_category().message(errno), errno);
             return std::to_underlying(ExitCode::kIOErr);
         }
     }

@@ -39,6 +39,15 @@ static FILE* make_ppm(const char* data) {
     return f;
 }
 
+static void check_text(const struct PpmResult* r, const char* expected, const char* name) {
+    if (strcmp(r->diagnostic, expected) != 0) {
+        fprintf(stderr, "FAIL: %s -- got \"%s\" expected \"%s\"\n", name, r->diagnostic, expected);
+        ++failed;
+    } else {
+        printf("PASS: %s\n", name);
+    }
+}
+
 // -------------------------------------------------------------------
 // ppm_read tests
 // -------------------------------------------------------------------
@@ -139,7 +148,9 @@ static void test_channel_out_of_range(void) {
 static void test_channel_negative(void) {
     FILE* f = make_ppm("P3\n1 1\n255\n-1 0 0\n");
     struct PpmResult r = ppm_read(f);
-    check(r.error == PRE_BAD_NUMBER, "channel -1 -> PRE_BAD_NUMBER");
+    check(r.error == PRE_CHANNEL_RANGE, "channel -1 -> PRE_CHANNEL_RANGE");
+    check_text(&r, "строка 4: значение канала должно быть в [0; 255]; получено: -1 0 0",
+               "channel -1 diagnostic");
     fclose(f);
 }
 
@@ -147,6 +158,7 @@ static void test_not_a_number(void) {
     FILE* f = make_ppm("P3\n1 1\n255\nx 0 0\n");
     struct PpmResult r = ppm_read(f);
     check(r.error == PRE_BAD_NUMBER, "not a number -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 4: нечисловое значение, получено: x", "not a number diagnostic");
     fclose(f);
 }
 
@@ -188,6 +200,91 @@ static void test_error_line(void) {
     r = ppm_read(f);
     check(r.error == PRE_BAD_NUMBER, "maxval=100 -> PRE_BAD_NUMBER");
     check(r.error_line == 3, "maxval reported on line 3");
+    fclose(f);
+}
+
+static void test_header_negative(void) {
+    FILE* f = make_ppm("P3\n-5 1\n255\n0 0 0\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "width -5 -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 2: ширина должна быть положительным числом; получено: -5",
+               "width -5 diagnostic");
+    fclose(f);
+
+    f = make_ppm("P3\n1 -5\n255\n0 0 0\n");
+    r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "height -5 -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 2: высота должна быть положительным числом; получено: -5",
+               "height -5 diagnostic");
+    fclose(f);
+
+    f = make_ppm("P3\n1 1\n-5\n0 0 0\n");
+    r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "maxval -5 -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 3: максимальное значение канала должно быть 255; получено: -5",
+               "maxval -5 diagnostic");
+    fclose(f);
+}
+
+static void test_header_fractional(void) {
+    FILE* f = make_ppm("P3\n3.5 1\n255\n0 0 0\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "width 3.5 -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 2: значение должно быть целым числом; получено: 3.5",
+               "width 3.5 diagnostic");
+    fclose(f);
+
+    f = make_ppm("P3\n1 1\n25.5\n0 0 0\n");
+    r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "maxval 25.5 -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 3: значение должно быть целым числом; получено: 25.5",
+               "maxval 25.5 diagnostic");
+    fclose(f);
+}
+
+static void test_header_non_numeric(void) {
+    FILE* f = make_ppm("P3\nabc 1\n255\n0 0 0\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "width abc -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 2: нечисловое значение, получено: abc", "width abc diagnostic");
+    fclose(f);
+
+    f = make_ppm("P3\n+5 1\n255\n0 0 0\n");
+    r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "width +5 -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 2: нечисловое значение, получено: +5", "width +5 diagnostic");
+    fclose(f);
+}
+
+static void test_header_overflow(void) {
+    FILE* f = make_ppm("P3\n3000000000 1\n255\n0 0 0\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "width 3000000000 -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 2: число превышает допустимый диапазон", "width overflow diagnostic");
+    fclose(f);
+}
+
+static void test_header_eof(void) {
+    FILE* f = make_ppm("P3\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "header EOF -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 2: неожиданный конец файла", "header EOF diagnostic");
+    fclose(f);
+}
+
+static void test_pixel_fractional(void) {
+    FILE* f = make_ppm("P3\n1 1\n255\n3.5 0 0\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "pixel 3.5 -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 4: значение должно быть целым числом; получено: 3.5",
+               "pixel fractional diagnostic");
+    fclose(f);
+}
+
+static void test_alloc_error(void) {
+    FILE* f = make_ppm("P3\n2147483647 2147483647\n255\n0 0 0\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_ALLOC_ERROR, "huge dims -> PRE_ALLOC_ERROR, not crash");
     fclose(f);
 }
 
@@ -295,16 +392,23 @@ int main(void) {
     test_maxval_not_255();
     test_width_zero();
     test_comments_in_header();
+    test_header_negative();
+    test_header_fractional();
+    test_header_non_numeric();
+    test_header_overflow();
+    test_header_eof();
 
     printf("-- pixel data errors --\n");
     test_channel_out_of_range();
     test_channel_negative();
     test_not_a_number();
+    test_pixel_fractional();
     test_hash_in_data();
     test_too_many_pixels();
     test_too_few_pixels();
     test_valid_2x2();
     test_error_line();
+    test_alloc_error();
 
     printf("-- writer --\n");
     test_writer_basic();

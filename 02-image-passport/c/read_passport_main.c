@@ -31,8 +31,11 @@ int main(int argc, char** argv) {
         return EC_OK;
     }
 
-    struct PassportResult result = read_passport();
+    struct PassportResult result = read_passport(stdin);
     if (result.error != PE_OK) {
+        char msg[256];
+        passport_error_message(&result, msg, sizeof msg);
+        fprintf(stderr, "%s\n", msg);
         switch (result.error) {
         case PE_NO_INPUT:
             return EC_NOINPUT;

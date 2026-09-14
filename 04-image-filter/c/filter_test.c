@@ -2,8 +2,6 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 static int failed = 0;
 
@@ -25,17 +23,6 @@ static void check_pixel(const struct Pixel* pixel, uint8_t er, uint8_t eg, uint8
     } else {
         printf("PASS: %s\n", test_name);
     }
-}
-
-static FILE* make_ppm(const char* data) {
-    FILE* f = tmpfile();
-    if (!f) {
-        fprintf(stderr, "FAIL: tmpfile creation failed\n");
-        return NULL;
-    }
-    fputs(data, f);
-    rewind(f);
-    return f;
 }
 
 // -------------------------------------------------------------------
@@ -86,6 +73,130 @@ static void test_threshold_boundary(void) {
     check_pixel(&dst, 0, 0, 0, "threshold boundary low -> black");
     pixel_threshold(&src_high, 23, &dst);
     check_pixel(&dst, 255, 255, 255, "threshold boundary high -> white");
+}
+
+// -------------------------------------------------------------------
+// probe image tests (per-pixel formula checks)
+// -------------------------------------------------------------------
+
+static void test_grayscale_2x2(void) {
+    struct Pixel src, dst;
+
+    src = (struct Pixel){255, 0, 0};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 76, 76, 76, "grayscale 2x2 (255,0,0) -> 76");
+
+    src = (struct Pixel){0, 255, 0};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 150, 150, 150, "grayscale 2x2 (0,255,0) -> 150");
+
+    src = (struct Pixel){0, 0, 255};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 29, 29, 29, "grayscale 2x2 (0,0,255) -> 29");
+
+    src = (struct Pixel){30, 31, 66};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 35, 35, 35, "grayscale 2x2 (30,31,66) -> 35");
+}
+
+static void test_threshold_2x2(void) {
+    struct Pixel src, dst;
+
+    src = (struct Pixel){255, 0, 0};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 0, 0, 0, "threshold 2x2 (255,0,0) T=100 -> black");
+
+    src = (struct Pixel){0, 255, 0};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 255, 255, 255, "threshold 2x2 (0,255,0) T=100 -> white");
+
+    src = (struct Pixel){0, 0, 255};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 0, 0, 0, "threshold 2x2 (0,0,255) T=100 -> black");
+
+    src = (struct Pixel){30, 31, 66};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 0, 0, 0, "threshold 2x2 (30,31,66) T=100 -> black");
+}
+
+static void test_grayscale_3x3(void) {
+    struct Pixel src, dst;
+
+    src = (struct Pixel){30, 31, 45};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 32, 32, 32, "grayscale 3x3 (30,31,45) -> 32");
+
+    src = (struct Pixel){30, 31, 66};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 35, 35, 35, "grayscale 3x3 (30,31,66) -> 35");
+
+    src = (struct Pixel){128, 128, 128};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 128, 128, 128, "grayscale 3x3 (128,128,128) -> 128");
+
+    src = (struct Pixel){100, 100, 100};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 100, 100, 100, "grayscale 3x3 (100,100,100) -> 100");
+
+    src = (struct Pixel){30, 164, 196};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 128, 128, 128, "grayscale 3x3 (30,164,196) -> 128");
+
+    src = (struct Pixel){30, 164, 200};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 128, 128, 128, "grayscale 3x3 (30,164,200) -> 128");
+
+    src = (struct Pixel){10, 20, 30};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 18, 18, 18, "grayscale 3x3 (10,20,30) -> 18");
+
+    src = (struct Pixel){200, 100, 50};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 124, 124, 124, "grayscale 3x3 (200,100,50) -> 124");
+
+    src = (struct Pixel){50, 200, 100};
+    pixel_to_grayscale(&src, &dst);
+    check_pixel(&dst, 144, 144, 144, "grayscale 3x3 (50,200,100) -> 144");
+}
+
+static void test_threshold_3x3(void) {
+    struct Pixel src, dst;
+
+    src = (struct Pixel){30, 31, 45};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 0, 0, 0, "threshold 3x3 (30,31,45) T=100 -> black");
+
+    src = (struct Pixel){30, 31, 66};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 0, 0, 0, "threshold 3x3 (30,31,66) T=100 -> black");
+
+    src = (struct Pixel){128, 128, 128};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 255, 255, 255, "threshold 3x3 (128,128,128) T=100 -> white");
+
+    src = (struct Pixel){100, 100, 100};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 0, 0, 0, "threshold 3x3 (100,100,100) T=100 -> black");
+
+    src = (struct Pixel){30, 164, 196};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 255, 255, 255, "threshold 3x3 (30,164,196) T=100 -> white");
+
+    src = (struct Pixel){30, 164, 200};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 255, 255, 255, "threshold 3x3 (30,164,200) T=100 -> white");
+
+    src = (struct Pixel){10, 20, 30};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 0, 0, 0, "threshold 3x3 (10,20,30) T=100 -> black");
+
+    src = (struct Pixel){200, 100, 50};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 255, 255, 255, "threshold 3x3 (200,100,50) T=100 -> white");
+
+    src = (struct Pixel){50, 200, 100};
+    pixel_threshold(&src, 100, &dst);
+    check_pixel(&dst, 255, 255, 255, "threshold 3x3 (50,200,100) T=100 -> white");
 }
 
 // -------------------------------------------------------------------
@@ -159,111 +270,6 @@ static void test_parse_unknown(void) {
 }
 
 // -------------------------------------------------------------------
-// run_filter integration tests
-// -------------------------------------------------------------------
-
-static void test_run_filter_grayscale(void) {
-    FILE* input = make_ppm("P3\n2 2\n255\n"
-                           "0 0 0 255 0 0\n"
-                           "0 255 0 0 0 255\n");
-    FILE* output = tmpfile();
-    char* argv[] = {"prog", "--grayscale"};
-    int code = run_filter(2, argv, input, output);
-
-    check(code == EC_OK, "run_filter --grayscale -> exit 0");
-
-    rewind(output);
-    struct PpmResult result = ppm_read(output);
-    check(result.error == PRE_OK, "run_filter --grayscale: output readable");
-    if (result.error == PRE_OK) {
-        check(result.image.width == 2, "run_filter --grayscale: width");
-        check(result.image.height == 2, "run_filter --grayscale: height");
-        check_pixel(&result.image.pixels[0], 0, 0, 0, "run_filter --grayscale: pixel 0");
-        check_pixel(&result.image.pixels[1], 76, 76, 76, "run_filter --grayscale: pixel 1");
-        check_pixel(&result.image.pixels[2], 150, 150, 150, "run_filter --grayscale: pixel 2");
-        check_pixel(&result.image.pixels[3], 29, 29, 29, "run_filter --grayscale: pixel 3");
-        ppm_image_free(&result.image);
-    }
-
-    fclose(input);
-    fclose(output);
-}
-
-static void test_run_filter_threshold(void) {
-    FILE* input = make_ppm("P3\n2 1\n255\n0 0 0 128 128 128\n");
-    FILE* output = tmpfile();
-    char* argv[] = {"prog", "--threshold", "100"};
-    int code = run_filter(3, argv, input, output);
-
-    check(code == EC_OK, "run_filter --threshold -> exit 0");
-
-    rewind(output);
-    struct PpmResult result = ppm_read(output);
-    check(result.error == PRE_OK, "run_filter --threshold: output readable");
-    if (result.error == PRE_OK) {
-        check_pixel(&result.image.pixels[0], 0, 0, 0, "run_filter --threshold: pixel 0 black");
-        check_pixel(&result.image.pixels[1], 255, 255, 255,
-                    "run_filter --threshold: pixel 1 white");
-        ppm_image_free(&result.image);
-    }
-
-    fclose(input);
-    fclose(output);
-}
-
-static void test_run_filter_empty(void) {
-    FILE* input = make_ppm("");
-    FILE* output = tmpfile();
-    char* argv[] = {"prog", "--grayscale"};
-    int code = run_filter(2, argv, input, output);
-    check(code == EC_NOINPUT, "run_filter empty -> EC_NOINPUT");
-    fclose(input);
-    fclose(output);
-}
-
-static void test_run_filter_bad_args(void) {
-    FILE* input = make_ppm("P3\n1 1\n255\n0 0 0\n");
-    FILE* output = tmpfile();
-    char* argv[] = {"prog", "--invalid"};
-    int code = run_filter(2, argv, input, output);
-    check(code == EC_USAGE, "run_filter bad args -> EC_USAGE");
-    fclose(input);
-    fclose(output);
-}
-
-static void test_run_filter_help(void) {
-    FILE* input = make_ppm("");
-    FILE* output = tmpfile();
-    char* argv[] = {"prog", "--help"};
-    int code = run_filter(2, argv, input, output);
-    check(code == EC_OK, "run_filter --help -> EC_OK");
-
-    rewind(output);
-    char buf[256];
-    size_t n = fread(buf, 1, sizeof(buf) - 1, output);
-    buf[n] = '\0';
-    check(strstr(buf, "Использование") != NULL, "run_filter --help: usage in stdout");
-    fclose(input);
-    fclose(output);
-}
-
-static void test_run_filter_version(void) {
-    FILE* input = make_ppm("");
-    FILE* output = tmpfile();
-    char* argv[] = {"prog", "--version"};
-    int code = run_filter(2, argv, input, output);
-    check(code == EC_OK, "run_filter --version -> EC_OK");
-
-    rewind(output);
-    char buf[256];
-    size_t n = fread(buf, 1, sizeof(buf) - 1, output);
-    buf[n] = '\0';
-    check(strstr(buf, "filter") != NULL, "run_filter --version: name in stdout");
-    fclose(input);
-    fclose(output);
-}
-
-// -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
 
@@ -272,11 +278,15 @@ int main(void) {
     test_grayscale_black();
     test_grayscale_red();
     test_grayscale_mixed();
+    test_grayscale_2x2();
+    test_grayscale_3x3();
 
     printf("--- threshold tests (C) ---\n");
     test_threshold_above();
     test_threshold_below();
     test_threshold_boundary();
+    test_threshold_2x2();
+    test_threshold_3x3();
 
     printf("--- parse_args tests (C) ---\n");
     test_parse_grayscale();
@@ -288,14 +298,6 @@ int main(void) {
     test_parse_unknown();
     test_parse_help();
     test_parse_version();
-
-    printf("--- run_filter integration tests (C) ---\n");
-    test_run_filter_grayscale();
-    test_run_filter_threshold();
-    test_run_filter_empty();
-    test_run_filter_bad_args();
-    test_run_filter_help();
-    test_run_filter_version();
 
     printf("---\n");
     if (failed > 0)

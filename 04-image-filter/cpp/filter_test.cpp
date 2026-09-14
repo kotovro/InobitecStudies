@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <print>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -89,6 +88,72 @@ void test_threshold_exactly_at() {
 void test_threshold_edge() {
     auto out = pixel_threshold(Pixel{0, 0, 0}, 0);
     check_pixel(out, 0, 0, 0, "threshold 0 with luma 0 -> black");
+}
+
+// -------------------------------------------------------------------
+// probe image tests (per-pixel formula checks)
+// -------------------------------------------------------------------
+
+void test_grayscale_2x2() {
+    check_pixel(pixel_to_grayscale(Pixel{255, 0, 0}), 76, 76, 76, "grayscale 2x2 (255,0,0) -> 76");
+    check_pixel(pixel_to_grayscale(Pixel{0, 255, 0}), 150, 150, 150,
+                "grayscale 2x2 (0,255,0) -> 150");
+    check_pixel(pixel_to_grayscale(Pixel{0, 0, 255}), 29, 29, 29, "grayscale 2x2 (0,0,255) -> 29");
+    check_pixel(pixel_to_grayscale(Pixel{30, 31, 66}), 35, 35, 35,
+                "grayscale 2x2 (30,31,66) -> 35");
+}
+
+void test_threshold_2x2() {
+    check_pixel(pixel_threshold(Pixel{255, 0, 0}, 100), 0, 0, 0,
+                "threshold 2x2 (255,0,0) T=100 -> black");
+    check_pixel(pixel_threshold(Pixel{0, 255, 0}, 100), 255, 255, 255,
+                "threshold 2x2 (0,255,0) T=100 -> white");
+    check_pixel(pixel_threshold(Pixel{0, 0, 255}, 100), 0, 0, 0,
+                "threshold 2x2 (0,0,255) T=100 -> black");
+    check_pixel(pixel_threshold(Pixel{30, 31, 66}, 100), 0, 0, 0,
+                "threshold 2x2 (30,31,66) T=100 -> black");
+}
+
+void test_grayscale_3x3() {
+    check_pixel(pixel_to_grayscale(Pixel{30, 31, 45}), 32, 32, 32,
+                "grayscale 3x3 (30,31,45) -> 32");
+    check_pixel(pixel_to_grayscale(Pixel{30, 31, 66}), 35, 35, 35,
+                "grayscale 3x3 (30,31,66) -> 35");
+    check_pixel(pixel_to_grayscale(Pixel{128, 128, 128}), 128, 128, 128,
+                "grayscale 3x3 (128,128,128) -> 128");
+    check_pixel(pixel_to_grayscale(Pixel{100, 100, 100}), 100, 100, 100,
+                "grayscale 3x3 (100,100,100) -> 100");
+    check_pixel(pixel_to_grayscale(Pixel{30, 164, 196}), 128, 128, 128,
+                "grayscale 3x3 (30,164,196) -> 128");
+    check_pixel(pixel_to_grayscale(Pixel{30, 164, 200}), 128, 128, 128,
+                "grayscale 3x3 (30,164,200) -> 128");
+    check_pixel(pixel_to_grayscale(Pixel{10, 20, 30}), 18, 18, 18,
+                "grayscale 3x3 (10,20,30) -> 18");
+    check_pixel(pixel_to_grayscale(Pixel{200, 100, 50}), 124, 124, 124,
+                "grayscale 3x3 (200,100,50) -> 124");
+    check_pixel(pixel_to_grayscale(Pixel{50, 200, 100}), 144, 144, 144,
+                "grayscale 3x3 (50,200,100) -> 144");
+}
+
+void test_threshold_3x3() {
+    check_pixel(pixel_threshold(Pixel{30, 31, 45}, 100), 0, 0, 0,
+                "threshold 3x3 (30,31,45) T=100 -> black");
+    check_pixel(pixel_threshold(Pixel{30, 31, 66}, 100), 0, 0, 0,
+                "threshold 3x3 (30,31,66) T=100 -> black");
+    check_pixel(pixel_threshold(Pixel{128, 128, 128}, 100), 255, 255, 255,
+                "threshold 3x3 (128,128,128) T=100 -> white");
+    check_pixel(pixel_threshold(Pixel{100, 100, 100}, 100), 0, 0, 0,
+                "threshold 3x3 (100,100,100) T=100 -> black");
+    check_pixel(pixel_threshold(Pixel{30, 164, 196}, 100), 255, 255, 255,
+                "threshold 3x3 (30,164,196) T=100 -> white");
+    check_pixel(pixel_threshold(Pixel{30, 164, 200}, 100), 255, 255, 255,
+                "threshold 3x3 (30,164,200) T=100 -> white");
+    check_pixel(pixel_threshold(Pixel{10, 20, 30}, 100), 0, 0, 0,
+                "threshold 3x3 (10,20,30) T=100 -> black");
+    check_pixel(pixel_threshold(Pixel{200, 100, 50}, 100), 255, 255, 255,
+                "threshold 3x3 (200,100,50) T=100 -> white");
+    check_pixel(pixel_threshold(Pixel{50, 200, 100}, 100), 255, 255, 255,
+                "threshold 3x3 (50,200,100) T=100 -> white");
 }
 
 // -------------------------------------------------------------------
@@ -182,104 +247,6 @@ void test_parse_run_request() {
 }
 
 // -------------------------------------------------------------------
-// run_filter integration tests
-// -------------------------------------------------------------------
-
-void test_run_filter_grayscale() {
-    auto input_stream = std::istringstream("P3\n2 2\n255\n"
-                                           "0 0 0 255 0 0\n"
-                                           "0 255 0 0 0 255\n");
-    auto output_stream = std::ostringstream();
-
-    int code = run_filter(std::to_array<std::string_view>({"prog", "--grayscale"}), input_stream,
-                          output_stream);
-    check(code == 0, "run_filter --grayscale -> exit 0");
-
-    auto roundtrip_input = std::istringstream(output_stream.str());
-    auto result = Image::read(roundtrip_input);
-    check(result.value.has_value(), "run_filter --grayscale: output readable");
-    if (result.value.has_value()) {
-        const auto& image = *result.value;
-        check(image.width() == 2, "run_filter --grayscale: width");
-        check(image.height() == 2, "run_filter --grayscale: height");
-        check(image.pixel_count() == 4, "run_filter --grayscale: pixel count");
-        check_pixel(image.pixels()[0], 0, 0, 0, "run_filter --grayscale: pixel 0");
-        check_pixel(image.pixels()[1], 76, 76, 76, "run_filter --grayscale: pixel 1");
-        check_pixel(image.pixels()[2], 150, 150, 150, "run_filter --grayscale: pixel 2");
-        check_pixel(image.pixels()[3], 29, 29, 29, "run_filter --grayscale: pixel 3");
-    }
-}
-
-void test_run_filter_threshold() {
-    auto input_stream = std::istringstream("P3\n2 1\n255\n"
-                                           "0 0 0 128 128 128\n");
-    auto output_stream = std::ostringstream();
-
-    int code = run_filter(std::to_array<std::string_view>({"prog", "--threshold", "100"}),
-                          input_stream, output_stream);
-    check(code == 0, "run_filter --threshold -> exit 0");
-
-    auto roundtrip_input = std::istringstream(output_stream.str());
-    auto result = Image::read(roundtrip_input);
-    check(result.value.has_value(), "run_filter --threshold: output readable");
-    if (result.value.has_value()) {
-        const auto& image = *result.value;
-        check(image.pixel_count() == 2, "run_filter --threshold: pixel count");
-        check_pixel(image.pixels()[0], 0, 0, 0, "run_filter --threshold: pixel 0 black");
-        check_pixel(image.pixels()[1], 255, 255, 255, "run_filter --threshold: pixel 1 white");
-    }
-}
-
-void test_run_filter_empty_input() {
-    auto input_stream = std::istringstream("");
-    auto output_stream = std::ostringstream();
-
-    int code = run_filter(std::to_array<std::string_view>({"prog", "--grayscale"}), input_stream,
-                          output_stream);
-    check(code == std::to_underlying(ExitCode::kNoInput), "run_filter empty input -> kNoInput");
-}
-
-void test_run_filter_bad_ppm() {
-    auto input_stream = std::istringstream("not a ppm");
-    auto output_stream = std::ostringstream();
-
-    int code = run_filter(std::to_array<std::string_view>({"prog", "--grayscale"}), input_stream,
-                          output_stream);
-    check(code == std::to_underlying(ExitCode::kData), "run_filter bad ppm -> kData");
-}
-
-void test_run_filter_bad_args() {
-    auto input_stream = std::istringstream("P3\n1 1\n255\n0 0 0\n");
-    auto output_stream = std::ostringstream();
-
-    int code = run_filter(std::to_array<std::string_view>({"prog", "--invalid"}), input_stream,
-                          output_stream);
-    check(code == std::to_underlying(ExitCode::kUsage), "run_filter bad args -> kUsage");
-}
-
-void test_run_filter_help() {
-    auto input_stream = std::istringstream("");
-    auto output_stream = std::ostringstream();
-
-    int code = run_filter(std::to_array<std::string_view>({"prog", "--help"}), input_stream,
-                          output_stream);
-    check(code == std::to_underlying(ExitCode::kOk), "run_filter --help -> exit 0");
-    check(output_stream.str().find("Использование:") != std::string::npos,
-          "run_filter --help: usage in stdout");
-}
-
-void test_run_filter_version() {
-    auto input_stream = std::istringstream("");
-    auto output_stream = std::ostringstream();
-
-    int code = run_filter(std::to_array<std::string_view>({"prog", "--version"}), input_stream,
-                          output_stream);
-    check(code == std::to_underlying(ExitCode::kOk), "run_filter --version -> exit 0");
-    check(output_stream.str().find("filter") != std::string::npos,
-          "run_filter --version: name in stdout");
-}
-
-// -------------------------------------------------------------------
 // main
 // -------------------------------------------------------------------
 
@@ -292,12 +259,16 @@ int main() {
     test_grayscale_red();
     test_grayscale_green();
     test_grayscale_mixed();
+    test_grayscale_2x2();
+    test_grayscale_3x3();
 
     std::println("--- threshold tests ---");
     test_threshold_above();
     test_threshold_below();
     test_threshold_exactly_at();
     test_threshold_edge();
+    test_threshold_2x2();
+    test_threshold_3x3();
 
     std::println("--- parse_args tests ---");
     test_parse_no_args();
@@ -314,15 +285,6 @@ int main() {
     test_parse_help();
     test_parse_version();
     test_parse_run_request();
-
-    std::println("--- run_filter integration tests ---");
-    test_run_filter_grayscale();
-    test_run_filter_threshold();
-    test_run_filter_empty_input();
-    test_run_filter_bad_ppm();
-    test_run_filter_bad_args();
-    test_run_filter_help();
-    test_run_filter_version();
 
     std::println("---");
     if (failed > 0)

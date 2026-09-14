@@ -32,10 +32,26 @@ static int skip_field(FILE* f, int* line_num, int allow_hash) {
     return EOF;
 }
 
-// Helper: read a non-negative long long, skipping whitespace/comments.
-// Returns 0 on success, -1 on error (result fields are set).
-static int read_long(FILE* f, int* line_num, int allow_hash, long long* val,
-                     struct PpmResult* result) {
+enum TokenResult {
+    TOKEN_OK,
+    TOKEN_EOF,
+    TOKEN_ERROR,
+};
+
+// Helper: set the "unexpected end of file" diagnostic for a header field.
+static void set_eof_error(struct PpmResult* result, int line_num) {
+    result->error = PRE_BAD_NUMBER;
+    result->error_line = line_num;
+    snprintf(result->diagnostic, sizeof(result->diagnostic), "строка %d: неожиданный конец файла",
+             line_num);
+}
+
+// Helper: read a full integer token, skipping whitespace/comments.
+// allow_hash: 1 = skip #-lines (header phase), 0 = treat '#' as an error.
+// Returns TOKEN_OK (*val set, may be negative), TOKEN_EOF, or TOKEN_ERROR
+// (result->diagnostic set) for fractional/non-numeric/overflow/IO errors.
+static enum TokenResult read_int_token(FILE* f, int* line_num, int allow_hash, long long* val,
+                                       struct PpmResult* result) {
     int c = skip_field(f, line_num, allow_hash);
     if (c == EOF) {
         if (ferror(f)) {
@@ -46,13 +62,9 @@ static int read_long(FILE* f, int* line_num, int allow_hash, long long* val,
             result->error_line = *line_num;
             snprintf(result->diagnostic, sizeof(result->diagnostic), "сбой чтения: %s (errno %d)",
                      buf, e);
-            return -1;
+            return TOKEN_ERROR;
         }
-        result->error = PRE_BAD_NUMBER;
-        result->error_line = *line_num;
-        snprintf(result->diagnostic, sizeof(result->diagnostic),
-                 "строка %d: неожиданный конец файла", *line_num);
-        return -1;
+        return TOKEN_EOF;
     }
 
     if (c == '#') {
@@ -60,40 +72,81 @@ static int read_long(FILE* f, int* line_num, int allow_hash, long long* val,
         result->error_line = *line_num;
         snprintf(result->diagnostic, sizeof(result->diagnostic),
                  "строка %d: символ '#' не допускается в данных", *line_num);
-        return -1;
+        return TOKEN_ERROR;
     }
 
-    if (c < '0' || c > '9') {
-        result->error = PRE_BAD_NUMBER;
-        result->error_line = *line_num;
-        if (c >= ' ' && c <= '~')
-            snprintf(result->diagnostic, sizeof(result->diagnostic),
-                     "строка %d: нечисловое значение, получено: '%c'", *line_num, (char)c);
-        else
-            snprintf(result->diagnostic, sizeof(result->diagnostic),
-                     "строка %d: нечисловое значение, код 0x%02x", *line_num, (unsigned char)c);
-        return -1;
-    }
+    char token[128];
+    size_t token_len = 0;
+    int has_dot = 0;
+    int has_digit = 0;
+    int invalid = 0;
+    int negative = 0;
+    int overflow = 0;
+    long long magnitude = 0;
 
-    long long v = 0;
-    while (c >= '0' && c <= '9') {
-        v = v * 10 + (c - '0');
-        if (v > 0x7FFFFFFF) {
-            result->error = PRE_BAD_NUMBER;
-            result->error_line = *line_num;
-            snprintf(result->diagnostic, sizeof(result->diagnostic),
-                     "строка %d: число превышает допустимый диапазон", *line_num);
-            return -1;
-        }
-        c = fgetc(f);
-        if (c == EOF)
+    for (;;) {
+        if (c == EOF || c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '#')
             break;
+
+        if (token_len < sizeof(token) - 1)
+            token[token_len] = (char)c;
+        ++token_len;
+
+        if (c == '.') {
+            has_dot = 1;
+        } else if ((c == '-' || c == '+') && token_len == 1) {
+            negative = (c == '-');
+            if (c == '+')
+                invalid = 1;
+        } else if (c >= '0' && c <= '9') {
+            has_digit = 1;
+            if (!overflow) {
+                magnitude = magnitude * 10 + (c - '0');
+                if (magnitude > 0x7FFFFFFF)
+                    overflow = 1;
+            }
+        } else {
+            invalid = 1;
+        }
+
+        c = fgetc(f);
     }
     if (c != EOF)
         ungetc(c, f);
 
-    *val = v;
-    return 0;
+    token[token_len < sizeof(token) ? token_len : sizeof(token) - 1] = '\0';
+
+    if (has_dot) {
+        result->error = PRE_BAD_NUMBER;
+        result->error_line = *line_num;
+        snprintf(result->diagnostic, sizeof(result->diagnostic),
+                 "строка %d: значение должно быть целым числом; получено: %s", *line_num, token);
+        return TOKEN_ERROR;
+    }
+
+    if (invalid || !has_digit) {
+        result->error = PRE_BAD_NUMBER;
+        result->error_line = *line_num;
+        if (token_len == 1 && (unsigned char)token[0] < ' ')
+            snprintf(result->diagnostic, sizeof(result->diagnostic),
+                     "строка %d: нечисловое значение, код 0x%02x", *line_num,
+                     (unsigned char)token[0]);
+        else
+            snprintf(result->diagnostic, sizeof(result->diagnostic),
+                     "строка %d: нечисловое значение, получено: %s", *line_num, token);
+        return TOKEN_ERROR;
+    }
+
+    if (overflow) {
+        result->error = PRE_BAD_NUMBER;
+        result->error_line = *line_num;
+        snprintf(result->diagnostic, sizeof(result->diagnostic),
+                 "строка %d: число превышает допустимый диапазон", *line_num);
+        return TOKEN_ERROR;
+    }
+
+    *val = negative ? -magnitude : magnitude;
+    return TOKEN_OK;
 }
 
 // -------------------------------------------------------------------
@@ -157,9 +210,14 @@ struct PpmResult ppm_read(FILE* f) {
 
     // ---- 2. Width, Height, Maxval ----
     long long w_val = 0;
-    if (read_long(f, &line_num, 1, &w_val, &result) != 0)
+    enum TokenResult wr = read_int_token(f, &line_num, 1, &w_val, &result);
+    if (wr == TOKEN_EOF) {
+        set_eof_error(&result, line_num);
         return result;
-    if (w_val <= 0 || w_val > 0x7FFFFFFF) {
+    }
+    if (wr == TOKEN_ERROR)
+        return result;
+    if (w_val <= 0) {
         result.error = PRE_BAD_NUMBER;
         result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
@@ -169,9 +227,14 @@ struct PpmResult ppm_read(FILE* f) {
     }
 
     long long h_val = 0;
-    if (read_long(f, &line_num, 1, &h_val, &result) != 0)
+    enum TokenResult hr = read_int_token(f, &line_num, 1, &h_val, &result);
+    if (hr == TOKEN_EOF) {
+        set_eof_error(&result, line_num);
         return result;
-    if (h_val <= 0 || h_val > 0x7FFFFFFF) {
+    }
+    if (hr == TOKEN_ERROR)
+        return result;
+    if (h_val <= 0) {
         result.error = PRE_BAD_NUMBER;
         result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
@@ -181,7 +244,12 @@ struct PpmResult ppm_read(FILE* f) {
     }
 
     long long m_val = 0;
-    if (read_long(f, &line_num, 1, &m_val, &result) != 0)
+    enum TokenResult mr = read_int_token(f, &line_num, 1, &m_val, &result);
+    if (mr == TOKEN_EOF) {
+        set_eof_error(&result, line_num);
+        return result;
+    }
+    if (mr == TOKEN_ERROR)
         return result;
     if (m_val != 255) {
         result.error = PRE_BAD_NUMBER;
@@ -216,21 +284,29 @@ struct PpmResult ppm_read(FILE* f) {
 
     // ---- 3. Pixel data ----
     int pixel_error = 0;
+    int pixel_eof = 0;
     long long pixel_count = 0;
 
     for (long long i = 0; i < total_pixels; ++i) {
         long long r_val, g_val, b_val;
+        enum TokenResult tr;
 
-        if (read_long(f, &line_num, 0, &r_val, &result) != 0) {
+        tr = read_int_token(f, &line_num, 0, &r_val, &result);
+        if (tr != TOKEN_OK) {
             pixel_error = 1;
+            pixel_eof = (tr == TOKEN_EOF);
             break;
         }
-        if (read_long(f, &line_num, 0, &g_val, &result) != 0) {
+        tr = read_int_token(f, &line_num, 0, &g_val, &result);
+        if (tr != TOKEN_OK) {
             pixel_error = 1;
+            pixel_eof = (tr == TOKEN_EOF);
             break;
         }
-        if (read_long(f, &line_num, 0, &b_val, &result) != 0) {
+        tr = read_int_token(f, &line_num, 0, &b_val, &result);
+        if (tr != TOKEN_OK) {
             pixel_error = 1;
+            pixel_eof = (tr == TOKEN_EOF);
             break;
         }
 
@@ -253,7 +329,7 @@ struct PpmResult ppm_read(FILE* f) {
     }
 
     if (pixel_error) {
-        if (result.error == PRE_BAD_NUMBER && pixel_count < total_pixels && feof(f)) {
+        if (pixel_eof && pixel_count < total_pixels) {
             result.error = PRE_TOO_FEW_PIXELS;
             result.error_line = line_num;
             snprintf(result.diagnostic, sizeof(result.diagnostic),
