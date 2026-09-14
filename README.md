@@ -52,7 +52,7 @@ dialog_logs/       — сырые логи диалогов с DeepSeek
 - **OS:** Windows
 - **Toolchain:** MSVC (Visual Studio Build Tools, `vcvars64.bat`)
 - **Сборка:** из консоли, `cl /c` + `link`, без IDE
-- **Консоль:** PowerShell / FAR Manager, кодировка UTF-8 (`chcp 65001`)
+- **Консоль:** PowerShell / FAR Manager / cmd, кодировка UTF-8 (`chcp 65001`)
 - **Просмотр PPM:** IrfanView, GIMP, ImageMagick (`magick out.ppm out.png`)
 
 **Важно для Windows:** команды, использующие перенаправление стандартного ввода или вывода (`<`, `>`), следует выполнять через **Command Prompt (cmd.exe)**, а не через PowerShell.
@@ -65,9 +65,9 @@ dialog_logs/       — сырые логи диалогов с DeepSeek
 ## Выпуск релиза
 Перед тем, как присвоить тег по semversion коду, реализуется следующая последовательность действий:
 1. Полная проверка по сценарию README (начиная с чистого клона репозитория): сборка и выполнение всех тестов (включая примеры для задачи 1 и модуль common/ppm_io) - без частичных или инкрементальных запусков.
-2. Проверка идентичности поведения при сбоях: выполнение сборок на C и C++ с использованием фиксированного набора входных данных, провоцирующих ошибки (например, заголовки чрезмерного размера или потребитель, преждевременно закрывающий канал), и подтверждение того, что обе реализации завершаются одинаково (совпадение класса кода возврата и наличие непустого диагностического сообщения), а не просто совпадение результатов при успешном выполнении.
+2. Проверка идентичности поведения при сбоях: выполнение сборок на C и C++ с использованием фиксированного набора входных данных, провоцирующих ошибки (например, заголовки чрезмерного размера или потребитель, преждевременно закрывающий канал), и подтверждение того, что обе реализации завершаются одинаково (совпадение класса кода возврата и непустые диагностические сообения, которые одиноково описывюат возникщую ошибку), а не просто совпадение результатов при успешном выполнении. 
 3. Сверка CHANGELOG на основе diff: поочередный анализ коммитов в диапазоне git log <last-tag>..HEAD и сопоставление их с записями в CHANGELOG для подтверждения того, что каждое изменение отражено в файле.
-4. Проверка согласованности версий: подтверждение того, что вывод команды --version совпадает с создаваемым тегом и версией, указанной в заголовке CHANGELOG
+4. Проверка согласованности версий: подтверждение того, что вывод команды --version совпадает с создаваемым тегом и версией, указанной в заголовке CHANGELOG.
 
 ---
 
@@ -87,6 +87,9 @@ New-Item -ItemType Directory -Force -Path build/test_data, build/common/c, build
 
 Флаги: `Debug + ASan` (`/Od /Zi /MDd /fsanitize=address`).
 
+Для замеров используется Release сборка с флагами `/O2 /Zi /DNDEBUG /MD`  при компиляции и `/DEBUG /OPT:REF /OPT:ICF` при линковке.
+
+
 ### Эталонные программы
 
 Эталонные программы представляют из себя независимые реализации для acceptance-тестов
@@ -99,14 +102,28 @@ New-Item -ItemType Directory -Force -Path build/test_data, build/common/c, build
 | `ref_radial` | `01-image-gen/ref/ref_radial.c` | PPM radial 3x3 |
 | `ref_gradient_3_3_grayscale` | `04-image-filter/ref/ref_gradient_3_3_grayscale.c` | PPM gradient 3×3, `--grayscale` |
 | `ref_gradient_3_3_threshold_128` | `04-image-filter/ref/ref_gradient_3_3_threshold_128.c` | PPM gradient 3×3, `--threshold 128` |
-| `ref_checker_3_3_grayscale` | `04-image-filter/ref/ref_checker_3_3_grayscale.c` | PPM checker 3×3, `--grayscale` |
-| `ref_checker_3_3_threshold_128` | `04-image-filter/ref/ref_checker_3_3_threshold_128.c` | PPM checker 3×3, `--threshold 128` |
 | `ref_radial_3_3_grayscale` | `04-image-filter/ref/ref_radial_3_3_grayscale.c` | PPM radial 3×3, `--grayscale` |
-| `ref_radial_3_3_threshold_128` | `04-image-filter/ref/ref_radial_3_3_threshold_128.c` | PPM radial 3×3, `--threshold 128` |
+| `ref_probe_2_2` | `04-image-filter/ref/ref_probe_2_2.c` | вход probe 2×2 |
+| `ref_probe_2_2_grayscale` | `04-image-filter/ref/ref_probe_2_2_grayscale.c` | PPM probe 2×2, `--grayscale` |
+| `ref_probe_2_2_threshold_100` | `04-image-filter/ref/ref_probe_2_2_threshold_100.c` | PPM probe 2×2, `--threshold 100` |
+| `ref_probe_3_3` | `04-image-filter/ref/ref_probe_3_3.c` | вход probe 3×3 |
+| `ref_probe_3_3_grayscale` | `04-image-filter/ref/ref_probe_3_3_grayscale.c` | PPM probe 3×3, `--grayscale` |
+| `ref_probe_3_3_threshold_100` | `04-image-filter/ref/ref_probe_3_3_threshold_100.c` | PPM probe 3×3, `--threshold 100` |
 | `ref_stats` | `03-image-stats/ref/ref_stats.c` | Статистика PPM из stdin |
 | `ref_passport <case>` | `02-image-passport/ref/ref_passport.c` | Паспорт: эталонный вывод по кейсу |
 
 Все бинарники — в `build/`.
+
+---
+
+## Приемочное теистирование 
+Для каждой программы, создающей файл, который используется в приемочном тестировании:
+
+Программа должна завершаться с кодом выхода 0.
+Созданный файл должен сравниваться с эталонным файлом с помощью утилиты fc (в Windows) или аналогичной утилиты для побайтового сравнения.
+Если созданный файл впоследствии используется другой программой, эта программа также должна завершиться успешно.
+
+Для того чтобы приемочный тест считался успешным, должны быть пройдены как проверка кода выхода, так и сравнение файлов.
 
 ---
 
@@ -139,7 +156,7 @@ gen_image --size 1024 --seed 42 > big_random.ppm
 ### Справка и версия
 ```
 gen_image --help       -> usage в stdout, exit 0
-gen_image --version    -> "gen_image 0.1.4", exit 0
+gen_image --version    -> "gen_image 0.1.5", exit 0
 ```
 
 ### Поведение при ошибках
@@ -148,6 +165,37 @@ gen_image --version    -> "gen_image 0.1.4", exit 0
 - Неизвестный паттерн -> exit 64, stderr
 - `--help` / `--version` -> exit 0, текст в stdout
 - Успех -> exit 0, PPM в stdout
+
+### Воспроизводимость случайной заливки
+
+Паттерн `random` детерминирован: одна и та же программа с одними и теми же
+`--size` и `--seed` всегда порождает побитово одинаковый файл.
+
+Гарантия действует **в пределах одной реализации**. C- и C++-версии генератора
+на одном seed дают **разные** изображения, и это ожидаемое поведение, а не
+регрессия:
+
+- C++-версия использует `std::mt19937`, для которого стандарт строго задаёт
+  порождаемую последовательность;
+- в C стандарт не предъявляет требований к алгоритму `rand`/`srand`:
+  реализация зависит от платформы и версии среды выполнения, поэтому один и тот
+  же seed на другой машине дал бы другую картинку и сделал бы эталоны
+  невоспроизводимыми. Чтобы этого избежать, C-версия использует собственный
+  генератор.
+
+Полная побитовая совместимость двух генераторов не реализована сознательно:
+она избыточна. Сравнение реализаций строится не на сопоставлении их
+генераторов, а на обработке **одного и того же** входного файла обеими
+реализациями фильтра.
+
+Практические следствия:
+
+- сравнивая C и C++, подавайте обеим один входной файл; не генерируйте вход
+  для каждой реализации её собственным генератором;
+- `fc` между `gen_image.exe` (C) и `gen_image.exe` (C++) на одном seed покажет
+  различия — это норма;
+- массовые тестовые данные в примерах ниже генерируются C-версией; при замене
+  её на C++-версию эталоны, посчитанные для этих данных, перестанут совпадать.
 
 ### Тесты
 Для С:
@@ -185,7 +233,7 @@ build\01-image-gen\c\gen_image.exe 0; $LASTEXITCODE      # -> 64
 
 # справка и версия
 build\01-image-gen\c\gen_image.exe --help; $LASTEXITCODE     # -> 0, usage в stdout
-build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.4"
+build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.5"
 ```
 
 ### Эталоны 
@@ -246,18 +294,21 @@ read_passport
 Для С:
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/read_passport_test.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/read_passport.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/pixel_word.c
-link /DEBUG build/02-image-passport/c/read_passport_test.obj build/02-image-passport/c/pixel_word.obj /OUT:build/02-image-passport/c/passport_tests.exe  
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ common/c/strerror.c
+link /DEBUG build/02-image-passport/c/read_passport_test.obj build/02-image-passport/c/read_passport.obj build/02-image-passport/c/pixel_word.obj build/02-image-passport/c/strerror.obj /OUT:build/02-image-passport/c/passport_tests.exe
 ```
 
 Для C++:
 ```
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/read_passport_test.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/read_passport.cpp
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/pixel_word.cpp
-link /DEBUG build/02-image-passport/cpp/read_passport_test.obj build/02-image-passport/cpp/pixel_word.obj /OUT:build/02-image-passport/cpp/passport_tests.exe  
+link /DEBUG build/02-image-passport/cpp/read_passport_test.obj build/02-image-passport/cpp/read_passport.obj build/02-image-passport/cpp/pixel_word.obj /OUT:build/02-image-passport/cpp/passport_tests.exe
 ```
 
-Юнит-тесты (склонение «пиксель/пикселя/пикселей»):
+Юнит-тесты (склонение, `read_passport`, тексты сообщений). `read_passport` принимает `FILE*`, чтобы вход инжектировался в тестах:
 ```
 build/02-image-passport/c/passport_tests.exe # C
 build/02-image-passport/cpp/passport_tests.exe # C++
@@ -420,7 +471,7 @@ filter --threshold T    -> бинаризация по порогу яркост
 ### Справка и версия
 ```
 filter --help       -> usage в stdout, exit 0 (stdin не читается)
-filter --version    -> "filter 0.1.4", exit 0
+filter --version    -> "filter 0.1.5", exit 0
 ```
 
 ### Классы ошибок
@@ -433,8 +484,7 @@ filter --version    -> "filter 0.1.4", exit 0
 
 ### Тесты
 
-Юнит-тесты (grayscale, threshold, парсинг аргументов) и integration
-(полный конвейер `argv -> stdin -> stdout` через `run_filter`):
+Юнит-тесты (grayscale, threshold, парсинг аргументов) — по пикселям, без интеграции:
 ```
 build/04-image-filter/c/filter_tests.exe    # C
 build/04-image-filter/cpp/filter_tests.exe  # C++
@@ -458,29 +508,63 @@ link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filte
 
 ### Эталоны 
 Для того чтобы проверить корректность работы самого фильтра, требуется собрать эталоны для первой задачи, а затем прогнать их под фильтром и сравнить с эталонным ответом фильтра. 
+Помимо паттернов первой задачи используются probe-входы (2×2 и 3×3) с пикселями, подобранными под границы: округление яроксти - luma - вниз/вверх, граница из-за испоьзования float, строгая граница порога.
 Подразумевается, что команды исполняются в cmd.
 
 ```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_checker_3_3_grayscale.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_checker_3_3_threshold_128.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_gradient_3_3_grayscale.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_gradient_3_3_threshold_128.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_radial_3_3_grayscale.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_radial_3_3_threshold_128.c
-link /DEBUG build/04-image-filter/ref/ref_checker_3_3_grayscale.obj /OUT:build/04-image-filter/ref/ref_checker_3_3_grayscale.exe
-link /DEBUG build/04-image-filter/ref/ref_checker_3_3_threshold_128.obj /OUT:build/04-image-filter/ref/ref_checker_3_3_threshold_128.exe
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_2_2.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_2_2_grayscale.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_2_2_threshold_100.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_3_3.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_3_3_grayscale.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_3_3_threshold_100.c
 link /DEBUG build/04-image-filter/ref/ref_gradient_3_3_grayscale.obj /OUT:build/04-image-filter/ref/ref_gradient_3_3_grayscale.exe
 link /DEBUG build/04-image-filter/ref/ref_gradient_3_3_threshold_128.obj /OUT:build/04-image-filter/ref/ref_gradient_3_3_threshold_128.exe
 link /DEBUG build/04-image-filter/ref/ref_radial_3_3_grayscale.obj /OUT:build/04-image-filter/ref/ref_radial_3_3_grayscale.exe
-link /DEBUG build/04-image-filter/ref/ref_radial_3_3_threshold_128.obj /OUT:build/04-image-filter/ref/ref_radial_3_3_threshold_128.exe
+link /DEBUG build/04-image-filter/ref/ref_probe_2_2.obj /OUT:build/04-image-filter/ref/ref_probe_2_2.exe
+link /DEBUG build/04-image-filter/ref/ref_probe_2_2_grayscale.obj /OUT:build/04-image-filter/ref/ref_probe_2_2_grayscale.exe
+link /DEBUG build/04-image-filter/ref/ref_probe_2_2_threshold_100.obj /OUT:build/04-image-filter/ref/ref_probe_2_2_threshold_100.exe
+link /DEBUG build/04-image-filter/ref/ref_probe_3_3.obj /OUT:build/04-image-filter/ref/ref_probe_3_3.exe
+link /DEBUG build/04-image-filter/ref/ref_probe_3_3_grayscale.obj /OUT:build/04-image-filter/ref/ref_probe_3_3_grayscale.exe
+link /DEBUG build/04-image-filter/ref/ref_probe_3_3_threshold_100.obj /OUT:build/04-image-filter/ref/ref_probe_3_3_threshold_100.exe
 ```
 
-### Пример для ref_radial_3_3_grayscale (при условии собранных эталонов первой задачи (базовая картинка `radial_3x3.ppm` уже сгенерирована в `build/test_data`)
+### Примеры приёмки
+
+Для паттерна первой задачи (при условии собранных эталонов первой задачи; базовая картинка `radial_3x3.ppm` уже сгенерирована в `build/test_data`):
 
 ```
-build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\ref_radial_3_3_grayscale.ppm
-build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial3x3.ppm > build\actual_filter.ppm
-fc /c  build\actual_filter.ppm build\test_data\ref_radial_3_3_grayscale.ppm
+build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\radial_3x3_grayscale.ppm
+build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial_3x3.ppm > build\actual_filter.ppm
+fc /c  build\actual_filter.ppm build\test_data\radial_3x3_grayscale.ppm
+```
+
+Для probe-входа 3×3. Сборка генератора входного изображения и генераторов эталонных отфильтрованных изображений:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_3_3.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_3_3_grayscale.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_3_3_threshold_100.c
+link /DEBUG build/04-image-filter/ref/ref_probe_3_3.obj /OUT:build/04-image-filter/ref/ref_probe_3_3.exe
+link /DEBUG build/04-image-filter/ref/ref_probe_3_3_grayscale.obj /OUT:build/04-image-filter/ref/ref_probe_3_3_grayscale.exe
+link /DEBUG build/04-image-filter/ref/ref_probe_3_3_threshold_100.obj /OUT:build/04-image-filter/ref/ref_probe_3_3_threshold_100.exe
+```
+
+Генерация входного probe-изображения и эталонов:
+```
+build\04-image-filter\ref\ref_probe_3_3.exe > build\test_data\probe_3x3.ppm
+build\04-image-filter\ref\ref_probe_3_3_grayscale.exe > build\test_data\probe_3x3_grayscale.ppm
+build\04-image-filter\ref\ref_probe_3_3_threshold_100.exe > build\test_data\probe_3x3_threshold_100.ppm
+```
+
+Прогон фильтра на сгенерированном probe-изображении и сравнение с эталонами (фильтр — из раздела «Сборка основного приложения»):
+```
+build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\probe_3x3.ppm > build\actual_filter.ppm
+fc /c build\actual_filter.ppm build\test_data\probe_3x3_grayscale.ppm
+build\04-image-filter\cpp\filter.exe --threshold 100 < build\test_data\probe_3x3.ppm > build\actual_filter.ppm
+fc /c build\actual_filter.ppm build\test_data\probe_3x3_threshold_100.ppm
 ```
 
 ### Сборка основного приложения
@@ -510,13 +594,15 @@ link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filte
 - **Объектный файл / статическая библиотека** — по умолчанию, без флагов
 - **Динамическая библиотека (DLL / .so)** — с флагом `KV_DYNAMIC_LINK`. При этом, в  случае сборки с созданием динамической библиотеки, необходимо скопировать DLL(so на Linux/Mac) в папку с приложением-потребителем, иначе оно при запуске выдаст ошибку
 
+Необходимо отметить, что для C и C++ версий после команд непосредственной сборки идут команды копирования dll. Первые две предназначены для PowerShell, третья - для cmd.
+
 Сборка для C (DLL + import-lib), линковка - с тестами для С реализации фильтров:
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib 
 link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe
 Copy-Item -Path build/common/c/ppm_io.dll -Destination build/04-image-filter/c/
-copy /Y build\common\c\ppm_io.dll build\04-image-filter\c\ 
 cp build/common/c/ppm_io.dll build/04-image-filter/c/
+copy /Y build\common\c\ppm_io.dll build\04-image-filter\c\ 
 ```
 
 Сборка для C++ (DLL + import-lib), линковка - с тестами для С++ реализации фильтров:
@@ -556,6 +642,7 @@ cp build/common/cpp/ppm_io.dll build/04-image-filter/cpp/
 
 ### C
 
+Отметим, что при указанных флагах сборки тесты на попытку вдыления огромного количесвта памяти выдвдаут предупрждение - это корректное поведение Debug сборки. 
 `common/c/ppm_io_test.c` покрывает `ppm_io` (чтение/запись PPM) и `luma`:
 
 ```
@@ -591,12 +678,12 @@ build/common/cpp/ppm_io_test.exe
 `N = {2, 64, 1024}` × `seed = {42, 9999}`.
 
 ```
-build\01-image-gen\c\gen_image.exe --size 2 --seed 42 > build/test_data/random2x2_seed42.ppm
-build\01-image-gen\c\gen_image.exe --size 2 --seed 9999 > build/test_data/random2x2_seed9999.ppm
-build\01-image-gen\c\gen_image.exe --size 64 --seed 42 > build/test_data/random64x64_seed42.ppm
-build\01-image-gen\c\gen_image.exe --size 64 --seed 9999 > build/test_data/random64x64_seed9999.ppm
-build\01-image-gen\c\gen_image.exe --size 1024 --seed 42 > build/test_data/random1024x1024_seed42.ppm
-build\01-image-gen\c\gen_image.exe --size 1024 --seed 9999 > build/test_data/random1024x1024_seed9999.ppm
+build\01-image-gen\c\gen_image.exe --size 2 --seed 42 > build/test_data/random_2x2_seed42.ppm
+build\01-image-gen\c\gen_image.exe --size 2 --seed 9999 > build/test_data/random_2x2_seed9999.ppm
+build\01-image-gen\c\gen_image.exe --size 64 --seed 42 > build/test_data/random_64x64_seed42.ppm
+build\01-image-gen\c\gen_image.exe --size 64 --seed 9999 > build/test_data/random_64x64_seed9999.ppm
+build\01-image-gen\c\gen_image.exe --size 1024 --seed 42 > build/test_data/random_1024x1024_seed42.ppm
+build\01-image-gen\c\gen_image.exe --size 1024 --seed 9999 > build/test_data/random_1024x1024_seed9999.ppm
 ```
 
 ### Эталонные файлы
@@ -607,22 +694,26 @@ build\01-image-gen\c\gen_image.exe --size 1024 --seed 9999 > build/test_data/ran
 
 ```
 build\01-image-gen\ref\ref_gradient.exe > build/test_data/gradient_3x3.ppm
-build\01-image-gen\ref\ref_checker.exe > build/test_data/checker3x3.ppm
-build\01-image-gen\ref\ref_radial.exe > build/test_data/radial3x3.ppm
+build\01-image-gen\ref\ref_checker.exe > build/test_data/checker_3x3.ppm
+build\01-image-gen\ref\ref_radial.exe > build/test_data/radial_3x3.ppm
 ```
-Задача 4 (6 файлов, 3×3) — 3 паттерна × {grayscale, threshold 128}:
+Задача 4 (9 файлов) — 3 эталона по паттернам + probe-входы 2×2/3×3 и их эталоны:
 
 ```
-build\04-image-filter\ref\ref_gradient_3_3_grayscale.exe > build/test_data/ref_gradient_3_3_grayscale.ppm
-build\04-image-filter\ref\ref_gradient_3_3_threshold_128.exe > build/test_data/ref_gradient_3_3_threshold_128.ppm
-build\04-image-filter\ref\ref_checker_3_3_grayscale.exe > build/test_data/ref_checker_3_3_grayscale.ppm
-build\04-image-filter\ref\ref_checker_3_3_threshold_128.exe > build/test_data/ref_checker_3_3_threshold_128.ppm
-build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build/test_data/ref_radial_3_3_grayscale.ppm
-build\04-image-filter\ref\ref_radial_3_3_threshold_128.exe > build/test_data/ref_radial_3_3_threshold_128.ppm
+build\04-image-filter\ref\ref_gradient_3_3_grayscale.exe > build/test_data/gradient_3x3_grayscale.ppm
+build\04-image-filter\ref\ref_gradient_3_3_threshold_128.exe > build/test_data/gradient_3x3_threshold_128.ppm
+build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build/test_data/radial_3x3_grayscale.ppm
+build\04-image-filter\ref\ref_probe_2_2.exe > build/test_data/probe_2x2.ppm
+build\04-image-filter\ref\ref_probe_2_2_grayscale.exe > build/test_data/probe_2x2_grayscale.ppm
+build\04-image-filter\ref\ref_probe_2_2_threshold_100.exe > build/test_data/probe_2x2_threshold_100.ppm
+build\04-image-filter\ref\ref_probe_3_3.exe > build/test_data/probe_3x3.ppm
+build\04-image-filter\ref\ref_probe_3_3_grayscale.exe > build/test_data/probe_3x3_grayscale.ppm
+build\04-image-filter\ref\ref_probe_3_3_threshold_100.exe > build/test_data/probe_3x3_threshold_100.ppm
 ```
 
-Итого 15 файлов: 6 тестовых входов (random) + 9 эталонов
-(3 базовых для задачи 1, 6 для задачи 4). Эталоны задач 2 и 3
+Итого 18 файлов: 6 тестовых входов (random) + 12 эталонных/входных
+(3 базовых для задачи 1; 9 для задачи 4 — 2 probe-входа и 7 эталонов фильтра).
+Эталоны задач 2 и 3
 
 ---
 
@@ -639,4 +730,3 @@ build\04-image-filter\ref\ref_radial_3_3_threshold_128.exe > build/test_data/ref
 | `EC_IOERR` | 74 | Сбой ввода-вывода |
 
 Код — машинный канал для скриптов-обёрток; stderr — детали для человека.
-

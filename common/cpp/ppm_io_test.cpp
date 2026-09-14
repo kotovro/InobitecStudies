@@ -1,13 +1,17 @@
 #include "ppm_io.hpp"
 
 #include <array>
+#include <cerrno>
 #include <cstdlib>
+#include <istream>
 #include <ostream>
 #include <print>
 #include <sstream>
 #include <streambuf>
 #include <string>
 #include <string_view>
+#include <system_error>
+#include <utility>
 
 #include "luma.hpp"
 
@@ -30,6 +34,16 @@ void check_pixel(const Pixel& p, uint8_t er, uint8_t eg, uint8_t eb, std::string
     if (p.r != er || p.g != eg || p.b != eb) {
         std::println(stderr, "FAIL: {} -- got ({},{},{}) expected ({},{},{})", name, p.r, p.g, p.b,
                      er, eg, eb);
+        ++failed;
+    } else {
+        std::println("PASS: {}", name);
+    }
+}
+
+void check_diag(const PpmResult& r, std::string_view expected, std::string_view name) {
+    if (r.diagnostic.compare(expected) != 0) {
+        std::println(stderr, "FAIL: {} -- got \"{}\" expected \"{}\"", name, r.diagnostic,
+                     expected);
         ++failed;
     } else {
         std::println("PASS: {}", name);
@@ -137,16 +151,21 @@ void test_channel_negative() {
     auto ss = std::istringstream("P3\n1 1\n255\n-1 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "channel -1 -> error");
-    if (!r.value.has_value())
+    if (!r.value.has_value()) {
         check(r.value.error() == PpmReadError::kChannelRange, "channel -1 -> kChannelRange");
+        check_diag(r, "строка 4: значение канала должно быть в [0; 255]; получено: -1 0 0",
+                   "channel -1 diagnostic");
+    }
 }
 
 void test_not_a_number() {
     auto ss = std::istringstream("P3\n1 1\n255\nx 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "not a number -> error");
-    if (!r.value.has_value())
+    if (!r.value.has_value()) {
         check(r.value.error() == PpmReadError::kBadNumber, "not a number -> kBadNumber");
+        check_diag(r, "строка 4: нечисловое значение, получено: x", "not a number diagnostic");
+    }
 }
 
 void test_hash_in_data() {
@@ -191,11 +210,142 @@ void test_error_line() {
 }
 
 void test_alloc_error() {
-    auto ss = std::istringstream("P3\n3000000000 3000000000\n255\n0 0 0\n");
+    auto ss = std::istringstream("P3\n2147483647 2147483647\n255\n0 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "huge dims -> error, not crash");
     if (!r.value.has_value())
         check(r.value.error() == PpmReadError::kAllocError, "huge dims -> kAllocError");
+}
+
+// Serves `data`, then fails with `err` (errno) via ios_base::failure, which
+// puts the stream into the bad state.
+class FailingInputBuf : public std::streambuf {
+  public:
+    FailingInputBuf(std::string data, int err) : data_(std::move(data)), err_(err) {
+        char* p = data_.data();
+        setg(p, p, p + data_.size());
+    }
+
+  protected:
+    int_type underflow() override {
+        errno = err_;
+        throw std::ios_base::failure("simulated io error");
+    }
+
+  private:
+    std::string data_;
+    int err_;
+};
+
+void test_read_io_error() {
+    FailingInputBuf sbuf("P3\n1 1\n255\n", EIO);
+    std::istream is(&sbuf);
+    auto r = Image::read(is);
+    check(!r.value.has_value(), "read io error -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kIOError, "read io error -> kIOError");
+        auto expected = std::string("сбой чтения: ") + std::generic_category().message(EIO) +
+                        " (errno " + std::to_string(EIO) + ")";
+        check_diag(r, expected, "read io error diagnostic");
+    }
+}
+
+void test_header_negative() {
+    auto ss = std::istringstream("P3\n-5 1\n255\n0 0 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "width -5 -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "width -5 -> kBadNumber");
+        check_diag(r, "строка 2: ширина должна быть положительным числом; получено: -5",
+                   "width -5 diagnostic");
+    }
+
+    ss = std::istringstream("P3\n1 -5\n255\n0 0 0\n");
+    r = Image::read(ss);
+    check(!r.value.has_value(), "height -5 -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "height -5 -> kBadNumber");
+        check_diag(r, "строка 2: высота должна быть положительным числом; получено: -5",
+                   "height -5 diagnostic");
+    }
+
+    ss = std::istringstream("P3\n1 1\n-5\n0 0 0\n");
+    r = Image::read(ss);
+    check(!r.value.has_value(), "maxval -5 -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "maxval -5 -> kBadNumber");
+        check_diag(r, "строка 3: максимальное значение канала должно быть 255; получено: -5",
+                   "maxval -5 diagnostic");
+    }
+}
+
+void test_header_fractional() {
+    auto ss = std::istringstream("P3\n3.5 1\n255\n0 0 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "width 3.5 -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "width 3.5 -> kBadNumber");
+        check_diag(r, "строка 2: значение должно быть целым числом; получено: 3.5",
+                   "width 3.5 diagnostic");
+    }
+
+    ss = std::istringstream("P3\n1 1\n25.5\n0 0 0\n");
+    r = Image::read(ss);
+    check(!r.value.has_value(), "maxval 25.5 -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "maxval 25.5 -> kBadNumber");
+        check_diag(r, "строка 3: значение должно быть целым числом; получено: 25.5",
+                   "maxval 25.5 diagnostic");
+    }
+}
+
+void test_header_non_numeric() {
+    auto ss = std::istringstream("P3\nabc 1\n255\n0 0 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "width abc -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "width abc -> kBadNumber");
+        check_diag(r, "строка 2: нечисловое значение, получено: abc", "width abc diagnostic");
+    }
+
+    ss = std::istringstream("P3\n+5 1\n255\n0 0 0\n");
+    r = Image::read(ss);
+    check(!r.value.has_value(), "width +5 -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "width +5 -> kBadNumber");
+        check_diag(r, "строка 2: нечисловое значение, получено: +5", "width +5 diagnostic");
+    }
+}
+
+void test_header_overflow() {
+    auto ss = std::istringstream("P3\n3000000000 1\n255\n0 0 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "width 3000000000 -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "width 3000000000 -> kBadNumber");
+        check_diag(r, "строка 2: число превышает допустимый диапазон", "width overflow diagnostic");
+    }
+}
+
+void test_header_eof() {
+    auto ss = std::istringstream("P3\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "header EOF -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "header EOF -> kBadNumber");
+        check_diag(r, "строка 2: неожиданный конец файла", "header EOF diagnostic");
+    }
+}
+
+void test_pixel_fractional() {
+    auto ss = std::istringstream("P3\n1 1\n255\n3.5 0 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "pixel 3.5 -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "pixel 3.5 -> kBadNumber");
+        check_diag(r, "строка 4: значение должно быть целым числом; получено: 3.5",
+                   "pixel fractional diagnostic");
+    }
 }
 
 // -------------------------------------------------------------------
@@ -351,38 +501,90 @@ void test_writer_stream_error() {
     PpmWriter pw(ss, 2, 2);
     auto r = pw.putHeader();
     check(!r.value.has_value(), "bad stream header -> error");
-    if (!r.value.has_value())
+    if (!r.value.has_value()) {
         check(r.value.error() == PpmWriteError::kIOError, "bad stream header -> kIOError");
+        check(r.diagnostic.find("(errno 0)") != std::string::npos,
+              "bad stream header -> errno 0 in diagnostic");
+    }
 }
 
-// Buffers all writes but fails at flush (sync() -> -1): emulates a pipe that
-// closed while the output was still buffered.
-class BrokenPipeBuf : public std::streambuf {
+// Controllable output buffer: accepts writes until fail_with(err) is called,
+// after which overflow()/sync() set errno and fail.
+class ControllableBuf : public std::streambuf {
   public:
+    void fail_with(int e) {
+        fail_ = true;
+        err_ = e;
+    }
+
+  protected:
     int_type overflow(int_type c) override {
+        if (fail_) {
+            errno = err_;
+            return traits_type::eof();
+        }
         if (c != traits_type::eof())
             data_ += static_cast<char>(c);
         return traits_type::not_eof(c);
     }
-    int sync() override { return -1; }
+    int sync() override {
+        if (fail_) {
+            errno = err_;
+            return -1;
+        }
+        return 0;
+    }
 
   private:
+    bool fail_ = false;
+    int err_ = 0;
     std::string data_;
 };
 
+void check_io_diagnostic(const PpmWriteResult& r, std::string_view phase, int err,
+                         std::string_view name) {
+    check(!r.value.has_value() && r.value.error() == PpmWriteError::kIOError, name);
+    if (r.value.has_value())
+        return;
+    check(r.diagnostic.find(phase) != std::string::npos, std::string(name) + ": phase");
+    check(r.diagnostic.find(std::string{"(errno "} + std::to_string(err) + ")") !=
+              std::string::npos,
+          std::string(name) + ": errno");
+    check(r.diagnostic.find(std::generic_category().message(err)) != std::string::npos,
+          std::string(name) + ": system text");
+}
+
+void test_writer_header_error_errno() {
+    ControllableBuf sbuf;
+    sbuf.fail_with(ENOSPC);
+    std::ostream os(&sbuf);
+    PpmWriter pw(os, 2, 2);
+    auto r = pw.putHeader();
+    check_io_diagnostic(r, "сбой записи заголовка в поток", ENOSPC,
+                        "header write error with errno");
+}
+
+void test_writer_pixel_error_errno() {
+    ControllableBuf sbuf;
+    std::ostream os(&sbuf);
+    PpmWriter pw(os, 2, 2);
+    check(pw.putHeader().value.has_value(), "pixel error: header ok");
+    sbuf.fail_with(ENOSPC);
+    auto pixels = std::to_array<Pixel>({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {10, 11, 12}});
+    auto r = pw.putAll(pixels, /*finalize=*/true);
+    check_io_diagnostic(r, "сбой записи пикселя в поток", ENOSPC, "pixel write error with errno");
+}
+
 void test_writer_flush_error() {
-    BrokenPipeBuf sbuf;
+    ControllableBuf sbuf;
     std::ostream os(&sbuf);
     PpmWriter pw(os, 1, 1);
-    auto h = pw.putHeader();
-    check(h.value.has_value(), "flush error: header ok");
+    check(pw.putHeader().value.has_value(), "flush error: header ok");
     auto pixels = std::to_array<Pixel>({{1, 2, 3}});
-    auto r = pw.putAll(pixels, /*finalize=*/true);
-    check(r.value.has_value(), "flush error: putAll ok while buffered");
-    auto f = pw.flush();
-    check(!f.value.has_value(), "flush error: flush detects broken stream");
-    if (!f.value.has_value())
-        check(f.value.error() == PpmWriteError::kIOError, "flush error -> kIOError");
+    check(pw.putAll(pixels, /*finalize=*/true).value.has_value(), "flush error: putAll ok");
+    sbuf.fail_with(EPIPE);
+    auto r = pw.flush();
+    check_io_diagnostic(r, "сбой записи при сбросе потока", EPIPE, "flush error with errno");
 }
 
 // -------------------------------------------------------------------
@@ -402,17 +604,24 @@ int main() {
     test_maxval_not_255();
     test_width_zero();
     test_comments_in_header();
+    test_header_negative();
+    test_header_fractional();
+    test_header_non_numeric();
+    test_header_overflow();
+    test_header_eof();
 
     std::println("-- pixel data errors --");
     test_channel_out_of_range();
     test_channel_negative();
     test_not_a_number();
+    test_pixel_fractional();
     test_hash_in_data();
     test_too_many_pixels();
     test_too_few_pixels();
     test_valid_2x2();
     test_error_line();
     test_alloc_error();
+    test_read_io_error();
 
     std::println("-- luma --");
     test_luma();
@@ -427,6 +636,8 @@ int main() {
     test_writer_not_enough_pixels();
     test_writer_finalize_false_no_check();
     test_writer_stream_error();
+    test_writer_header_error_errno();
+    test_writer_pixel_error_errno();
     test_writer_flush_error();
 
     std::println("---");

@@ -2,6 +2,6 @@
 
 namespace raster::common {
 
-inline constexpr const char* kVersion = "0.1.4";
+inline constexpr const char* kVersion = "0.1.5";
 
 }
