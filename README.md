@@ -56,10 +56,12 @@ dialog_logs/       — сырые логи диалогов с DeepSeek
 - **Консоль:** PowerShell / FAR Manager / cmd, кодировка UTF-8 (`chcp 65001`)
 - **Просмотр PPM:** IrfanView, GIMP, ImageMagick (`magick out.ppm out.png`)
 
-**Важно для Windows:** команды, использующие перенаправление стандартного ввода или вывода (`<`, `>`), следует выполнять через **Command Prompt (cmd.exe)**, а не через PowerShell.
-Это связано с особенностями обработки текстового вывода и кодировки в PowerShell. При создании эталонных файлов через перенаправление вывода использование PowerShell может привести к получению файлов в формате, отличном от ожидаемого программой.
-При этом обычное сравнение файлов может не обнаружить такую проблему: если эталонный и полученный файлы были созданы с одинаковым некорректным преобразованием, они будут побитово совпадать, несмотря на то, что оба файла имеют неверный формат.
-Поэтому для команд генерации эталонных данных и проверки программ с использованием `<` и `>` рекомендуется использовать **cmd.exe**.
+**Важно для Windows:** команды с перенаправлением ввода-вывода (`<`, `>`) должны выполняться в **Command Prompt (cmd.exe)**, а не в PowerShell.
+Windows PowerShell 5.1 перекодирует вывод при перенаправлении `>`, из-за чего эталонные файлы могут получиться в формате, отличном от ожидаемого программой; при этом сравнение двух одинаково испорченных файлов не покажет расхождения.
+Чтобы блок команд был исполним целиком в любой оболочке, для каждого shell-зависимого блока приведены два варианта:
+- **PowerShell** — команды с перенаправлением обёрнуты в `cmd /c "…"`, проверка результата — `$LASTEXITCODE`;
+- **cmd** — блок начинается с `chcp 65001 >nul`, проверка результата — `%errorlevel%`.
+Блоки сборки (`cl`, `link`) одинаковы для обеих оболочек и не дублируются.
 
 ---
 
@@ -81,10 +83,19 @@ vcvars64.bat
 
 Все команды выполняются из корня репозитория; cd внутри команд не используется. Сборка содержит раздельные этапы.
 
-Создать каталоги артефактов (один раз; `-Force` — повторный запуск безопасен):
+Создать каталоги артефактов (один раз; повторный запуск безопасен).
+
+**PowerShell:**
 ```powershell
 New-Item -ItemType Directory -Force -Path build/test_data, build/common/c, build/common/cpp, build/01-image-gen/c, build/01-image-gen/cpp, build/01-image-gen/ref, build/02-image-passport/c, build/02-image-passport/cpp, build/02-image-passport/ref, build/03-image-stats/c, build/03-image-stats/cpp, build/03-image-stats/ref, build/04-image-filter/c, build/04-image-filter/cpp, build/04-image-filter/ref
 New-Item -ItemType Directory -Force -Path build/release/common/c, build/release/common/cpp, build/release/01-image-gen/c, build/release/01-image-gen/cpp, build/release/01-image-gen/ref, build/release/02-image-passport/c, build/release/02-image-passport/cpp, build/release/02-image-passport/ref, build/release/03-image-stats/c, build/release/03-image-stats/cpp, build/release/03-image-stats/ref, build/release/04-image-filter/c, build/release/04-image-filter/cpp, build/release/04-image-filter/ref
+```
+
+**cmd:**
+```bat
+chcp 65001 >nul
+mkdir build\test_data build\common\c build\common\cpp build\01-image-gen\c build\01-image-gen\cpp build\01-image-gen\ref build\02-image-passport\c build\02-image-passport\cpp build\02-image-passport\ref build\03-image-stats\c build\03-image-stats\cpp build\03-image-stats\ref build\04-image-filter\c build\04-image-filter\cpp build\04-image-filter\ref 2>nul
+mkdir build\release\common\c build\release\common\cpp build\release\01-image-gen\c build\release\01-image-gen\cpp build\release\01-image-gen\ref build\release\02-image-passport\c build\release\02-image-passport\cpp build\release\02-image-passport\ref build\release\03-image-stats\c build\release\03-image-stats\cpp build\release\03-image-stats\ref build\release\04-image-filter\c build\release\04-image-filter\cpp build\release\04-image-filter\ref 2>nul
 ```
 
 Общие флаги: `/std:c17` (C) или `/std:c++latest` (C++), `/W4 /permissive- /utf-8`; для C++ дополнительно `/EHsc`.
@@ -117,6 +128,7 @@ Debug-артефакты размещаются в `build/`, Release-артеф�
 | `ref_probe_3_3_threshold_100` | `04-image-filter/ref/ref_probe_3_3_threshold_100.c` | PPM probe 3×3, `--threshold 100` |
 | `ref_stats` | `03-image-stats/ref/ref_stats.c` | Статистика PPM из stdin |
 | `ref_passport <case>` | `02-image-passport/ref/ref_passport.c` | Паспорт: эталонный вывод по кейсу |
+| `ref_passport_input <case>` | `02-image-passport/ref/ref_passport_input.c` | Паспорт: входной поток по кейсу |
 
 Все бинарники — в `build/` (Debug) и `build/release/` (Release).
 
@@ -246,12 +258,15 @@ build/release/01-image-gen/cpp/ppm_test.exe
 ```
 
 
-Acceptance — ручной прогон с эталоном через `cmd /c fc`:
-```
+Acceptance — ручной прогон с эталоном. Debug-бинарники.
+
+**PowerShell:**
+```powershell
 # gradient 3x3
-build\01-image-gen\ref\ref_gradient.exe > build\test_data\gradient_3x3.ppm
-build\01-image-gen\c\gen_image.exe 3 gradient > build\actual.ppm
+cmd /c "build\01-image-gen\ref\ref_gradient.exe > build\test_data\gradient_3x3.ppm"
+cmd /c "build\01-image-gen\c\gen_image.exe 3 gradient > build\actual.ppm"
 cmd /c fc build\actual.ppm build\test_data\gradient_3x3.ppm
+$LASTEXITCODE                                        # -> 0
 
 # error-кейсы (только exit-код; stderr — для человека)
 build\01-image-gen\c\gen_image.exe; $LASTEXITCODE        # -> 64
@@ -263,11 +278,71 @@ build\01-image-gen\c\gen_image.exe --help; $LASTEXITCODE     # -> 0, usage в st
 build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.5"
 ```
 
-Release-прогон: те же команды с Release-бинарниками (`build\release\...`) и Release-эталоном:
+**cmd:**
+```bat
+chcp 65001 >nul
+
+rem gradient 3x3
+build\01-image-gen\ref\ref_gradient.exe > build\test_data\gradient_3x3.ppm
+build\01-image-gen\c\gen_image.exe 3 gradient > build\actual.ppm
+fc build\actual.ppm build\test_data\gradient_3x3.ppm
+echo %errorlevel%                                        & rem expected 0
+
+rem error-кейсы (только exit-код; stderr — для человека)
+build\01-image-gen\c\gen_image.exe
+echo %errorlevel%                                        & rem expected 64
+build\01-image-gen\c\gen_image.exe abc
+echo %errorlevel%                                        & rem expected 64
+build\01-image-gen\c\gen_image.exe 0
+echo %errorlevel%                                        & rem expected 64
+
+rem справка и версия
+build\01-image-gen\c\gen_image.exe --help
+echo %errorlevel%                                        & rem expected 0, usage в stdout
+build\01-image-gen\c\gen_image.exe --version
+echo %errorlevel%                                        & rem expected 0, "gen_image 0.1.5"
 ```
+
+Release-бинарники (`build\release\...`).
+
+**PowerShell:**
+```powershell
+cmd /c "build\release\01-image-gen\ref\ref_gradient.exe > build\test_data\gradient_3x3.ppm"
+cmd /c "build\release\01-image-gen\c\gen_image.exe 3 gradient > build\actual.ppm"
+cmd /c fc build\actual.ppm build\test_data\gradient_3x3.ppm
+$LASTEXITCODE                                        # -> 0
+
+build\release\01-image-gen\c\gen_image.exe; $LASTEXITCODE        # -> 64
+build\release\01-image-gen\c\gen_image.exe abc; $LASTEXITCODE    # -> 64
+build\release\01-image-gen\c\gen_image.exe 0; $LASTEXITCODE      # -> 64
+
+build\release\01-image-gen\c\gen_image.exe --help; $LASTEXITCODE     # -> 0
+build\release\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0
+```
+
+**cmd:**
+```bat
+chcp 65001 >nul
+
+rem gradient 3x3
 build\release\01-image-gen\ref\ref_gradient.exe > build\test_data\gradient_3x3.ppm
 build\release\01-image-gen\c\gen_image.exe 3 gradient > build\actual.ppm
-cmd /c fc build\actual.ppm build\test_data\gradient_3x3.ppm
+fc build\actual.ppm build\test_data\gradient_3x3.ppm
+echo %errorlevel%                                        & rem expected 0
+
+rem error-кейсы
+build\release\01-image-gen\c\gen_image.exe
+echo %errorlevel%                                        & rem expected 64
+build\release\01-image-gen\c\gen_image.exe abc
+echo %errorlevel%                                        & rem expected 64
+build\release\01-image-gen\c\gen_image.exe 0
+echo %errorlevel%                                        & rem expected 64
+
+rem справка и версия
+build\release\01-image-gen\c\gen_image.exe --help
+echo %errorlevel%                                        & rem expected 0
+build\release\01-image-gen\c\gen_image.exe --version
+echo %errorlevel%                                        & rem expected 0
 ```
 
 ### Эталоны — Debug
@@ -405,34 +480,89 @@ build/release/02-image-passport/c/passport_tests.exe # C
 build/release/02-image-passport/cpp/passport_tests.exe # C++
 ```
 
-Acceptance — эталон `ref_passport.exe`, ручное сравнение через `cmd /c fc`:
-```
+Acceptance — эталон `ref_passport.exe`, ручное сравнение. Вход подаётся файлом, который пишет `ref_passport_input` (не зависит от `echo` и кодировки консоли). Debug-бинарники.
+
+**PowerShell:**
+```powershell
 # success-кейс: два слова + 1920
-"морской закат`n1920" | build\02-image-passport\cpp\passport.exe > build\actual.txt
-build\02-image-passport\ref\ref_passport.exe basic > build\expected.txt
+cmd /c "build\02-image-passport\ref\ref_passport_input.exe basic > build\test_data\passport_basic_in.txt"
+cmd /c "build\02-image-passport\ref\ref_passport.exe basic > build\expected.txt"
+cmd /c "build\02-image-passport\cpp\passport.exe < build\test_data\passport_basic_in.txt > build\actual.txt"
 cmd /c fc build\actual.txt build\expected.txt
-echo $LASTEXITCODE # -> 0
+$LASTEXITCODE                                        # -> 0
 
 # error: пустое имя
-"`n1920" | build\02-image-passport\cpp\passport.exe 2> build\actual_stderr.txt
-echo $LASTEXITCODE # -> 65
+cmd /c "build\02-image-passport\ref\ref_passport_input.exe empty_name > build\test_data\passport_empty_name_in.txt"
+cmd /c "build\02-image-passport\cpp\passport.exe < build\test_data\passport_empty_name_in.txt > build\actual.txt"
+$LASTEXITCODE                                        # -> 65
 ```
 
-Release-прогон: те же команды с Release-бинарниками (`build\release\02-image-passport\...`).
+**cmd:**
+```bat
+chcp 65001 >nul
 
-Доступные кейсы: `basic`, `single_1`, `plural_2`–`101`–`111`, `empty_name`, `no_input`, `bad_count`, `negative`, `zero`.
+rem success-кейс: два слова + 1920
+build\02-image-passport\ref\ref_passport_input.exe basic > build\test_data\passport_basic_in.txt
+build\02-image-passport\ref\ref_passport.exe basic > build\expected.txt
+build\02-image-passport\cpp\passport.exe < build\test_data\passport_basic_in.txt > build\actual.txt
+fc build\actual.txt build\expected.txt
+echo %errorlevel%                                    & rem expected 0
+
+rem error: пустое имя
+build\02-image-passport\ref\ref_passport_input.exe empty_name > build\test_data\passport_empty_name_in.txt
+build\02-image-passport\cpp\passport.exe < build\test_data\passport_empty_name_in.txt > build\actual.txt
+echo %errorlevel%                                    & rem expected 65
+```
+
+Release-бинарники (`build\release\02-image-passport\...`).
+
+**PowerShell:**
+```powershell
+cmd /c "build\release\02-image-passport\ref\ref_passport_input.exe basic > build\test_data\passport_basic_in.txt"
+cmd /c "build\release\02-image-passport\ref\ref_passport.exe basic > build\expected.txt"
+cmd /c "build\release\02-image-passport\cpp\passport.exe < build\test_data\passport_basic_in.txt > build\actual.txt"
+cmd /c fc build\actual.txt build\expected.txt
+$LASTEXITCODE                                        # -> 0
+
+cmd /c "build\release\02-image-passport\ref\ref_passport_input.exe empty_name > build\test_data\passport_empty_name_in.txt"
+cmd /c "build\release\02-image-passport\cpp\passport.exe < build\test_data\passport_empty_name_in.txt > build\actual.txt"
+$LASTEXITCODE                                        # -> 65
+```
+
+**cmd:**
+```bat
+chcp 65001 >nul
+
+rem success-кейс: два слова + 1920
+build\release\02-image-passport\ref\ref_passport_input.exe basic > build\test_data\passport_basic_in.txt
+build\release\02-image-passport\ref\ref_passport.exe basic > build\expected.txt
+build\release\02-image-passport\cpp\passport.exe < build\test_data\passport_basic_in.txt > build\actual.txt
+fc build\actual.txt build\expected.txt
+echo %errorlevel%                                    & rem expected 0
+
+rem error: пустое имя
+build\release\02-image-passport\ref\ref_passport_input.exe empty_name > build\test_data\passport_empty_name_in.txt
+build\release\02-image-passport\cpp\passport.exe < build\test_data\passport_empty_name_in.txt > build\actual.txt
+echo %errorlevel%                                    & rem expected 65
+```
+
+Доступные кейсы (те же имена принимает `ref_passport_input`): `basic`, `single_1`, `plural_2`–`101`–`111`, `empty_name`, `no_input`, `bad_count`, `negative`, `zero`.
 
 ### Эталоны — Debug
 Cборка эталонов (написаны на C)
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/ref/ 02-image-passport/ref/ref_passport.c 
 link /DEBUG build/02-image-passport/ref/ref_passport.obj /OUT:build/02-image-passport/ref/ref_passport.exe
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/ref/ 02-image-passport/ref/ref_passport_input.c
+link /DEBUG build/02-image-passport/ref/ref_passport_input.obj /OUT:build/02-image-passport/ref/ref_passport_input.exe
 ```
 
 ### Эталоны — Release
 ```
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/ref/ 02-image-passport/ref/ref_passport.c
 link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/ref/ref_passport.obj /OUT:build/release/02-image-passport/ref/ref_passport.exe
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/ref/ 02-image-passport/ref/ref_passport_input.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/ref/ref_passport_input.obj /OUT:build/release/02-image-passport/ref/ref_passport_input.exe
 ```
 
 ### Сборка основного приложения — Debug
@@ -545,23 +675,77 @@ build/release/03-image-stats/c/ppm_stats_test.exe   # C
 build/release/03-image-stats/cpp/ppm_stats_test.exe # C++
 ```
 
-Acceptance — ручной прогон (конвейер + `cmd /c fc`):
-```
+Acceptance — ручной прогон (конвейер). Debug-бинарники.
+
+**PowerShell:**
+```powershell
 # эталон: ref_gradient | ref_stats
-build\01-image-gen\ref\ref_gradient.exe | build\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_3x3.txt
+cmd /c "build\01-image-gen\ref\ref_gradient.exe | build\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_3x3.txt"
 
 # прогон: gen_image | image_stats
-build\01-image-gen\c\gen_image.exe 3 gradient | build\03-image-stats\c\image_stats.exe > build\actual.txt
+cmd /c "build\01-image-gen\c\gen_image.exe 3 gradient | build\03-image-stats\c\image_stats.exe > build\actual.txt"
 
 # сравнение
 cmd /c fc build\actual.txt build\test_data\stats_gradient_3x3.txt
+$LASTEXITCODE                                        # -> 0
 
 # error-кейсы (только exit-код)
-echo "" | build\03-image-stats\c\image_stats.exe; $LASTEXITCODE # -> 66
-echo P5 | build\03-image-stats\c\image_stats.exe; $LASTEXITCODE # -> 65
+cmd /c "build\03-image-stats\c\image_stats.exe < nul"
+$LASTEXITCODE                                        # -> 66
+cmd /c "echo P5 | build\03-image-stats\c\image_stats.exe"
+$LASTEXITCODE                                        # -> 65
 ```
 
-Release-прогон: те же команды с Release-бинарниками (`build\release\03-image-stats\...`).
+**cmd:**
+```bat
+chcp 65001 >nul
+
+rem эталон: ref_gradient | ref_stats
+build\01-image-gen\ref\ref_gradient.exe | build\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_3x3.txt
+
+rem прогон: gen_image | image_stats
+build\01-image-gen\c\gen_image.exe 3 gradient | build\03-image-stats\c\image_stats.exe > build\actual.txt
+
+rem сравнение
+fc build\actual.txt build\test_data\stats_gradient_3x3.txt
+echo %errorlevel%                                    & rem expected 0
+
+rem error-кейсы (только exit-код)
+build\03-image-stats\c\image_stats.exe < nul
+echo %errorlevel%                                    & rem expected 66
+echo P5 | build\03-image-stats\c\image_stats.exe
+echo %errorlevel%                                    & rem expected 65
+```
+
+Release-бинарники (`build\release\...`).
+
+**PowerShell:**
+```powershell
+cmd /c "build\release\01-image-gen\ref\ref_gradient.exe | build\release\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_3x3.txt"
+cmd /c "build\release\01-image-gen\c\gen_image.exe 3 gradient | build\release\03-image-stats\c\image_stats.exe > build\actual.txt"
+cmd /c fc build\actual.txt build\test_data\stats_gradient_3x3.txt
+$LASTEXITCODE                                        # -> 0
+
+cmd /c "build\release\03-image-stats\c\image_stats.exe < nul"
+$LASTEXITCODE                                        # -> 66
+cmd /c "echo P5 | build\release\03-image-stats\c\image_stats.exe"
+$LASTEXITCODE                                        # -> 65
+```
+
+**cmd:**
+```bat
+chcp 65001 >nul
+
+build\release\01-image-gen\ref\ref_gradient.exe | build\release\03-image-stats\ref\ref_stats.exe > build\test_data\stats_gradient_3x3.txt
+build\release\01-image-gen\c\gen_image.exe 3 gradient | build\release\03-image-stats\c\image_stats.exe > build\actual.txt
+fc build\actual.txt build\test_data\stats_gradient_3x3.txt
+echo %errorlevel%                                    & rem expected 0
+
+build\release\03-image-stats\c\image_stats.exe < nul
+echo %errorlevel%                                    & rem expected 66
+echo P5 | build\release\03-image-stats\c\image_stats.exe
+echo %errorlevel%                                    & rem expected 65
+```
 
 ### Эталоны — Debug
 ```
@@ -749,17 +933,45 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/ref/ref_probe_3_3_th
 
 ### Примеры приёмки
 
-Release-прогон: те же команды с Release-бинарниками (`build\release\...`) и Release-эталонами.
+Сборка probe (`cl`/`link`) одинакова для обеих оболочек и обеих конфигураций и приведена один раз. Остальные шаги используют перенаправление и даны для PowerShell и cmd.
 
-Для паттерна первой задачи (при условии собранных эталонов первой задачи; базовая картинка `radial_3x3.ppm` уже сгенерирована в `build/test_data`):
+**Часть 1. Паттерн первой задачи** (при условии собранных эталонов первой задачи; базовая картинка `radial_3x3.ppm` уже сгенерирована в `build/test_data`).
 
+Debug — PowerShell:
+```powershell
+cmd /c "build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\radial_3x3_grayscale.ppm"
+cmd /c "build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial_3x3.ppm > build\actual_filter.ppm"
+cmd /c fc build\actual_filter.ppm build\test_data\radial_3x3_grayscale.ppm
+$LASTEXITCODE                                        # -> 0
 ```
+
+Debug — cmd:
+```bat
+chcp 65001 >nul
 build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\radial_3x3_grayscale.ppm
 build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial_3x3.ppm > build\actual_filter.ppm
 fc build\actual_filter.ppm build\test_data\radial_3x3_grayscale.ppm
+echo %errorlevel%                                    & rem expected 0
 ```
 
-Для probe-входа 3×3. Сборка генератора входного изображения и генераторов эталонных отфильтрованных изображений:
+Release — PowerShell:
+```powershell
+cmd /c "build\release\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\radial_3x3_grayscale.ppm"
+cmd /c "build\release\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial_3x3.ppm > build\actual_filter.ppm"
+cmd /c fc build\actual_filter.ppm build\test_data\radial_3x3_grayscale.ppm
+$LASTEXITCODE                                        # -> 0
+```
+
+Release — cmd:
+```bat
+chcp 65001 >nul
+build\release\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\radial_3x3_grayscale.ppm
+build\release\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial_3x3.ppm > build\actual_filter.ppm
+fc build\actual_filter.ppm build\test_data\radial_3x3_grayscale.ppm
+echo %errorlevel%                                    & rem expected 0
+```
+
+**Часть 2. Probe 3×3.** Сборка генератора входного изображения и генераторов эталонных отфильтрованных изображений (общая):
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_3_3.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_probe_3_3_grayscale.c
@@ -769,19 +981,80 @@ link /DEBUG build/04-image-filter/ref/ref_probe_3_3_grayscale.obj /OUT:build/04-
 link /DEBUG build/04-image-filter/ref/ref_probe_3_3_threshold_100.obj /OUT:build/04-image-filter/ref/ref_probe_3_3_threshold_100.exe
 ```
 
-Генерация входного probe-изображения и эталонов:
+Генерация входного probe-изображения и эталонов.
+
+Debug — PowerShell:
+```powershell
+cmd /c "build\04-image-filter\ref\ref_probe_3_3.exe > build\test_data\probe_3x3.ppm"
+cmd /c "build\04-image-filter\ref\ref_probe_3_3_grayscale.exe > build\test_data\probe_3x3_grayscale.ppm"
+cmd /c "build\04-image-filter\ref\ref_probe_3_3_threshold_100.exe > build\test_data\probe_3x3_threshold_100.ppm"
 ```
+
+Debug — cmd:
+```bat
+chcp 65001 >nul
 build\04-image-filter\ref\ref_probe_3_3.exe > build\test_data\probe_3x3.ppm
 build\04-image-filter\ref\ref_probe_3_3_grayscale.exe > build\test_data\probe_3x3_grayscale.ppm
 build\04-image-filter\ref\ref_probe_3_3_threshold_100.exe > build\test_data\probe_3x3_threshold_100.ppm
 ```
 
-Прогон фильтра на сгенерированном probe-изображении и сравнение с эталонами (фильтр — из раздела «Сборка основного приложения — Debug»):
+Release — PowerShell:
+```powershell
+cmd /c "build\release\04-image-filter\ref\ref_probe_3_3.exe > build\test_data\probe_3x3.ppm"
+cmd /c "build\release\04-image-filter\ref\ref_probe_3_3_grayscale.exe > build\test_data\probe_3x3_grayscale.ppm"
+cmd /c "build\release\04-image-filter\ref\ref_probe_3_3_threshold_100.exe > build\test_data\probe_3x3_threshold_100.ppm"
 ```
+
+Release — cmd:
+```bat
+chcp 65001 >nul
+build\release\04-image-filter\ref\ref_probe_3_3.exe > build\test_data\probe_3x3.ppm
+build\release\04-image-filter\ref\ref_probe_3_3_grayscale.exe > build\test_data\probe_3x3_grayscale.ppm
+build\release\04-image-filter\ref\ref_probe_3_3_threshold_100.exe > build\test_data\probe_3x3_threshold_100.ppm
+```
+
+Прогон фильтра на сгенерированном probe-изображении и сравнение с эталонами.
+
+Debug — PowerShell:
+```powershell
+cmd /c "build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\probe_3x3.ppm > build\actual_filter.ppm"
+cmd /c fc build\actual_filter.ppm build\test_data\probe_3x3_grayscale.ppm
+$LASTEXITCODE                                        # -> 0
+cmd /c "build\04-image-filter\cpp\filter.exe --threshold 100 < build\test_data\probe_3x3.ppm > build\actual_filter.ppm"
+cmd /c fc build\actual_filter.ppm build\test_data\probe_3x3_threshold_100.ppm
+$LASTEXITCODE                                        # -> 0
+```
+
+Debug — cmd:
+```bat
+chcp 65001 >nul
 build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\probe_3x3.ppm > build\actual_filter.ppm
 fc build\actual_filter.ppm build\test_data\probe_3x3_grayscale.ppm
+echo %errorlevel%                                    & rem expected 0
 build\04-image-filter\cpp\filter.exe --threshold 100 < build\test_data\probe_3x3.ppm > build\actual_filter.ppm
 fc build\actual_filter.ppm build\test_data\probe_3x3_threshold_100.ppm
+echo %errorlevel%                                    & rem expected 0
+```
+
+Release — PowerShell:
+```powershell
+cmd /c "build\release\04-image-filter\cpp\filter.exe --grayscale < build\test_data\probe_3x3.ppm > build\actual_filter.ppm"
+cmd /c fc build\actual_filter.ppm build\test_data\probe_3x3_grayscale.ppm
+$LASTEXITCODE                                        # -> 0
+cmd /c "build\release\04-image-filter\cpp\filter.exe --threshold 100 < build\test_data\probe_3x3.ppm > build\actual_filter.ppm"
+cmd /c fc build\actual_filter.ppm build\test_data\probe_3x3_threshold_100.ppm
+$LASTEXITCODE                                        # -> 0
+```
+
+Release — cmd:
+```bat
+chcp 65001 >nul
+build\release\04-image-filter\cpp\filter.exe --grayscale < build\test_data\probe_3x3.ppm > build\actual_filter.ppm
+fc build\actual_filter.ppm build\test_data\probe_3x3_grayscale.ppm
+echo %errorlevel%                                    & rem expected 0
+build\release\04-image-filter\cpp\filter.exe --threshold 100 < build\test_data\probe_3x3.ppm > build\actual_filter.ppm
+fc build\actual_filter.ppm build\test_data\probe_3x3_threshold_100.ppm
+echo %errorlevel%                                    & rem expected 0
 ```
 
 ### Сборка основного приложения — Debug
@@ -830,7 +1103,7 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/ppm_io.obj build
 - **Объектный файл / статическая библиотека** — по умолчанию, без флагов
 - **Динамическая библиотека (DLL / .so)** — с флагом `KV_DYNAMIC_LINK`. При этом, в  случае сборки с созданием динамической библиотеки, необходимо скопировать DLL(so на Linux/Mac) в папку с приложением-потребителем, иначе оно при запуске выдаст ошибку
 
-Необходимо отметить, что для C и C++ версий после команд непосредственной сборки идут команды копирования dll. Первые две предназначены для PowerShell, третья - для cmd.
+Копирование DLL к потребителю приведено отдельными блоками для PowerShell и cmd (Debug и Release).
 
 ### Сборка DLL — Debug
 
@@ -838,18 +1111,27 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/ppm_io.obj build
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /utf-8 /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/common/c/ppm_io.dll /IMPLIB:build/common/c/ppm_io.lib 
 link /DEBUG build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj build/common/c/ppm_io.lib /OUT:build/04-image-filter/c/filter_test_dll.exe
-Copy-Item -Path build/common/c/ppm_io.dll -Destination build/04-image-filter/c/
-cp build/common/c/ppm_io.dll build/04-image-filter/c/
-copy /Y build\common\c\ppm_io.dll build\04-image-filter\c\ 
 ```
 
 Сборка для C++ (DLL + import-lib), линковка - с тестами для С++ реализации фильтров:
 ```
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /utf-8 /DKV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/common/cpp/ppm_io.dll /IMPLIB:build/common/cpp/ppm_io.lib
 link /DEBUG build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj build/common/cpp/ppm_io.lib /OUT:build/04-image-filter/cpp/filter_test_dll.exe
+```
+
+Копирование DLL к потребителю (без него при запуске — ошибка разрешения символов).
+
+PowerShell:
+```powershell
+Copy-Item -Path build/common/c/ppm_io.dll -Destination build/04-image-filter/c/
 Copy-Item -Path build/common/cpp/ppm_io.dll -Destination build/04-image-filter/cpp/
+```
+
+cmd:
+```bat
+chcp 65001 >nul
+copy /Y build\common\c\ppm_io.dll build\04-image-filter\c\
 copy /Y build\common\cpp\ppm_io.dll build\04-image-filter\cpp\
-cp build/common/cpp/ppm_io.dll build/04-image-filter/cpp/
 ```
 
 ### Сборка DLL — Release
@@ -858,18 +1140,27 @@ cp build/common/cpp/ppm_io.dll build/04-image-filter/cpp/
 ```
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /DKV_DYNAMIC_LINK /LD common/c/ppm_io.c common/c/strerror.c /link /OUT:build/release/common/c/ppm_io.dll /IMPLIB:build/release/common/c/ppm_io.lib
 link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/c/filter.obj build/release/04-image-filter/c/filter_test.obj build/release/common/c/ppm_io.lib /OUT:build/release/04-image-filter/c/filter_test_dll.exe
-Copy-Item -Path build/release/common/c/ppm_io.dll -Destination build/release/04-image-filter/c/
-cp build/release/common/c/ppm_io.dll build/release/04-image-filter/c/
-copy /Y build\release\common\c\ppm_io.dll build\release\04-image-filter\c\
 ```
 
 Сборка для C++ (DLL + import-lib), линковка - с тестами для С++ реализации фильтров:
 ```
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /DKV_DYNAMIC_LINK /LD common/cpp/ppm_io.cpp /link /OUT:build/release/common/cpp/ppm_io.dll /IMPLIB:build/release/common/cpp/ppm_io.lib
 link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/filter.obj build/release/04-image-filter/cpp/filter_test.obj build/release/common/cpp/ppm_io.lib /OUT:build/release/04-image-filter/cpp/filter_test_dll.exe
+```
+
+Копирование DLL к потребителю.
+
+PowerShell:
+```powershell
+Copy-Item -Path build/release/common/c/ppm_io.dll -Destination build/release/04-image-filter/c/
 Copy-Item -Path build/release/common/cpp/ppm_io.dll -Destination build/release/04-image-filter/cpp/
+```
+
+cmd:
+```bat
+chcp 65001 >nul
+copy /Y build\release\common\c\ppm_io.dll build\release\04-image-filter\c\
 copy /Y build\release\common\cpp\ppm_io.dll build\release\04-image-filter\cpp\
-cp build/release/common/cpp/ppm_io.dll build/release/04-image-filter/cpp/
 ```
 
 - **Linux / macOS** — флаг игнорируется, символы `.so` экспортируются по умолчанию
@@ -900,8 +1191,6 @@ cp build/release/common/cpp/ppm_io.dll build/release/04-image-filter/cpp/
 
 ### C — Debug
 
-Отметим, что при указанных флагах сборки тесты на попытку вдыления огромного количесвта памяти выдвдаут предупрждение - это корректное поведение Debug сборки. 
-`common/c/ppm_io_test.c` покрывает `ppm_io` (чтение/запись PPM) и `luma`:
 
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/common/c/ common/c/ppm_io.c
@@ -960,7 +1249,19 @@ build/release/common/cpp/ppm_io_test.exe
 Случайные изображения для задач 3/4 (паттерн `random`). 6 файлов:
 `N = {2, 64, 1024}` × `seed = {42, 9999}`.
 
+**PowerShell:**
+```powershell
+cmd /c "build\01-image-gen\c\gen_image.exe --size 2 --seed 42 > build/test_data/random_2x2_seed42.ppm"
+cmd /c "build\01-image-gen\c\gen_image.exe --size 2 --seed 9999 > build/test_data/random_2x2_seed9999.ppm"
+cmd /c "build\01-image-gen\c\gen_image.exe --size 64 --seed 42 > build/test_data/random_64x64_seed42.ppm"
+cmd /c "build\01-image-gen\c\gen_image.exe --size 64 --seed 9999 > build/test_data/random_64x64_seed9999.ppm"
+cmd /c "build\01-image-gen\c\gen_image.exe --size 1024 --seed 42 > build/test_data/random_1024x1024_seed42.ppm"
+cmd /c "build\01-image-gen\c\gen_image.exe --size 1024 --seed 9999 > build/test_data/random_1024x1024_seed9999.ppm"
 ```
+
+**cmd:**
+```bat
+chcp 65001 >nul
 build\01-image-gen\c\gen_image.exe --size 2 --seed 42 > build/test_data/random_2x2_seed42.ppm
 build\01-image-gen\c\gen_image.exe --size 2 --seed 9999 > build/test_data/random_2x2_seed9999.ppm
 build\01-image-gen\c\gen_image.exe --size 64 --seed 42 > build/test_data/random_64x64_seed42.ppm
@@ -973,16 +1274,41 @@ build\01-image-gen\c\gen_image.exe --size 1024 --seed 9999 > build/test_data/ran
 
 Независимые reference-выходы, с которыми сравнивается фактический вывод.
 
-Задача 1 (3 файла, 3×3) — через ref-генераторы:
+Задача 1 (3 файла, 3×3) — через ref-генераторы.
 
+PowerShell:
+```powershell
+cmd /c "build\01-image-gen\ref\ref_gradient.exe > build/test_data/gradient_3x3.ppm"
+cmd /c "build\01-image-gen\ref\ref_checker.exe > build/test_data/checker_3x3.ppm"
+cmd /c "build\01-image-gen\ref\ref_radial.exe > build/test_data/radial_3x3.ppm"
 ```
+
+cmd:
+```bat
+chcp 65001 >nul
 build\01-image-gen\ref\ref_gradient.exe > build/test_data/gradient_3x3.ppm
 build\01-image-gen\ref\ref_checker.exe > build/test_data/checker_3x3.ppm
 build\01-image-gen\ref\ref_radial.exe > build/test_data/radial_3x3.ppm
 ```
-Задача 4 (9 файлов) — 3 эталона по паттернам + probe-входы 2×2/3×3 и их эталоны:
 
+Задача 4 (9 файлов) — 3 эталона по паттернам + probe-входы 2×2/3×3 и их эталоны.
+
+PowerShell:
+```powershell
+cmd /c "build\04-image-filter\ref\ref_gradient_3_3_grayscale.exe > build/test_data/gradient_3x3_grayscale.ppm"
+cmd /c "build\04-image-filter\ref\ref_gradient_3_3_threshold_128.exe > build/test_data/gradient_3x3_threshold_128.ppm"
+cmd /c "build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build/test_data/radial_3x3_grayscale.ppm"
+cmd /c "build\04-image-filter\ref\ref_probe_2_2.exe > build/test_data/probe_2x2.ppm"
+cmd /c "build\04-image-filter\ref\ref_probe_2_2_grayscale.exe > build/test_data/probe_2x2_grayscale.ppm"
+cmd /c "build\04-image-filter\ref\ref_probe_2_2_threshold_100.exe > build/test_data/probe_2x2_threshold_100.ppm"
+cmd /c "build\04-image-filter\ref\ref_probe_3_3.exe > build/test_data/probe_3x3.ppm"
+cmd /c "build\04-image-filter\ref\ref_probe_3_3_grayscale.exe > build/test_data/probe_3x3_grayscale.ppm"
+cmd /c "build\04-image-filter\ref\ref_probe_3_3_threshold_100.exe > build/test_data/probe_3x3_threshold_100.ppm"
 ```
+
+cmd:
+```bat
+chcp 65001 >nul
 build\04-image-filter\ref\ref_gradient_3_3_grayscale.exe > build/test_data/gradient_3x3_grayscale.ppm
 build\04-image-filter\ref\ref_gradient_3_3_threshold_128.exe > build/test_data/gradient_3x3_threshold_128.ppm
 build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build/test_data/radial_3x3_grayscale.ppm
@@ -1013,3 +1339,57 @@ build\04-image-filter\ref\ref_probe_3_3_threshold_100.exe > build/test_data/prob
 | `EC_IOERR` | 74 | Сбой ввода-вывода |
 
 Код — машинный канал для скриптов-обёрток; stderr — детали для человека.
+
+
+
+Текст в README
+
+Фраза из README.md:645 удаляется целиком, без замены на другое объяснение того же завершения — после правок его не будет, и объяснять станет нечего.
+
+Вместо неё добавляются два раздела.
+
+Критерий успеха прогона тестов.
+
+Прогон считается успешным, когда выполнены все условия:
+
+каждый тестовый бинарник завершается с кодом возврата 0;
+
+в выводе каждого бинарника присутствует финальная строка сводки вида SUMMARY: ran=N passed=N failed=0;
+
+значение ran совпадает с ожидаемым числом проверок для этого бинарника, указанным в tests/expected_counts.
+
+Нарушение любого из условий означает отказ. Ненулевой код возврата тестового бинарника всегда означает дефект и никогда — особенность конфигурации сборки. Тег на такой ревизии не навешивается.
+
+Отладочная сборка.
+
+Отладочная сборка включает AddressSanitizer. Санитайзер обнаруживает обращения за границы буферов, использование освобождённой памяти и утечки. При обнаружении любой из этих ситуаций процесс завершается с ненулевым кодом возврата и печатает отчёт с указанием файла и строки. Такое завершение всегда указывает на дефект в программе или в тесте и подлежит разбору, а не фиксации в документации как ожидаемого поведения.
+
+Раздел о проверке заголовка — туда, где описан формат ввода:
+
+Объявленные в заголовке размеры изображения проверяются на согласованность с объёмом данных: заголовок отвергается с ошибкой «получено меньше пикселей, чем объявлено», если остатка файла физически не хватает даже на минимальную запись заявленного числа пикселей. Для формата P3 минимальная запись одного пикселя составляет три цифры и три разделителя. Фиксированного верхнего предела на размер изображения не вводится: файл любого объёма, содержащий столько данных, сколько объявлено в заголовке, обрабатывается без ограничений сверх доступной памяти.
+
+Запись в CHANGELOG
+
+Исправлено
+
+Заголовок с размерами, для которых в файле заведомо недостаточно данных, теперь отвергается на этапе разбора заголовка с ошибкой PRE_TOO_FEW_PIXELS, до обращения к аллокатору. Ранее программа пыталась выделить память по объявленным размерам, что на входе 2147483647 2147483647 приводило к запросу порядка 1,4·10¹⁹ байт и аварийному завершению под AddressSanitizer с потерей всех последующих проверок в тестовом наборе. Фиксированного предела на размер изображения не вводится — проверка выводится из формата и фактического размера источника.
+
+Размеры изображения ограничиваются значением INT32_MAX перед записью в поля структуры соответствующего типа. Ранее значения свыше этого предела молча обрезались, из-за чего поля структуры и счётчик цикла чтения расходились.
+
+Добавлена защита от переполнения при вычислении числа пикселей.
+
+Удалена недостижимая ветка проверки нулевого числа пикселей: условие не могло выполниться после проверок положительности размеров.
+
+Удалён недостижимый обработчик std::length_error в C++-реализации; запрос на шестидесятичетырёхбитной сборке не достигает max_size() и до этого исключения не доходит. Коды ошибок «битый заголовок» и «нехватка памяти» разделены — ранее оба отображались в alloc_err.
+
+Вывод тестовых бинарников переведён в построчную буферизацию: при аварийном завершении лог сохраняется до точки падения. Ранее при перенаправлении в файл терялся весь вывод.
+
+Изменено
+
+Тест на огромные размеры переведён из группы проверок выделения памяти в группу проверок валидации ввода: он проверяет отвержение несогласованного заголовка и не выполняет выделения. Ветка нехватки памяти покрыта отдельным тестом через подменяемый аллокатор.
+
+Каждый тестовый бинарник печатает финальную строку сводки; раннер сверяет число выполненных проверок с ожидаемым и проверяет код возврата каждого бинарника.
+
+Из README удалено утверждение о том, что аварийное завершение тестов на попытке большого выделения является корректным поведением отладочной сборки. Добавлен раздел с критерием успеха прогона.
+
+Примечание к записи от 13.09. Замена входа C++-теста (3000000000 → 2147483647 2147483647) сделала достижимым тест, который до этого проходил, не выполнив проверяемого действия. Полученный отказ был истолкован как особенность конфигурации сборки, что и зафиксировано ошибочной формулировкой в README. Разбор — в ответе на замечание от [дата].
