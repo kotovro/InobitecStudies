@@ -1,5 +1,6 @@
 #include "read_passport.hpp"
 
+#include <cctype>
 #include <cerrno>
 #include <charconv>
 #include <format>
@@ -9,6 +10,23 @@
 #include <system_error>
 
 namespace raster::passport {
+
+namespace {
+
+void trim_whitespace(std::string& s) {
+    size_t end = s.size();
+    while (end > 0 && std::isspace(static_cast<unsigned char>(s[end - 1])))
+        --end;
+    s.erase(end);
+
+    size_t start = 0;
+    while (start < s.size() && std::isspace(static_cast<unsigned char>(s[start])))
+        ++start;
+    if (start > 0)
+        s.erase(0, start);
+}
+
+} // namespace
 
 std::expected<PassportData, PassportError> read_passport(std::istream& is) {
     std::println("Введите название изображения: ");
@@ -23,15 +41,7 @@ std::expected<PassportData, PassportError> read_passport(std::istream& is) {
         return std::unexpected(PassportError{
             PassportErrorKind::kIOError, {}, std::error_code(errno, std::generic_category())});
 
-    while (!name.empty() && (name.back() == ' ' || name.back() == '\t'))
-        name.pop_back();
-    if (!name.empty()) {
-        size_t start = name.find_first_not_of(" \t");
-        if (start == std::string::npos)
-            name.clear();
-        else if (start != 0)
-            name = name.substr(start);
-    }
+    trim_whitespace(name);
 
     if (name.empty()) [[unlikely]]
         return std::unexpected(PassportError{PassportErrorKind::kEmptyName, {}});
@@ -47,6 +57,8 @@ std::expected<PassportData, PassportError> read_passport(std::istream& is) {
     if (is.fail() && !is.eof()) [[unlikely]]
         return std::unexpected(PassportError{
             PassportErrorKind::kIOError, {}, std::error_code(errno, std::generic_category())});
+
+    trim_whitespace(count_str);
 
     int32_t count{};
     auto [ptr, ec] = std::from_chars(count_str.data(), count_str.data() + count_str.size(), count);
