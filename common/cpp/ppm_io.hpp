@@ -5,6 +5,7 @@
 #include <expected>
 #include <iosfwd>
 #include <memory>
+#include <memory_resource>
 #include <span>
 #include <string>
 
@@ -42,6 +43,8 @@ struct PpmResult;
 class Image {
   public:
     KV_API static PpmResult read(std::istream& is);
+    // Internal seam: not exported. Used by tests to inject a memory resource.
+    static PpmResult read(std::istream& is, std::pmr::memory_resource* mr);
 
     KV_API Image();
     KV_API ~Image();
@@ -59,6 +62,8 @@ class Image {
     KV_API std::span<const Pixel> pixels() const;
 
   private:
+    explicit Image(std::pmr::memory_resource* mr);
+
     struct Impl;
     std::unique_ptr<Impl> _impl;
 };

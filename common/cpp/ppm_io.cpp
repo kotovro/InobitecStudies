@@ -5,10 +5,10 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <memory_resource>
 #include <new>
 #include <print>
 #include <span>
-#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -24,13 +24,17 @@ std::string system_error_text(int e) {
 } // namespace
 
 struct Image::Impl {
+    explicit Impl(std::pmr::memory_resource* resource) : pixels(resource) {}
+
     int32_t width{};
     int32_t height{};
     uint16_t max_val{};
-    std::vector<Pixel> pixels;
+    std::pmr::vector<Pixel> pixels;
 };
 
-Image::Image() : _impl(std::make_unique<Impl>()) {}
+Image::Image() : _impl(std::make_unique<Impl>(std::pmr::get_default_resource())) {}
+
+Image::Image(std::pmr::memory_resource* mr) : _impl(std::make_unique<Impl>(mr)) {}
 
 Image::~Image() = default;
 
@@ -50,8 +54,10 @@ std::span<Pixel> Image::pixels() { return _impl->pixels; }
 
 std::span<const Pixel> Image::pixels() const { return _impl->pixels; }
 
-PpmResult Image::read(std::istream& is) {
-    Image img{};
+PpmResult Image::read(std::istream& is) { return read(is, std::pmr::get_default_resource()); }
+
+PpmResult Image::read(std::istream& is, std::pmr::memory_resource* mr) {
+    Image img{mr};
     int line_num = 1;
     enum class Phase { kHeader, kData } phase = Phase::kHeader;
 
@@ -199,13 +205,6 @@ PpmResult Image::read(std::istream& is) {
         img._impl->width = static_cast<int32_t>(w);
         img._impl->height = static_cast<int32_t>(h);
         img._impl->max_val = static_cast<uint16_t>(m);
-        try {
-            img._impl->pixels.reserve(static_cast<std::size_t>(w) * static_cast<std::size_t>(h));
-        } catch (const std::bad_alloc&) {
-            return alloc_err(w * h);
-        } catch (const std::length_error&) {
-            return alloc_err(w * h);
-        }
     }
 
     // ---- 3. Pixel data ----
@@ -264,8 +263,6 @@ PpmResult Image::read(std::istream& is) {
             img._impl->pixels.push_back(
                 Pixel{static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b)});
         } catch (const std::bad_alloc&) {
-            return alloc_err(total_pixels);
-        } catch (const std::length_error&) {
             return alloc_err(total_pixels);
         }
     }

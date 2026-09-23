@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "luma.h"
+#include "ppm_io_alloc.h"
 
 static int failed = 0;
 
@@ -281,10 +282,62 @@ static void test_pixel_fractional(void) {
     fclose(f);
 }
 
-static void test_alloc_error(void) {
+// -------------------------------------------------------------------
+// Allocation seam tests
+// -------------------------------------------------------------------
+
+static int g_alloc_calls = 0;
+static int g_alloc_fail_on = -1;
+static size_t g_max_alloc = 0;
+
+static void* test_alloc(size_t size) {
+    ++g_alloc_calls;
+    if (size > g_max_alloc)
+        g_max_alloc = size;
+    if (g_alloc_fail_on > 0 && g_alloc_calls == g_alloc_fail_on)
+        return NULL;
+    return malloc(size);
+}
+
+static void* test_realloc(void* ptr, size_t size) {
+    ++g_alloc_calls;
+    if (size > g_max_alloc)
+        g_max_alloc = size;
+    if (g_alloc_fail_on > 0 && g_alloc_calls == g_alloc_fail_on)
+        return NULL;
+    return realloc(ptr, size);
+}
+
+static void test_free(void* ptr) { free(ptr); }
+
+static const struct PpmAllocator kTestAllocator = {test_alloc, test_realloc, test_free};
+
+static void reset_alloc_tracking(int fail_on) {
+    g_alloc_calls = 0;
+    g_alloc_fail_on = fail_on;
+    g_max_alloc = 0;
+}
+
+static void test_huge_header_does_not_allocate(void) {
+    reset_alloc_tracking(-1);
     FILE* f = make_ppm("P3\n2147483647 2147483647\n255\n0 0 0\n");
-    struct PpmResult r = ppm_read(f);
-    check(r.error == PRE_ALLOC_ERROR, "huge dims -> PRE_ALLOC_ERROR, not crash");
+    struct PpmResult r = ppm_read_with(f, &kTestAllocator);
+    check(r.error == PRE_TOO_FEW_PIXELS, "huge header -> PRE_TOO_FEW_PIXELS");
+    check(g_max_alloc <= 16, "huge header -> no header-sized allocation");
+    fclose(f);
+}
+
+static void test_alloc_failure(void) {
+    reset_alloc_tracking(1);
+    FILE* f = make_ppm("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0 0 0 255\n");
+    struct PpmResult r = ppm_read_with(f, &kTestAllocator);
+    check(r.error == PRE_ALLOC_ERROR, "first allocation failure -> PRE_ALLOC_ERROR");
+    fclose(f);
+
+    reset_alloc_tracking(2);
+    f = make_ppm("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0 0 0 255\n");
+    r = ppm_read_with(f, &kTestAllocator);
+    check(r.error == PRE_ALLOC_ERROR, "growth allocation failure -> PRE_ALLOC_ERROR");
     fclose(f);
 }
 
@@ -408,7 +461,8 @@ int main(void) {
     test_too_few_pixels();
     test_valid_2x2();
     test_error_line();
-    test_alloc_error();
+    test_huge_header_does_not_allocate();
+    test_alloc_failure();
 
     printf("-- writer --\n");
     test_writer_basic();

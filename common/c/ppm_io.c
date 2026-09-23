@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#include "ppm_io_alloc.h"
 #include "strerror.h"
 
 // -------------------------------------------------------------------
@@ -150,10 +151,24 @@ static enum TokenResult read_int_token(FILE* f, int* line_num, int allow_hash, l
 }
 
 // -------------------------------------------------------------------
-// ppm_read
+// Allocation seam (internal, see ppm_io_alloc.h)
 // -------------------------------------------------------------------
 
-struct PpmResult ppm_read(FILE* f) {
+static void* default_alloc(size_t size) { return malloc(size); }
+
+static void* default_realloc(void* ptr, size_t size) { return realloc(ptr, size); }
+
+static void default_free(void* ptr) { free(ptr); }
+
+static const struct PpmAllocator kDefaultAllocator = {default_alloc, default_realloc, default_free};
+
+struct PpmResult ppm_read(FILE* f) { return ppm_read_with(f, &kDefaultAllocator); }
+
+// -------------------------------------------------------------------
+// ppm_read_with
+// -------------------------------------------------------------------
+
+struct PpmResult ppm_read_with(FILE* f, const struct PpmAllocator* allocator) {
     struct PpmResult result = {PRE_OK, 0, "", {0, 0, 0, NULL}};
     int line_num = 1;
 
@@ -265,16 +280,7 @@ struct PpmResult ppm_read(FILE* f) {
     result.image.max_val = (uint16_t)m_val;
 
     long long total_pixels = w_val * h_val;
-    if (total_pixels == 0) {
-        result.error = PRE_BAD_NUMBER;
-        result.error_line = line_num;
-        snprintf(result.diagnostic, sizeof(result.diagnostic),
-                 "строка %d: изображение не содержит пикселей", line_num);
-        return result;
-    }
-
-    result.image.pixels = (struct Pixel*)malloc((size_t)total_pixels * sizeof(struct Pixel));
-    if (!result.image.pixels) {
+    if ((unsigned long long)total_pixels > SIZE_MAX / sizeof(struct Pixel)) {
         result.error = PRE_ALLOC_ERROR;
         result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
@@ -282,7 +288,9 @@ struct PpmResult ppm_read(FILE* f) {
         return result;
     }
 
-    // ---- 3. Pixel data ----
+    // ---- 3. Pixel data (buffer grows as pixels are read) ----
+    struct Pixel* pixels = NULL;
+    size_t capacity = 0;
     int pixel_error = 0;
     int pixel_eof = 0;
     long long pixel_count = 0;
@@ -317,14 +325,32 @@ struct PpmResult ppm_read(FILE* f) {
             snprintf(result.diagnostic, sizeof(result.diagnostic),
                      "строка %d: значение канала должно быть в [0; %d]; получено: %lld %lld %lld",
                      line_num, result.image.max_val, r_val, g_val, b_val);
-            free(result.image.pixels);
-            result.image.pixels = NULL;
+            allocator->free(pixels);
             return result;
         }
 
-        result.image.pixels[i].r = (uint8_t)r_val;
-        result.image.pixels[i].g = (uint8_t)g_val;
-        result.image.pixels[i].b = (uint8_t)b_val;
+        if ((size_t)i == capacity) {
+            size_t target = (size_t)total_pixels;
+            size_t new_capacity =
+                capacity == 0 ? 1 : (capacity > target / 2 ? target : capacity * 2);
+            size_t bytes = new_capacity * sizeof(struct Pixel);
+            struct Pixel* grown = capacity == 0 ? (struct Pixel*)allocator->alloc(bytes)
+                                                : (struct Pixel*)allocator->realloc(pixels, bytes);
+            if (!grown) {
+                allocator->free(pixels);
+                result.error = PRE_ALLOC_ERROR;
+                result.error_line = line_num;
+                snprintf(result.diagnostic, sizeof(result.diagnostic),
+                         "не удалось выделить память для %lld пикселей", total_pixels);
+                return result;
+            }
+            pixels = grown;
+            capacity = new_capacity;
+        }
+
+        pixels[i].r = (uint8_t)r_val;
+        pixels[i].g = (uint8_t)g_val;
+        pixels[i].b = (uint8_t)b_val;
         ++pixel_count;
     }
 
@@ -336,8 +362,7 @@ struct PpmResult ppm_read(FILE* f) {
                      "строка %d: получено только %lld пикселей (ожидалось %lld)", line_num,
                      pixel_count, total_pixels);
         }
-        free(result.image.pixels);
-        result.image.pixels = NULL;
+        allocator->free(pixels);
         return result;
     }
 
@@ -354,16 +379,14 @@ struct PpmResult ppm_read(FILE* f) {
             result.error_line = line_num;
             snprintf(result.diagnostic, sizeof(result.diagnostic),
                      "строка %d: символ '#' не допускается в данных", line_num);
-            free(result.image.pixels);
-            result.image.pixels = NULL;
+            allocator->free(pixels);
             return result;
         }
         result.error = PRE_TOO_MANY_PIXELS;
         result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
                  "строка %d: лишние данные после %lld пикселей", line_num, pixel_count);
-        free(result.image.pixels);
-        result.image.pixels = NULL;
+        allocator->free(pixels);
         return result;
     }
 
@@ -375,11 +398,11 @@ struct PpmResult ppm_read(FILE* f) {
         result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic), "сбой чтения: %s (errno %d)", buf,
                  e);
-        free(result.image.pixels);
-        result.image.pixels = NULL;
+        allocator->free(pixels);
         return result;
     }
 
+    result.image.pixels = pixels;
     return result;
 }
 
