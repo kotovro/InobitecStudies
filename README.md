@@ -247,7 +247,7 @@ cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/hsv_to_rgb.c
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/ppm_test.c
 link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/c/patterns.obj build/release/01-image-gen/c/parse_args.obj build/release/01-image-gen/c/hsv_to_rgb.obj build/release/01-image-gen/c/ppm_test.obj /OUT:build/release/01-image-gen/c/ppm_test.exe
-build/release\01-image-gen\c\ppm_test.exe
+buil\release\01-image-gen\c\ppm_test.exe
 ```
 
 Для С++:
@@ -454,9 +454,9 @@ link /DEBUG build/02-image-passport/cpp/read_passport_test.obj build/02-image-pa
 ```
 
 Юнит-тесты (склонение, `read_passport`, тексты сообщений). `read_passport` принимает `FILE*`, чтобы вход инжектировался в тестах:
-```powershell
-build\02-image-passport/c\passport_tests.exe # C
-build\02-image-passport\cpp/passport_tests.exe # C++
+```
+build\02-image-passport/c\passport_tests.exe 
+build\02-image-passport\cpp/passport_tests.exe
 ```
 
 ### Тесты — Release
@@ -479,8 +479,8 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/cpp/read_passport_
 ```
 
 ```powershell
-build\release\02-image-passport\c\passport_tests.exe # C
-build\release\02-image-passport\cpp\passport_tests.exe # C++
+build\release\02-image-passport\c\passport_tests.exe 
+build\release\02-image-passport\cpp\passport_tests.exe
 ```
 
 Acceptance — эталон `ref_passport.exe`, ручное сравнение. Вход подаётся файлом, который пишет `ref_passport_input` (не зависит от `echo` и кодировки консоли). Debug-бинарники.
@@ -649,9 +649,9 @@ link /DEBUG build/03-image-stats/cpp/ppm_io.obj build/03-image-stats/cpp/ppm_sta
 ```
 
 Юнит-тесты (статистика через общий `ppm_io`):
-``` powershell
-build\03-image-stats\c\ppm_stats_test.exe   # compute_stats
-build\03-image-stats\cpp\ppm_stats_test.exe # C++
+``` 
+build\03-image-stats\c\ppm_stats_test.exe  
+build\03-image-stats\cpp\ppm_stats_test.exe
 ```
 
 ### Тесты — Release
@@ -673,9 +673,9 @@ cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:buil
 link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/cpp/ppm_io.obj build/release/03-image-stats/cpp/ppm_stats.obj build/release/03-image-stats/cpp/ppm_stats_test.obj /OUT:build/release/03-image-stats/cpp/ppm_stats_test.exe
 ```
 
-```powershell
-build\release\03-image-stats\c\ppm_stats_test.exe   # C
-build\release\03-image-stats\cpp\ppm_stats_test.exe # C++
+```
+build\release\03-image-stats\c\ppm_stats_test.exe 
+build\release\03-image-stats\cpp\ppm_stats_test.exe 
 ```
 
 Acceptance — ручной прогон (конвейер). Debug-бинарники.
@@ -841,9 +841,9 @@ filter --version    -> "filter 0.1.5", exit 0
 ### Тесты — Debug
 
 Юнит-тесты (grayscale, threshold, парсинг аргументов) — по пикселям, без интеграции:
-```powershell
-build\04-image-filte\c\filter_tests.exe    # C
-build\04-image-filter\cpp\filter_tests.exe  # C++
+```
+build\04-image-filter\c\filter_tests.exe
+build\04-image-filter\cpp\filter_tests.exe 
 ```
 Для C:
 ```
@@ -881,9 +881,9 @@ cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:buil
 link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/ppm_io.obj build/release/04-image-filter/cpp/filter.obj build/release/04-image-filter/cpp/filter_test.obj /OUT:build/release/04-image-filter/cpp/filter_tests.exe
 ```
 
-```powershell
-build\release\04-image-filter\c\filter_tests.exe    # C
-build\release\04-image-filter\cpp\filter_tests.exe  # C++
+```
+build\release\04-image-filter\c\filter_tests.exe
+build\release\04-image-filter\cpp\filter_tests.exe+
 ```
 
 ### Эталоны — Debug
@@ -1216,7 +1216,7 @@ cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/common/c/ common/c/strerror.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/common/c/ common/c/ppm_io_test.c
 link /DEBUG build/common/c/ppm_io.obj build/common/c/strerror.obj build/common/c/ppm_io_test.obj /OUT:build/common/c/ppm_io_test.exe
-build/common/c/ppm_io_test.exe
+buil\common\c\ppm_io_test.exe
 ```
 
 ### C — Release
@@ -1228,7 +1228,7 @@ cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/co
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/c/ common/c/strerror.c
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/c/ common/c/ppm_io_test.c
 link /DEBUG /OPT:REF /OPT:ICF build/release/common/c/ppm_io.obj build/release/common/c/strerror.obj build/release/common/c/ppm_io_test.obj /OUT:build/release/common/c/ppm_io_test.exe
-build/release/common/c/ppm_io_test.exe
+build\release\commoт\c\ppm_io_test.exe
 ```
 
 ### C++ — Debug
@@ -1239,7 +1239,7 @@ build/release/common/c/ppm_io_test.exe
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/common/cpp/ common/cpp/ppm_io.cpp
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/common/cpp/ common/cpp/ppm_io_test.cpp
 link /DEBUG build/common/cpp/ppm_io.obj build/common/cpp/ppm_io_test.obj /OUT:build/common/cpp/ppm_io_test.exe
-build/common/cpp/ppm_io_test.exe
+build\common\cpp\ppm_io_test.exe
 ```
 
 ### C++ — Release
@@ -1250,7 +1250,7 @@ build/common/cpp/ppm_io_test.exe
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/cpp/ common/cpp/ppm_io.cpp
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/cpp/ common/cpp/ppm_io_test.cpp
 link /DEBUG /OPT:REF /OPT:ICF build/release/common/cpp/ppm_io.obj build/release/common/cpp/ppm_io_test.obj /OUT:build/release/common/cpp/ppm_io_test.exe
-build/release/common/cpp/ppm_io_test.exe
+buildr\elease\commo\cpp\ppm_io_test.exe
 ```
 
 ---
