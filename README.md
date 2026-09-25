@@ -139,7 +139,7 @@ Debug сборка включает AddressSanitizer: он обнаружива�
 
 ---
 
-## Приёмочное теистирование 
+## Приёмочное тестирование 
 Для каждой программы, создающей файл, который используется в приемочном тестировании:
 
 Программа должна завершаться с кодом выхода 0.
@@ -179,7 +179,7 @@ gen_image --size 1024 --seed 42 > big_random.ppm
 ### Справка и версия
 ```
 gen_image --help       -> usage в stdout, exit 0
-gen_image --version    -> "gen_image 0.1.5", exit 0
+gen_image --version    -> "gen_image 0.1.6", exit 0
 ```
 
 ### Поведение при ошибках
@@ -278,7 +278,7 @@ build\01-image-gen\c\gen_image.exe 0; $LASTEXITCODE      # -> 64
 
 # справка и версия
 build\01-image-gen\c\gen_image.exe --help; $LASTEXITCODE     # -> 0, usage в stdout
-build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.5"
+build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.6"
 ```
 
 **cmd:**
@@ -303,7 +303,7 @@ rem справка и версия
 build\01-image-gen\c\gen_image.exe --help
 echo %errorlevel%                                        & rem expected 0, usage в stdout
 build\01-image-gen\c\gen_image.exe --version
-echo %errorlevel%                                        & rem expected 0, "gen_image 0.1.5"
+echo %errorlevel%                                        & rem expected 0, "gen_image 0.1.6"
 ```
 
 Release-бинарники (`build\release\...`).
@@ -827,7 +827,7 @@ filter --threshold T    -> бинаризация по порогу яркост
 ### Справка и версия
 ```
 filter --help       -> usage в stdout, exit 0 (stdin не читается)
-filter --version    -> "filter 0.1.5", exit 0
+filter --version    -> "filter 0.1.6", exit 0
 ```
 
 ### Классы ошибок
@@ -1216,7 +1216,7 @@ cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/common/c/ common/c/strerror.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/common/c/ common/c/ppm_io_test.c
 link /DEBUG build/common/c/ppm_io.obj build/common/c/strerror.obj build/common/c/ppm_io_test.obj /OUT:build/common/c/ppm_io_test.exe
-buil\common\c\ppm_io_test.exe
+build\common\c\ppm_io_test.exe
 ```
 
 ### C — Release
@@ -1250,7 +1250,7 @@ build\common\cpp\ppm_io_test.exe
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/cpp/ common/cpp/ppm_io.cpp
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/cpp/ common/cpp/ppm_io_test.cpp
 link /DEBUG /OPT:REF /OPT:ICF build/release/common/cpp/ppm_io.obj build/release/common/cpp/ppm_io_test.obj /OUT:build/release/common/cpp/ppm_io_test.exe
-buildr\release\commo\cpp\ppm_io_test.exe
+buildr\release\common\cpp\ppm_io_test.exe
 ```
 
 ---
