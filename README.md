@@ -247,7 +247,7 @@ cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/hsv_to_rgb.c
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/ppm_test.c
 link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/c/patterns.obj build/release/01-image-gen/c/parse_args.obj build/release/01-image-gen/c/hsv_to_rgb.obj build/release/01-image-gen/c/ppm_test.obj /OUT:build/release/01-image-gen/c/ppm_test.exe
-buil\release\01-image-gen\c\ppm_test.exe
+build\release\01-image-gen\c\ppm_test.exe
 ```
 
 Для С++:
@@ -455,8 +455,8 @@ link /DEBUG build/02-image-passport/cpp/read_passport_test.obj build/02-image-pa
 
 Юнит-тесты (склонение, `read_passport`, тексты сообщений). `read_passport` принимает `FILE*`, чтобы вход инжектировался в тестах:
 ```
-build\02-image-passport/c\passport_tests.exe 
-build\02-image-passport\cpp/passport_tests.exe
+build\02-image-passport\c\passport_tests.exe 
+build\02-image-passport\cpp\passport_tests.exe
 ```
 
 ### Тесты — Release
@@ -883,7 +883,7 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/ppm_io.obj build
 
 ```
 build\release\04-image-filter\c\filter_tests.exe
-build\release\04-image-filter\cpp\filter_tests.exe+
+build\release\04-image-filter\cpp\filter_tests.exe
 ```
 
 ### Эталоны — Debug
@@ -1228,7 +1228,7 @@ cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/co
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/c/ common/c/strerror.c
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/c/ common/c/ppm_io_test.c
 link /DEBUG /OPT:REF /OPT:ICF build/release/common/c/ppm_io.obj build/release/common/c/strerror.obj build/release/common/c/ppm_io_test.obj /OUT:build/release/common/c/ppm_io_test.exe
-build\release\commoт\c\ppm_io_test.exe
+build\release\common\c\ppm_io_test.exe
 ```
 
 ### C++ — Debug
@@ -1250,7 +1250,7 @@ build\common\cpp\ppm_io_test.exe
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/cpp/ common/cpp/ppm_io.cpp
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/cpp/ common/cpp/ppm_io_test.cpp
 link /DEBUG /OPT:REF /OPT:ICF build/release/common/cpp/ppm_io.obj build/release/common/cpp/ppm_io_test.obj /OUT:build/release/common/cpp/ppm_io_test.exe
-buildr\elease\commo\cpp\ppm_io_test.exe
+buildr\release\commo\cpp\ppm_io_test.exe
 ```
 
 ---
