@@ -1250,7 +1250,7 @@ build\common\cpp\ppm_io_test.exe
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/cpp/ common/cpp/ppm_io.cpp
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/common/cpp/ common/cpp/ppm_io_test.cpp
 link /DEBUG /OPT:REF /OPT:ICF build/release/common/cpp/ppm_io.obj build/release/common/cpp/ppm_io_test.obj /OUT:build/release/common/cpp/ppm_io_test.exe
-buildr\release\common\cpp\ppm_io_test.exe
+build\release\common\cpp\ppm_io_test.exe
 ```
 
 ---
