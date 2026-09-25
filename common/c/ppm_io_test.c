@@ -288,6 +288,8 @@ static void test_pixel_fractional(void) {
 
 static int g_alloc_calls = 0;
 static int g_alloc_fail_on = -1;
+static int g_free_calls = 0;
+static int g_successful_allocs = 0;
 static size_t g_max_alloc = 0;
 
 static void* test_alloc(size_t size) {
@@ -296,6 +298,7 @@ static void* test_alloc(size_t size) {
         g_max_alloc = size;
     if (g_alloc_fail_on > 0 && g_alloc_calls == g_alloc_fail_on)
         return NULL;
+    ++g_successful_allocs;
     return malloc(size);
 }
 
@@ -305,17 +308,39 @@ static void* test_realloc(void* ptr, size_t size) {
         g_max_alloc = size;
     if (g_alloc_fail_on > 0 && g_alloc_calls == g_alloc_fail_on)
         return NULL;
+    ++g_successful_allocs;
     return realloc(ptr, size);
 }
 
-static void test_free(void* ptr) { free(ptr); }
+static void test_free(void* ptr) {
+    if (ptr)
+        ++g_free_calls;
+    free(ptr);
+}
 
 static const struct PpmAllocator kTestAllocator = {test_alloc, test_realloc, test_free};
 
 static void reset_alloc_tracking(int fail_on) {
     g_alloc_calls = 0;
+    g_free_calls = 0;
+    g_successful_allocs = 0;
     g_alloc_fail_on = fail_on;
     g_max_alloc = 0;
+}
+
+static void verify_no_leaks(void) {
+    check(g_successful_allocs == g_free_calls, "successful allocs == frees (no leaks)");
+}
+
+static void test_success_releases_through_allocator(void) {
+    reset_alloc_tracking(-1);
+    FILE* f = make_ppm("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0 0 0 255\n");
+    struct PpmResult r = ppm_read_with(f, &kTestAllocator);
+    check(r.error == PRE_OK, "success -> PRE_OK");
+    if (r.error == PRE_OK) {
+        ppm_image_free_with(&r.image, &kTestAllocator);
+    }
+    fclose(f);
 }
 
 static void test_huge_header_does_not_allocate(void) {
@@ -332,12 +357,34 @@ static void test_alloc_failure(void) {
     FILE* f = make_ppm("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0 0 0 255\n");
     struct PpmResult r = ppm_read_with(f, &kTestAllocator);
     check(r.error == PRE_ALLOC_ERROR, "first allocation failure -> PRE_ALLOC_ERROR");
+    check_text(&r, "строка 4: не удалось выделить память для 1 пикселей",
+               "first alloc failure diagnostic");
+    verify_no_leaks();
     fclose(f);
 
     reset_alloc_tracking(2);
     f = make_ppm("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0 0 0 255\n");
     r = ppm_read_with(f, &kTestAllocator);
     check(r.error == PRE_ALLOC_ERROR, "growth allocation failure -> PRE_ALLOC_ERROR");
+    check_text(&r, "строка 4: не удалось выделить память для 2 пикселей",
+               "growth alloc failure diagnostic");
+    verify_no_leaks();
+    fclose(f);
+}
+
+static void test_overflow_header(void) {
+    FILE* f = make_ppm("P3\n2147483648 1\n255\n0 0 0\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "2147483648 -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 2: число превышает допустимый диапазон", "overflow header diagnostic");
+    fclose(f);
+}
+
+static void test_too_few_pixels_partial(void) {
+    FILE* f = make_ppm("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0\n");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_TOO_FEW_PIXELS, "3 pixels -> PRE_TOO_FEW_PIXELS");
+    check_text(&r, "строка 5: получено только 3 пикселей (ожидалось 4)", "3 pixels diagnostic");
     fclose(f);
 }
 
@@ -386,6 +433,10 @@ static void test_image_free_null(void) {
     struct Image img = {0, 0, 0, NULL};
     ppm_image_free(&img);
     check(1, "ppm_image_free(zeroed Image) -> no crash");
+
+    // ppm_image_free_with must handle NULL allocator gracefully
+    ppm_image_free_with(&img, NULL);
+    check(1, "ppm_image_free_with(NULL allocator) -> no crash");
 }
 
 static void test_writer_finish_error(void) {
@@ -463,6 +514,9 @@ int main(void) {
     test_error_line();
     test_huge_header_does_not_allocate();
     test_alloc_failure();
+    test_overflow_header();
+    test_too_few_pixels_partial();
+    test_success_releases_through_allocator();
 
     printf("-- writer --\n");
     test_writer_basic();

@@ -219,11 +219,18 @@ void test_error_line() {
 // later call instead.
 class FailingMemoryResource : public std::pmr::memory_resource {
   public:
+    // Only fails allocations under Pixel (alignment 1). Service allocations
+    // (e.g. _Container_proxy in Debug MSVC) have higher alignment and are
+    // not counted, making the seam deterministic across Debug/Release.
     explicit FailingMemoryResource(int fail_on_call) : fail_on_call_(fail_on_call) {}
 
   private:
+    static_assert(alignof(Pixel) == 1,
+                  "Filter relies on Pixel having alignment 1; service allocations "
+                  "(e.g. _Container_proxy) have higher alignment.");
+
     void* do_allocate(std::size_t bytes, std::size_t alignment) override {
-        if (++calls_ == fail_on_call_)
+        if (alignment == alignof(Pixel) && ++calls_ == fail_on_call_)
             throw std::bad_alloc();
         return std::pmr::new_delete_resource()->allocate(bytes, alignment);
     }
@@ -242,6 +249,7 @@ class RecordingMemoryResource : public std::pmr::memory_resource {
     std::size_t max_bytes() const { return max_bytes_; }
 
   private:
+    // Tracks only vector allocations; string/token use std::allocator
     void* do_allocate(std::size_t bytes, std::size_t alignment) override {
         if (bytes > max_bytes_)
             max_bytes_ = bytes;
@@ -263,7 +271,8 @@ void test_huge_header_does_not_allocate() {
     check(!r.value.has_value(), "huge header -> error");
     if (!r.value.has_value())
         check(r.value.error() == PpmReadError::kTooFewPixels, "huge header -> kTooFewPixels");
-    check(rec.max_bytes() <= 64, "huge header -> no header-sized allocation");
+    check(rec.max_bytes() <= 16, "huge header -> no header-sized allocation");
+    // sizeof(Pixel)=3, multiplier≈5 => 16; one allocation, no growth
 }
 
 void test_alloc_failure() {
@@ -273,6 +282,38 @@ void test_alloc_failure() {
     check(!r.value.has_value(), "alloc failure -> error");
     if (!r.value.has_value())
         check(r.value.error() == PpmReadError::kAllocError, "alloc failure -> kAllocError");
+    check_diag(r, "строка 4: не удалось выделить память; размещено пикселей: 1",
+               "alloc failure diagnostic");
+}
+
+void test_alloc_failure_first() {
+    FailingMemoryResource fail(1);
+    auto ss = std::istringstream("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0 0 0 255\n");
+    auto r = Image::read(ss, &fail);
+    check(!r.value.has_value(), "first alloc failure -> error");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmReadError::kAllocError, "first alloc failure -> kAllocError");
+    check_diag(r, "строка 4: не удалось выделить память; размещено пикселей: 0",
+               "first alloc failure diagnostic");
+    // RecordingMemoryResource outlives Image — vector holds pointer to mr
+}
+
+void test_overflow_header() {
+    auto ss = std::istringstream("P3\n2147483648 1\n255\n0 0 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "2147483648 -> error");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmReadError::kBadNumber, "2147483648 -> kBadNumber");
+    check_diag(r, "строка 2: число превышает допустимый диапазон", "overflow header diagnostic");
+}
+
+void test_too_few_pixels_partial() {
+    auto ss = std::istringstream("P3\n2 2\n255\n0 0 0 255 0 0 0 255 0\n");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "3 pixels -> error");
+    if (!r.value.has_value())
+        check(r.value.error() == PpmReadError::kTooFewPixels, "3 pixels -> kTooFewPixels");
+    check_diag(r, "строка 5: получено только 3 пикселей (ожидалось 4)", "3 pixels diagnostic");
 }
 
 // Serves `data`, then fails with `err` (errno) via ios_base::failure, which
@@ -285,6 +326,7 @@ class FailingInputBuf : public std::streambuf {
     }
 
   protected:
+    // errno may be overwritten by stdlib calls before the diagnostic reads it — works in practice
     int_type underflow() override {
         errno = err_;
         throw std::ios_base::failure("simulated io error");
@@ -653,7 +695,6 @@ void test_writer_flush_error() {
 
 int main() {
     std::println("--- ppm_read tests ---");
-
     std::println("-- header errors --");
     test_empty_input();
     test_magic_bad();
@@ -680,8 +721,10 @@ int main() {
     test_error_line();
     test_huge_header_does_not_allocate();
     test_alloc_failure();
+    test_alloc_failure_first();
     test_read_io_error();
-
+    test_overflow_header();
+    test_too_few_pixels_partial();
     std::println("-- luma --");
     test_luma();
 
@@ -698,7 +741,6 @@ int main() {
     test_writer_header_error_errno();
     test_writer_pixel_error_errno();
     test_writer_flush_error();
-
     std::println("---");
     if (failed > 0)
         std::println(stderr, "{} tests FAILED", failed);
