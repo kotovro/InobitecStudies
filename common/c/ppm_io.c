@@ -279,14 +279,15 @@ struct PpmResult ppm_read_with(FILE* f, const struct PpmAllocator* allocator) {
     result.image.height = (int32_t)h_val;
     result.image.max_val = (uint16_t)m_val;
 
-    long long total_pixels = w_val * h_val;
-    if ((unsigned long long)total_pixels > SIZE_MAX / sizeof(struct Pixel)) {
+    long long total_pixels;
+    if ((unsigned long long)w_val * (unsigned long long)h_val > SIZE_MAX / sizeof(struct Pixel)) {
         result.error = PRE_ALLOC_ERROR;
         result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
-                 "не удалось выделить память для %lld пикселей", total_pixels);
+                 "не удалось выделить память для %lld x %lld пикселей", w_val, h_val);
         return result;
     }
+    total_pixels = w_val * h_val;
 
     // ---- 3. Pixel data (buffer grows as pixels are read) ----
     struct Pixel* pixels = NULL;
@@ -341,7 +342,8 @@ struct PpmResult ppm_read_with(FILE* f, const struct PpmAllocator* allocator) {
                 result.error = PRE_ALLOC_ERROR;
                 result.error_line = line_num;
                 snprintf(result.diagnostic, sizeof(result.diagnostic),
-                         "не удалось выделить память для %lld пикселей", total_pixels);
+                         "строка %d: не удалось выделить память для %zu пикселей", line_num,
+                         new_capacity);
                 return result;
             }
             pixels = grown;
@@ -406,12 +408,17 @@ struct PpmResult ppm_read_with(FILE* f, const struct PpmAllocator* allocator) {
     return result;
 }
 
-void ppm_image_free(struct Image* img) {
+void ppm_image_free_with(struct Image* img, const struct PpmAllocator* allocator) {
     if (img) {
-        free(img->pixels);
+        if (allocator)
+            allocator->free(img->pixels);
+        else
+            free(img->pixels);
         img->pixels = NULL;
     }
 }
+
+void ppm_image_free(struct Image* img) { ppm_image_free_with(img, NULL); }
 
 // -------------------------------------------------------------------
 // PpmWriter
