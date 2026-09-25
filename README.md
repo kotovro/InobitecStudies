@@ -68,12 +68,11 @@ Windows PowerShell 5.1 перекодирует вывод при перенап
 ## Выпуск релиза
 Перед тем, как присвоить тег по semversion коду, реализуется следующая последовательность действий:
 1. Полная проверка по сценарию README (начиная с чистого клона репозитория): сборка и выполнение всех тестов (включая примеры для задачи 1 и модуль common/ppm_io) - без частичных или инкрементальных запусков.
-2. Проверка идентичности поведения при сбоях: выполнение сборок на C и C++ с использованием фиксированного набора входных данных, провоцирующих ошибки (например, заголовки чрезмерного размера или потребитель, преждевременно закрывающий канал), и подтверждение того, что обе реализации завершаются одинаково (совпадение класса кода возврата и непустые диагностические сообения, которые одиноково описывюат возникщую ошибку), а не просто совпадение результатов при успешном выполнении. 
-3. Сверка CHANGELOG на основе diff: поочередный анализ коммитов в диапазоне git log <last-tag>..HEAD и сопоставление их с записями в CHANGELOG для подтверждения того, что каждое изменение отражено в файле.
+2. Проверка идентичности поведения при сбоях: выполнение сборок на C и C++ с использованием фиксированного набора входных данных, провоцирующих ошибки (например, заголовки чрезмерного размера или потребитель, преждевременно закрывающий канал), и подтверждение того, что обе реализации завершаются одинаково (совпадение класса кода возврата и непустые диагностические сообщения, которые одинаково описывают возникшую ошибку), а не просто совпадение результатов при успешном выполнении.
+3. Сверка CHANGELOG на основе diff: поочерёдный анализ коммитов в диапазоне git log <last-tag>..HEAD и сопоставление их с записями в CHANGELOG для подтверждения того, что каждое изменение отражено в файле.
 4. Проверка согласованности версий: подтверждение того, что вывод команды --version совпадает с создаваемым тегом и версией, указанной в заголовке CHANGELOG.
 
 ---
-
 ## Сборка
 
 Установить окружение:
@@ -109,8 +108,8 @@ Debug-артефакты размещаются в `build/`, Release-артеф�
 ## Тесты
 
 Критерий успеха прогона: прогон успешен, когда каждый тестовый бинарник завершился кодом 0 и напечатал финальную строку All tests PASSED. Отсутствие финальной строки означает, что процесс был убит до конца набора.
-Любой ненулевой код возврата означает дефект - в программе или в тестах. Ненулевой код означает, что прогон упал, независимо от того, сколько строк PASS было напечататься. Тег на такой ревизии не навешивается.
-Debug сборка включает AddressSanitizer: он обнаруживает обращения за границы буферов, использование освобождённой памяти и утечки. При обнаружении процесс завершается ненулевым кодом и печатает отчёт с файлом и строкой. Это всегда подлежит разбору.
+Любой ненулевой код возврата означает дефект - в программе или в тестах. Ненулевой код означает, что прогон упал, независимо от того, сколько строк PASS было напечатано. Тег на такой ревизии не навешивается.
+Debug сборка включает AddressSanitizer: он обнаруживает обращения за границы буферов, использование освобождённой памяти и утечки. При обнаружении процесс завершается ненулевым кодом. Это всегда подлежит разбору.
 
 
 ### Эталонные программы
@@ -553,7 +552,7 @@ echo %errorlevel%                                    & rem expected 65
 Доступные кейсы (те же имена принимает `ref_passport_input`): `basic`, `single_1`, `plural_2`–`101`–`111`, `empty_name`, `no_input`, `bad_count`, `negative`, `zero`.
 
 ### Эталоны — Debug
-Cборка эталонов (написаны на C)
+Сборка эталонов (написаны на C)
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/ref/ 02-image-passport/ref/ref_passport.c 
 link /DEBUG build/02-image-passport/ref/ref_passport.obj /OUT:build/02-image-passport/ref/ref_passport.exe
@@ -619,7 +618,7 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/cpp/read_passport_
 - гистограмму яркости (8 корзин)
 
 Работает в конвейере:
-```
+```bat
 build\01-image-gen\c\gen_image.exe 64 gradient | build\03-image-stats\c\image_stats.exe
 build\01-image-gen\c\gen_image.exe --size 1024 --seed 42 | build\03-image-stats\c\image_stats.exe > report.txt
 ```
@@ -650,7 +649,7 @@ link /DEBUG build/03-image-stats/cpp/ppm_io.obj build/03-image-stats/cpp/ppm_sta
 ```
 
 Юнит-тесты (статистика через общий `ppm_io`):
-```
+``` powershell
 build/03-image-stats/c/ppm_stats_test.exe   # compute_stats
 build/03-image-stats/cpp/ppm_stats_test.exe # C++
 ```
@@ -674,7 +673,7 @@ cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:buil
 link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/cpp/ppm_io.obj build/release/03-image-stats/cpp/ppm_stats.obj build/release/03-image-stats/cpp/ppm_stats_test.obj /OUT:build/release/03-image-stats/cpp/ppm_stats_test.exe
 ```
 
-```
+```powershell
 build/release/03-image-stats/c/ppm_stats_test.exe   # C
 build/release/03-image-stats/cpp/ppm_stats_test.exe # C++
 ```
@@ -810,7 +809,7 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/cpp/ppm_io.obj build/
 буфер пикселей, потоковую запись через `PpmWriter`).
 
 Работает в конвейере:
-```
+```bat
 build\01-image-gen\c\gen_image.exe 64 gradient | build\04-image-filter\c\filter.exe --grayscale
 build\01-image-gen\c\gen_image.exe 4 gradient | build\04-image-filter\c\filter.exe --threshold 128 | build\03-image-stats\c\image_stats.exe
 ```
@@ -842,7 +841,7 @@ filter --version    -> "filter 0.1.5", exit 0
 ### Тесты — Debug
 
 Юнит-тесты (grayscale, threshold, парсинг аргументов) — по пикселям, без интеграции:
-```
+```powershell
 build/04-image-filter/c/filter_tests.exe    # C
 build/04-image-filter/cpp/filter_tests.exe  # C++
 ```
@@ -882,14 +881,14 @@ cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:buil
 link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/ppm_io.obj build/release/04-image-filter/cpp/filter.obj build/release/04-image-filter/cpp/filter_test.obj /OUT:build/release/04-image-filter/cpp/filter_tests.exe
 ```
 
-```
+```powershell
 build/release/04-image-filter/c/filter_tests.exe    # C
 build/release/04-image-filter/cpp/filter_tests.exe  # C++
 ```
 
 ### Эталоны — Debug
 Для того чтобы проверить корректность работы самого фильтра, требуется собрать эталоны для первой задачи, а затем прогнать их под фильтром и сравнить с эталонным ответом фильтра. 
-Помимо паттернов первой задачи используются probe-входы (2×2 и 3×3) с пикселями, подобранными под границы: округление яроксти - luma - вниз/вверх, граница из-за испоьзования float, строгая граница порога.
+Помимо паттернов первой задачи используются probe-входы (2×2 и 3×3) с пикселями, подобранными под границы: округление яркости - luma - вниз/вверх, граница из-за испоьзования float, строгая граница порога.
 Подразумевается, что команды исполняются в cmd.
 
 ```
