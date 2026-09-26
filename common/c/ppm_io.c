@@ -151,7 +151,7 @@ static enum TokenResult read_int_token(FILE* f, int* line_num, int allow_hash, l
 }
 
 // -------------------------------------------------------------------
-// Allocation seam (internal, see ppm_io_alloc.h)
+// Allocation seam (see ppm_io_alloc.h)
 // -------------------------------------------------------------------
 
 static void* default_alloc(size_t size) { return malloc(size); }

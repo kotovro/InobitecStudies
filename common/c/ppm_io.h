@@ -40,8 +40,6 @@ struct PpmResult {
 
 struct PpmResult KV_API ppm_read(FILE* f);
 void KV_API ppm_image_free(struct Image* img);
-struct PpmAllocator;
-void KV_API ppm_image_free_with(struct Image* img, const struct PpmAllocator* allocator);
 
 struct PpmWriter {
     FILE* f;

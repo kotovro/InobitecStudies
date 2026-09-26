@@ -1,22 +1,57 @@
 #ifndef KV_PPM_IO_ALLOC_H
 #define KV_PPM_IO_ALLOC_H
 
+#include "api.h"
+
 #include <stddef.h>
 #include <stdio.h>
 
+#include "ppm_io.h"
+
 /*
- * Internal allocation seam for ppm_read. Not part of the public API and not
- * exported (no KV_API). Used by tests to inject a failing/recording allocator.
+ * Чтение PPM с памятью из пользовательского аллокатора. ppm_read_with работает
+ * так же, как ppm_read (тот же разбор, те же коды ошибок), но под пиксели
+ * обращается только к функциям переданного аллокатора и не вызывает malloc,
+ * realloc и free напрямую. Память выделяется по мере чтения данных, а не по
+ * размерам из заголовка: первый блок - через alloc, дальнейший рост - через
+ * realloc.
  *
- * Contract: a custom allocator must return memory compatible with free(),
- * because ppm_image_free releases pixels with free().
- */
+ * Контракт:
+ * - указатель на аллокатор не может быть нулевым, все три функции должны быть
+ *   заданы; аллокатор используется только во время вызова и не сохраняется;
+ * - alloc возвращает блок не меньше size байт или NULL при отказе;
+ * - realloc ведёт себя как стандартный realloc: при отказе возвращает NULL и
+ *   оставляет старый блок нетронутым, после чего библиотека сама освобождает
+ *   его через free;
+ * - free должна принимать NULL: библиотека вызывает её с NULL, если ошибка
+ *   случилась до первого выделения;
+ * - функции не получают контекста, поэтому аллокатор с состоянием хранит его
+ *   вне структуры.
+ *
+ * При отказе выделения возвращается PRE_ALLOC_ERROR. Если объём из заголовка
+ * не представим в size_t, возвращается PRE_ALLOC_ERROR без обращения к
+ * аллокатору. При любой ошибке image.pixels == NULL, а всё выделенное к этому
+ * моменту уже освобождено тем же аллокатором.
+ *
+ * При успехе память принадлежит вызывающему. Изображение, прочитанное через
+ * ppm_read_with, освобождается ppm_image_free_with с тем же аллокатором, а не
+ * ppm_image_free.
+*/
 struct PpmAllocator {
     void* (*alloc)(size_t size);
     void* (*realloc)(void* ptr, size_t size);
     void (*free)(void* ptr);
 };
 
-struct PpmResult ppm_read_with(FILE* f, const struct PpmAllocator* allocator);
+struct PpmResult KV_API ppm_read_with(FILE* f, const struct PpmAllocator* allocator);
+/*
+ * Освобождает пиксели изображения через переданный аллокатор. Изображение,
+ * прочитанное через ppm_read_with, освобождается этой функцией с тем же
+ * аллокатором. allocator == NULL означает стандартный free, то есть поведение
+ * ppm_image_free. img == NULL допустим: функция ничего не делает. После вызова
+ * img->pixels == NULL, поэтому повторный вызов безопасен.
+*/
+void KV_API ppm_image_free_with(struct Image* img, const struct PpmAllocator* allocator);
+
 
 #endif
