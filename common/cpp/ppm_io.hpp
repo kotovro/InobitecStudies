@@ -43,8 +43,8 @@ struct PpmResult;
 class Image {
   public:
     KV_API static PpmResult read(std::istream& is);
-    
-	// Читает изображение, размещая пиксели в памяти из `mr`.
+
+    // Читает изображение, размещая пиксели в памяти из `mr`.
     // `mr` должен оставаться живым всё время жизни возвращённого изображения.
     KV_API static PpmResult read(std::istream& is, std::pmr::memory_resource* mr);
 
