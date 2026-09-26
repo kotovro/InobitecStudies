@@ -43,11 +43,17 @@ struct PpmResult;
 class Image {
   public:
     KV_API static PpmResult read(std::istream& is);
-    // Internal seam: not exported. Used by tests to inject a memory resource.
-    static PpmResult read(std::istream& is, std::pmr::memory_resource* mr);
+    
+	// Читает изображение, размещая пиксели в памяти из `mr`.
+    // `mr` должен оставаться живым всё время жизни возвращённого изображения.
+    KV_API static PpmResult read(std::istream& is, std::pmr::memory_resource* mr);
 
+    // Создаёт пустое изображение на стандартном ресурсе:
+    // width() == 0, height() == 0, pixel_count() == 0, pixels() пуст.
     KV_API Image();
     KV_API ~Image();
+    // После перемещения объект-источник допускает только уничтожение
+    // и присваивание; обращение к остальным методам - UB.
     KV_API Image(Image&&) noexcept;
     KV_API Image& operator=(Image&&) noexcept;
     Image(const Image&) = delete;
