@@ -88,6 +88,42 @@ void test_read_negative_count() {
         check(r.error().kind == PassportErrorKind::kNegativeCount, "negative -> kNegativeCount");
 }
 
+void test_read_valid_crlf() {
+    auto is = std::istringstream("морской закат\r\n1920\r\n");
+    auto r = read_passport(is);
+    check(r.has_value(), "crlf input -> ok");
+    if (r.has_value()) {
+        check(r->name == "морской закат", "crlf: name");
+        check(r->count == 1920, "crlf: count");
+    }
+}
+
+void test_read_bad_count_crlf() {
+    auto is = std::istringstream("тест\r\nabc\r\n");
+    auto r = read_passport(is);
+    check(!r.has_value(), "crlf bad count -> error");
+    if (!r.has_value()) {
+        check(r.error().kind == PassportErrorKind::kBadCount, "crlf bad count -> kBadCount");
+        check(r.error().bad_value == "abc", "crlf bad count -> bad_value without CR");
+    }
+}
+
+void test_read_empty_name_crlf() {
+    auto is = std::istringstream("\r\n1920\r\n");
+    auto r = read_passport(is);
+    check(!r.has_value(), "crlf empty name -> error");
+    if (!r.has_value())
+        check(r.error().kind == PassportErrorKind::kEmptyName, "crlf empty name -> kEmptyName");
+}
+
+void test_read_count_surrounding_ws() {
+    auto is = std::istringstream("тест\r\n 1920 \r\n");
+    auto r = read_passport(is);
+    check(r.has_value(), "count with surrounding ws -> ok");
+    if (r.has_value())
+        check(r->count == 1920, "count with surrounding ws: count");
+}
+
 void test_read_io_error() {
     FailingInputBuf sbuf(EIO);
     std::istream is(&sbuf);
@@ -157,6 +193,10 @@ int main() {
     test_read_empty_name();
     test_read_bad_count();
     test_read_negative_count();
+    test_read_valid_crlf();
+    test_read_bad_count_crlf();
+    test_read_empty_name_crlf();
+    test_read_count_surrounding_ws();
     test_read_io_error();
 
     std::println("--- error messages ---");

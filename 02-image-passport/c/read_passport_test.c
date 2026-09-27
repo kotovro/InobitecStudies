@@ -70,6 +70,44 @@ static void test_read_negative_count(void) {
     fclose(f);
 }
 
+static void test_read_valid_crlf(void) {
+    FILE* f = make_input("морской закат\r\n1920\r\n");
+    struct PassportResult r = read_passport(f);
+    check(r.error == PE_OK, "crlf input -> PE_OK");
+    if (r.error == PE_OK) {
+        check(strcmp(r.name, "морской закат") == 0, "crlf: name");
+        check(r.count == 1920, "crlf: count");
+        free(r.name);
+    }
+    fclose(f);
+}
+
+static void test_read_bad_count_crlf(void) {
+    FILE* f = make_input("тест\r\nabc\r\n");
+    struct PassportResult r = read_passport(f);
+    check(r.error == PE_BAD_COUNT, "crlf bad count -> PE_BAD_COUNT");
+    check(strcmp(r.bad_value, "abc") == 0, "crlf bad count -> bad_value without CR");
+    fclose(f);
+}
+
+static void test_read_empty_name_crlf(void) {
+    FILE* f = make_input("\r\n1920\r\n");
+    struct PassportResult r = read_passport(f);
+    check(r.error == PE_EMPTY_NAME, "crlf empty name -> PE_EMPTY_NAME");
+    fclose(f);
+}
+
+static void test_read_count_surrounding_ws(void) {
+    FILE* f = make_input("тест\r\n 1920 \r\n");
+    struct PassportResult r = read_passport(f);
+    check(r.error == PE_OK, "count with surrounding ws -> PE_OK");
+    if (r.error == PE_OK) {
+        check(r.count == 1920, "count with surrounding ws: count");
+        free(r.name);
+    }
+    fclose(f);
+}
+
 static void test_read_io_error(void) {
     // A write-only stream cannot be read from, so fgets fails without EOF.
     FILE* wf = fopen("_read_passport_io_test.tmp", "w");
@@ -152,6 +190,10 @@ int main(void) {
     test_read_empty_name();
     test_read_bad_count();
     test_read_negative_count();
+    test_read_valid_crlf();
+    test_read_bad_count_crlf();
+    test_read_empty_name_crlf();
+    test_read_count_surrounding_ws();
     test_read_io_error();
 
     printf("--- error messages ---\n");

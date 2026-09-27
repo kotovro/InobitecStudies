@@ -1,6 +1,6 @@
 #ifndef KV_VERSION_H
 #define KV_VERSION_H
 
-#define KV_VERSION "0.1.5"
+#define KV_VERSION "0.1.6"
 
 #endif

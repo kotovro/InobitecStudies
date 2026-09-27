@@ -5,6 +5,7 @@
 #include <expected>
 #include <iosfwd>
 #include <memory>
+#include <memory_resource>
 #include <span>
 #include <string>
 
@@ -43,8 +44,16 @@ class Image {
   public:
     KV_API static PpmResult read(std::istream& is);
 
+    // Читает изображение, размещая пиксели в памяти из `mr`.
+    // `mr` должен оставаться живым всё время жизни возвращённого изображения.
+    KV_API static PpmResult read(std::istream& is, std::pmr::memory_resource* mr);
+
+    // Создаёт пустое изображение на стандартном ресурсе:
+    // width() == 0, height() == 0, pixel_count() == 0, pixels() пуст.
     KV_API Image();
     KV_API ~Image();
+    // После перемещения объект-источник допускает только уничтожение
+    // и присваивание; обращение к остальным методам - UB.
     KV_API Image(Image&&) noexcept;
     KV_API Image& operator=(Image&&) noexcept;
     Image(const Image&) = delete;
@@ -59,6 +68,8 @@ class Image {
     KV_API std::span<const Pixel> pixels() const;
 
   private:
+    explicit Image(std::pmr::memory_resource* mr);
+
     struct Impl;
     std::unique_ptr<Impl> _impl;
 };

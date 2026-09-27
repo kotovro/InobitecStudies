@@ -1,11 +1,24 @@
 #include "read_passport.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "../../common/c/strerror.h"
+
+static void trim_whitespace(char* s) {
+    size_t len = strlen(s);
+    while (len > 0 && isspace((unsigned char)s[len - 1]))
+        s[--len] = '\0';
+
+    size_t start = 0;
+    while (s[start] != '\0' && isspace((unsigned char)s[start]))
+        ++start;
+    if (start > 0)
+        memmove(s, s + start, len - start + 1);
+}
 
 struct PassportResult read_passport(FILE* in) {
     printf("Введите название изображения: \n");
@@ -17,20 +30,8 @@ struct PassportResult read_passport(FILE* in) {
         return (struct PassportResult){.error = PE_IO_ERROR, .system_errno = errno};
     }
 
+    trim_whitespace(name_buf);
     size_t name_len = strlen(name_buf);
-    if (name_len > 0 && name_buf[name_len - 1] == '\n')
-        name_buf[--name_len] = '\0';
-
-    while (name_len > 0 && (name_buf[name_len - 1] == ' ' || name_buf[name_len - 1] == '\t'))
-        name_buf[--name_len] = '\0';
-    size_t trim_start = 0;
-    while (name_buf[trim_start] == ' ' || name_buf[trim_start] == '\t')
-        trim_start++;
-    if (trim_start > 0) {
-        name_len -= trim_start;
-        memmove(name_buf, name_buf + trim_start, name_len + 1);
-    }
-
     if (name_len == 0)
         return (struct PassportResult){.error = PE_EMPTY_NAME};
 
@@ -49,9 +50,7 @@ struct PassportResult read_passport(FILE* in) {
         return (struct PassportResult){.error = PE_IO_ERROR, .system_errno = errno};
     }
 
-    size_t count_len = strlen(count_str);
-    if (count_len > 0 && count_str[count_len - 1] == '\n')
-        count_str[--count_len] = '\0';
+    trim_whitespace(count_str);
 
     char* end = NULL;
     errno = 0;
