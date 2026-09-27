@@ -36,7 +36,7 @@
  * При успехе память принадлежит вызывающему. Изображение, прочитанное через
  * ppm_read_with, освобождается ppm_image_free_with с тем же аллокатором, а не
  * ppm_image_free.
-*/
+ */
 struct PpmAllocator {
     void* (*alloc)(size_t size);
     void* (*realloc)(void* ptr, size_t size);
@@ -50,8 +50,7 @@ struct PpmResult KV_API ppm_read_with(FILE* f, const struct PpmAllocator* alloca
  * аллокатором. allocator == NULL означает стандартный free, то есть поведение
  * ppm_image_free. img == NULL допустим: функция ничего не делает. После вызова
  * img->pixels == NULL, поэтому повторный вызов безопасен.
-*/
+ */
 void KV_API ppm_image_free_with(struct Image* img, const struct PpmAllocator* allocator);
-
 
 #endif
