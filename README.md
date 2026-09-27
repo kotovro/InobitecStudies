@@ -219,6 +219,74 @@ gen_image --version    -> "gen_image 0.1.6", exit 0
 - массовые тестовые данные в примерах ниже генерируются C-версией; при замене
   её на C++-версию эталоны, посчитанные для этих данных, перестанут совпадать.
 
+### Сборка основного приложения — Debug
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/parse_args.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/hsv_to_rgb.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/patterns.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/main.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ common/c/strerror.c
+link /DEBUG build/01-image-gen/c/parse_args.obj build/01-image-gen/c/patterns.obj build/01-image-gen/c/hsv_to_rgb.obj build/01-image-gen/c/main.obj build/01-image-gen/c/ppm_io.obj build/01-image-gen/c/strerror.obj /OUT:build/01-image-gen/c/gen_image.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/parse_args.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/hsv_to_rgb.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/patterns.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/main.cpp 
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ common/cpp/ppm_io.cpp
+link /DEBUG build/01-image-gen/cpp/patterns.obj build/01-image-gen/cpp/parse_args.obj build/01-image-gen/cpp/hsv_to_rgb.obj build/01-image-gen/cpp/main.obj build/01-image-gen/cpp/ppm_io.obj /OUT:build/01-image-gen/cpp/gen_image.exe
+```
+
+### Сборка основного приложения — Release
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/parse_args.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/hsv_to_rgb.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/patterns.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/main.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ common/c/strerror.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/c/parse_args.obj build/release/01-image-gen/c/patterns.obj build/release/01-image-gen/c/hsv_to_rgb.obj build/release/01-image-gen/c/main.obj build/release/01-image-gen/c/ppm_io.obj build/release/01-image-gen/c/strerror.obj /OUT:build/release/01-image-gen/c/gen_image.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ 01-image-gen/cpp/parse_args.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ 01-image-gen/cpp/hsv_to_rgb.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ 01-image-gen/cpp/patterns.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ 01-image-gen/cpp/main.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ common/cpp/ppm_io.cpp
+link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/cpp/patterns.obj build/release/01-image-gen/cpp/parse_args.obj build/release/01-image-gen/cpp/hsv_to_rgb.obj build/release/01-image-gen/cpp/main.obj build/release/01-image-gen/cpp/ppm_io.obj /OUT:build/release/01-image-gen/cpp/gen_image.exe
+```
+
+---
+
+### Эталоны — Debug
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/ref/ 01-image-gen/ref/ref_gradient.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/ref/ 01-image-gen/ref/ref_checker.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/ref/ 01-image-gen/ref/ref_radial.c
+link /DEBUG build/01-image-gen/ref/ref_gradient.obj /OUT:build/01-image-gen/ref/ref_gradient.exe
+link /DEBUG build/01-image-gen/ref/ref_checker.obj /OUT:build/01-image-gen/ref/ref_checker.exe
+link /DEBUG build/01-image-gen/ref/ref_radial.obj /OUT:build/01-image-gen/ref/ref_radial.exe
+```
+
+### Эталоны — Release
+```
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/ref/ 01-image-gen/ref/ref_gradient.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/ref/ 01-image-gen/ref/ref_checker.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/ref/ 01-image-gen/ref/ref_radial.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/ref/ref_gradient.obj /OUT:build/release/01-image-gen/ref/ref_gradient.exe
+link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/ref/ref_checker.obj /OUT:build/release/01-image-gen/ref/ref_checker.exe
+link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/ref/ref_radial.obj /OUT:build/release/01-image-gen/ref/ref_radial.exe
+```
+
 ### Тесты — Debug
 Для С:
 ```
@@ -261,6 +329,8 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/cpp/patterns.obj build/
 build\release\01-image-gen\cpp\ppm_test.exe
 ```
 
+
+### Примеры приёмки
 
 Acceptance — ручной прогон с эталоном. Debug-бинарники.
 
@@ -349,74 +419,6 @@ build\release\01-image-gen\c\gen_image.exe --version
 echo %errorlevel%                                        & rem expected 0
 ```
 
-### Эталоны — Debug
-```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/ref/ 01-image-gen/ref/ref_gradient.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/ref/ 01-image-gen/ref/ref_checker.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/ref/ 01-image-gen/ref/ref_radial.c
-link /DEBUG build/01-image-gen/ref/ref_gradient.obj /OUT:build/01-image-gen/ref/ref_gradient.exe
-link /DEBUG build/01-image-gen/ref/ref_checker.obj /OUT:build/01-image-gen/ref/ref_checker.exe
-link /DEBUG build/01-image-gen/ref/ref_radial.obj /OUT:build/01-image-gen/ref/ref_radial.exe
-```
-
-### Эталоны — Release
-```
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/ref/ 01-image-gen/ref/ref_gradient.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/ref/ 01-image-gen/ref/ref_checker.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/ref/ 01-image-gen/ref/ref_radial.c
-link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/ref/ref_gradient.obj /OUT:build/release/01-image-gen/ref/ref_gradient.exe
-link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/ref/ref_checker.obj /OUT:build/release/01-image-gen/ref/ref_checker.exe
-link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/ref/ref_radial.obj /OUT:build/release/01-image-gen/ref/ref_radial.exe
-```
-
-### Сборка основного приложения — Debug
-
-Для C:
-```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/parse_args.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/hsv_to_rgb.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/patterns.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ 01-image-gen/c/main.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ common/c/ppm_io.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/c/ common/c/strerror.c
-link /DEBUG build/01-image-gen/c/parse_args.obj build/01-image-gen/c/patterns.obj build/01-image-gen/c/hsv_to_rgb.obj build/01-image-gen/c/main.obj build/01-image-gen/c/ppm_io.obj build/01-image-gen/c/strerror.obj /OUT:build/01-image-gen/c/gen_image.exe
-```
-
-Для C++:
-```
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/parse_args.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/hsv_to_rgb.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/patterns.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ 01-image-gen/cpp/main.cpp 
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/01-image-gen/cpp/ common/cpp/ppm_io.cpp
-link /DEBUG build/01-image-gen/cpp/patterns.obj build/01-image-gen/cpp/parse_args.obj build/01-image-gen/cpp/hsv_to_rgb.obj build/01-image-gen/cpp/main.obj build/01-image-gen/cpp/ppm_io.obj /OUT:build/01-image-gen/cpp/gen_image.exe
-```
-
-### Сборка основного приложения — Release
-
-Для C:
-```
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/parse_args.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/hsv_to_rgb.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/patterns.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ 01-image-gen/c/main.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ common/c/ppm_io.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/c/ common/c/strerror.c
-link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/c/parse_args.obj build/release/01-image-gen/c/patterns.obj build/release/01-image-gen/c/hsv_to_rgb.obj build/release/01-image-gen/c/main.obj build/release/01-image-gen/c/ppm_io.obj build/release/01-image-gen/c/strerror.obj /OUT:build/release/01-image-gen/c/gen_image.exe
-```
-
-Для C++:
-```
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ 01-image-gen/cpp/parse_args.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ 01-image-gen/cpp/hsv_to_rgb.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ 01-image-gen/cpp/patterns.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ 01-image-gen/cpp/main.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/01-image-gen/cpp/ common/cpp/ppm_io.cpp
-link /DEBUG /OPT:REF /OPT:ICF build/release/01-image-gen/cpp/patterns.obj build/release/01-image-gen/cpp/parse_args.obj build/release/01-image-gen/cpp/hsv_to_rgb.obj build/release/01-image-gen/cpp/main.obj build/release/01-image-gen/cpp/ppm_io.obj /OUT:build/release/01-image-gen/cpp/gen_image.exe
-```
-
----
-
 ## Задача 2 — Паспорт изображения
 
 Запрашивает название и число пикселей, выводит фразу с правильным склонением
@@ -433,6 +435,63 @@ read_passport
 - Пустой ввод / EOF -> exit 66
 - Пустое имя / не-число / отрицательное -> exit 65
 - IO-сбой -> exit 74
+
+### Сборка основного приложения — Debug
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/read_passport.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/pixel_word.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/read_passport_main.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ common/c/strerror.c
+link /DEBUG build/02-image-passport/c/read_passport_main.obj build/02-image-passport/c/read_passport.obj build/02-image-passport/c/pixel_word.obj build/02-image-passport/c/strerror.obj /OUT:build/02-image-passport/c/passport.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/read_passport.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/pixel_word.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/read_passport_main.cpp
+link /DEBUG build/02-image-passport/cpp/read_passport_main.obj build/02-image-passport/cpp/read_passport.obj build/02-image-passport/cpp/pixel_word.obj /OUT:build/02-image-passport/cpp/passport.exe
+```
+
+### Сборка основного приложения — Release
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/c/ 02-image-passport/c/read_passport.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/c/ 02-image-passport/c/pixel_word.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/c/ 02-image-passport/c/read_passport_main.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/c/ common/c/strerror.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/c/read_passport_main.obj build/release/02-image-passport/c/read_passport.obj build/release/02-image-passport/c/pixel_word.obj build/release/02-image-passport/c/strerror.obj /OUT:build/release/02-image-passport/c/passport.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/cpp/ 02-image-passport/cpp/read_passport.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/cpp/ 02-image-passport/cpp/pixel_word.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/cpp/ 02-image-passport/cpp/read_passport_main.cpp
+link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/cpp/read_passport_main.obj build/release/02-image-passport/cpp/read_passport.obj build/release/02-image-passport/cpp/pixel_word.obj /OUT:build/release/02-image-passport/cpp/passport.exe
+```
+
+---
+
+### Эталоны — Debug
+Сборка эталонов (написаны на C)
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/ref/ 02-image-passport/ref/ref_passport.c 
+link /DEBUG build/02-image-passport/ref/ref_passport.obj /OUT:build/02-image-passport/ref/ref_passport.exe
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/ref/ 02-image-passport/ref/ref_passport_input.c
+link /DEBUG build/02-image-passport/ref/ref_passport_input.obj /OUT:build/02-image-passport/ref/ref_passport_input.exe
+```
+
+### Эталоны — Release
+```
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/ref/ 02-image-passport/ref/ref_passport.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/ref/ref_passport.obj /OUT:build/release/02-image-passport/ref/ref_passport.exe
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/ref/ 02-image-passport/ref/ref_passport_input.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/ref/ref_passport_input.obj /OUT:build/release/02-image-passport/ref/ref_passport_input.exe
+```
 
 ### Тесты — Debug
 
@@ -479,10 +538,12 @@ cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:buil
 link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/cpp/read_passport_test.obj build/release/02-image-passport/cpp/read_passport.obj build/release/02-image-passport/cpp/pixel_word.obj /OUT:build/release/02-image-passport/cpp/passport_tests.exe
 ```
 
-```powershell
+```
 build\release\02-image-passport\c\passport_tests.exe 
 build\release\02-image-passport\cpp\passport_tests.exe
 ```
+
+### Примеры приёмки
 
 Acceptance — эталон `ref_passport.exe`, ручное сравнение. Вход подаётся файлом, который пишет `ref_passport_input` (не зависит от `echo` и кодировки консоли). Debug-бинарники.
 
@@ -552,63 +613,6 @@ echo %errorlevel%                                    & rem expected 65
 
 Доступные кейсы (те же имена принимает `ref_passport_input`): `basic`, `single_1`, `plural_2`–`101`–`111`, `empty_name`, `no_input`, `bad_count`, `negative`, `zero`.
 
-### Эталоны — Debug
-Сборка эталонов (написаны на C)
-```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/ref/ 02-image-passport/ref/ref_passport.c 
-link /DEBUG build/02-image-passport/ref/ref_passport.obj /OUT:build/02-image-passport/ref/ref_passport.exe
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/ref/ 02-image-passport/ref/ref_passport_input.c
-link /DEBUG build/02-image-passport/ref/ref_passport_input.obj /OUT:build/02-image-passport/ref/ref_passport_input.exe
-```
-
-### Эталоны — Release
-```
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/ref/ 02-image-passport/ref/ref_passport.c
-link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/ref/ref_passport.obj /OUT:build/release/02-image-passport/ref/ref_passport.exe
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/ref/ 02-image-passport/ref/ref_passport_input.c
-link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/ref/ref_passport_input.obj /OUT:build/release/02-image-passport/ref/ref_passport_input.exe
-```
-
-### Сборка основного приложения — Debug
-
-Для C:
-```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/read_passport.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/pixel_word.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ 02-image-passport/c/read_passport_main.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/c/ common/c/strerror.c
-link /DEBUG build/02-image-passport/c/read_passport_main.obj build/02-image-passport/c/read_passport.obj build/02-image-passport/c/pixel_word.obj build/02-image-passport/c/strerror.obj /OUT:build/02-image-passport/c/passport.exe
-```
-
-Для C++:
-```
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/read_passport.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/pixel_word.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/02-image-passport/cpp/ 02-image-passport/cpp/read_passport_main.cpp
-link /DEBUG build/02-image-passport/cpp/read_passport_main.obj build/02-image-passport/cpp/read_passport.obj build/02-image-passport/cpp/pixel_word.obj /OUT:build/02-image-passport/cpp/passport.exe
-```
-
-### Сборка основного приложения — Release
-
-Для C:
-```
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/c/ 02-image-passport/c/read_passport.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/c/ 02-image-passport/c/pixel_word.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/c/ 02-image-passport/c/read_passport_main.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/c/ common/c/strerror.c
-link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/c/read_passport_main.obj build/release/02-image-passport/c/read_passport.obj build/release/02-image-passport/c/pixel_word.obj build/release/02-image-passport/c/strerror.obj /OUT:build/release/02-image-passport/c/passport.exe
-```
-
-Для C++:
-```
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/cpp/ 02-image-passport/cpp/read_passport.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/cpp/ 02-image-passport/cpp/pixel_word.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/02-image-passport/cpp/ 02-image-passport/cpp/read_passport_main.cpp
-link /DEBUG /OPT:REF /OPT:ICF build/release/02-image-passport/cpp/read_passport_main.obj build/release/02-image-passport/cpp/read_passport.obj build/release/02-image-passport/cpp/pixel_word.obj /OUT:build/release/02-image-passport/cpp/passport.exe
-```
-
----
-
 ## Задача 3 — Статистика изображения
 
 Читает PPM `P3` из stdin до EOF, выводит:
@@ -628,6 +632,58 @@ build\01-image-gen\c\gen_image.exe --size 1024 --seed 42 | build\03-image-stats\
 - Пустой ввод -> exit 66
 - IO-сбой -> exit 74
 - Битый формат, не-число, `#` в данных, лишние/недостающие пиксели -> exit 65
+
+### Сборка приложения — Debug
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/strerror.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/ppm_stats.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/main.c
+link /DEBUG build/03-image-stats/c/ppm_io.obj build/03-image-stats/c/strerror.obj build/03-image-stats/c/ppm_stats.obj build/03-image-stats/c/main.obj /OUT:build/03-image-stats/c/image_stats.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ common/cpp/ppm_io.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ 03-image-stats/cpp/ppm_stats.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ 03-image-stats/cpp/image_stats.cpp
+link /DEBUG build/03-image-stats/cpp/ppm_io.obj build/03-image-stats/cpp/ppm_stats.obj build/03-image-stats/cpp/image_stats.obj /OUT:build/03-image-stats/cpp/image_stats.exe
+```
+
+### Сборка приложения — Release
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/c/ common/c/strerror.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/c/ 03-image-stats/c/ppm_stats.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/c/ 03-image-stats/c/main.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/c/ppm_io.obj build/release/03-image-stats/c/strerror.obj build/release/03-image-stats/c/ppm_stats.obj build/release/03-image-stats/c/main.obj /OUT:build/release/03-image-stats/c/image_stats.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/cpp/ common/cpp/ppm_io.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/cpp/ 03-image-stats/cpp/ppm_stats.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/cpp/ 03-image-stats/cpp/image_stats.cpp
+link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/cpp/ppm_io.obj build/release/03-image-stats/cpp/ppm_stats.obj build/release/03-image-stats/cpp/image_stats.obj /OUT:build/release/03-image-stats/cpp/image_stats.exe
+```
+
+---
+
+### Эталоны — Debug
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/ref/ 03-image-stats/ref/ref_stats.c
+link /DEBUG build/03-image-stats/ref/ref_stats.obj /OUT:build/03-image-stats/ref/ref_stats.exe
+```
+
+### Эталоны — Release
+```
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/ref/ 03-image-stats/ref/ref_stats.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/ref/ref_stats.obj /OUT:build/release/03-image-stats/ref/ref_stats.exe
+```
 
 ### Тесты — Debug
 
@@ -678,6 +734,8 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/cpp/ppm_io.obj build/
 build\release\03-image-stats\c\ppm_stats_test.exe 
 build\release\03-image-stats\cpp\ppm_stats_test.exe 
 ```
+
+### Примеры приёмки
 
 Acceptance — ручной прогон (конвейер). Debug-бинарники.
 
@@ -751,58 +809,6 @@ echo P5 | build\release\03-image-stats\c\image_stats.exe
 echo %errorlevel%                                    & rem expected 65
 ```
 
-### Эталоны — Debug
-```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/ref/ 03-image-stats/ref/ref_stats.c
-link /DEBUG build/03-image-stats/ref/ref_stats.obj /OUT:build/03-image-stats/ref/ref_stats.exe
-```
-
-### Эталоны — Release
-```
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/ref/ 03-image-stats/ref/ref_stats.c
-link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/ref/ref_stats.obj /OUT:build/release/03-image-stats/ref/ref_stats.exe
-```
-
-### Сборка приложения — Debug
-
-Для C:
-```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/ppm_io.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ common/c/strerror.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/ppm_stats.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/c/ 03-image-stats/c/main.c
-link /DEBUG build/03-image-stats/c/ppm_io.obj build/03-image-stats/c/strerror.obj build/03-image-stats/c/ppm_stats.obj build/03-image-stats/c/main.obj /OUT:build/03-image-stats/c/image_stats.exe
-```
-
-Для C++:
-```
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ common/cpp/ppm_io.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ 03-image-stats/cpp/ppm_stats.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/03-image-stats/cpp/ 03-image-stats/cpp/image_stats.cpp
-link /DEBUG build/03-image-stats/cpp/ppm_io.obj build/03-image-stats/cpp/ppm_stats.obj build/03-image-stats/cpp/image_stats.obj /OUT:build/03-image-stats/cpp/image_stats.exe
-```
-
-### Сборка приложения — Release
-
-Для C:
-```
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/c/ common/c/ppm_io.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/c/ common/c/strerror.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/c/ 03-image-stats/c/ppm_stats.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/c/ 03-image-stats/c/main.c
-link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/c/ppm_io.obj build/release/03-image-stats/c/strerror.obj build/release/03-image-stats/c/ppm_stats.obj build/release/03-image-stats/c/main.obj /OUT:build/release/03-image-stats/c/image_stats.exe
-```
-
-Для C++:
-```
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/cpp/ common/cpp/ppm_io.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/cpp/ 03-image-stats/cpp/ppm_stats.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/03-image-stats/cpp/ 03-image-stats/cpp/image_stats.cpp
-link /DEBUG /OPT:REF /OPT:ICF build/release/03-image-stats/cpp/ppm_io.obj build/release/03-image-stats/cpp/ppm_stats.obj build/release/03-image-stats/cpp/image_stats.obj /OUT:build/release/03-image-stats/cpp/image_stats.exe
-```
-
----
-
 ## Задача 4 — Фильтр изображения
 
 Применяет преобразование к PPM `P3`, читает из stdin, пишет валидный PPM
@@ -839,58 +845,48 @@ filter --version    -> "filter 0.1.6", exit 0
 - IO-сбой -> exit 74
 
 
-### Тесты — Debug
+### Сборка основного приложения — Debug
 
-Юнит-тесты (grayscale, threshold, парсинг аргументов) — по пикселям, без интеграции:
-```
-build\04-image-filter\c\filter_tests.exe
-build\04-image-filter\cpp\filter_tests.exe 
-```
 Для C:
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/ppm_io.c
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/strerror.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter_test.c 
-link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/strerror.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj /OUT:build/04-image-filter/c/filter_tests.exe
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter.c 
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/main.c
+link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/strerror.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/main.obj /OUT:build/04-image-filter/c/filter.exe
 ```
 
 Для C++:
 ```
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ common/cpp/ppm_io.cpp
 cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter_test.cpp 
-link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj /OUT:build/04-image-filter/cpp/filter_tests.exe
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter_main.cpp
+link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_main.obj /OUT:build/04-image-filter/cpp/filter.exe
 ```
 
-### Тесты — Release
+### Сборка основного приложения — Release
 
 Для C:
 ```
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ common/c/ppm_io.c
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ common/c/strerror.c
 cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ 04-image-filter/c/filter.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ 04-image-filter/c/filter_test.c
-link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/c/ppm_io.obj build/release/04-image-filter/c/strerror.obj build/release/04-image-filter/c/filter.obj build/release/04-image-filter/c/filter_test.obj /OUT:build/release/04-image-filter/c/filter_tests.exe
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ 04-image-filter/c/main.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/c/ppm_io.obj build/release/04-image-filter/c/strerror.obj build/release/04-image-filter/c/filter.obj build/release/04-image-filter/c/main.obj /OUT:build/release/04-image-filter/c/filter.exe
 ```
 
 Для C++:
 ```
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ common/cpp/ppm_io.cpp
 cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ 04-image-filter/cpp/filter.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ 04-image-filter/cpp/filter_test.cpp
-link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/ppm_io.obj build/release/04-image-filter/cpp/filter.obj build/release/04-image-filter/cpp/filter_test.obj /OUT:build/release/04-image-filter/cpp/filter_tests.exe
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ 04-image-filter/cpp/filter_main.cpp
+link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/ppm_io.obj build/release/04-image-filter/cpp/filter.obj build/release/04-image-filter/cpp/filter_main.obj /OUT:build/release/04-image-filter/cpp/filter.exe
 ```
 
-```
-build\release\04-image-filter\c\filter_tests.exe
-build\release\04-image-filter\cpp\filter_tests.exe
-```
 
 ### Эталоны — Debug
 Для того чтобы проверить корректность работы самого фильтра, требуется собрать эталоны для первой задачи, а затем прогнать их под фильтром и сравнить с эталонным ответом фильтра. 
 Помимо паттернов первой задачи используются probe-входы (2×2 и 3×3) с пикселями, подобранными под границы: округление яркости - luma - вниз/вверх, граница из-за использования float, строгая граница порога.
-Подразумевается, что команды исполняются в cmd.
 
 ```
 cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/ref/ 04-image-filter/ref/ref_gradient_3_3_grayscale.c
@@ -935,14 +931,64 @@ link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/ref/ref_probe_3_3_gr
 link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/ref/ref_probe_3_3_threshold_100.obj /OUT:build/release/04-image-filter/ref/ref_probe_3_3_threshold_100.exe
 ```
 
+### Тесты — Debug
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/strerror.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter.c
+cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter_test.c 
+link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/strerror.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/filter_test.obj /OUT:build/04-image-filter/c/filter_tests.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ common/cpp/ppm_io.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter_test.cpp 
+link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_test.obj /OUT:build/04-image-filter/cpp/filter_tests.exe
+```
+
+Юнит-тесты (grayscale, threshold, парсинг аргументов) — по пикселям, без интеграции:
+```
+build\04-image-filter\c\filter_tests.exe
+build\04-image-filter\cpp\filter_tests.exe 
+```
+
+### Тесты — Release
+
+Для C:
+```
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ common/c/ppm_io.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ common/c/strerror.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ 04-image-filter/c/filter.c
+cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ 04-image-filter/c/filter_test.c
+link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/c/ppm_io.obj build/release/04-image-filter/c/strerror.obj build/release/04-image-filter/c/filter.obj build/release/04-image-filter/c/filter_test.obj /OUT:build/release/04-image-filter/c/filter_tests.exe
+```
+
+Для C++:
+```
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ common/cpp/ppm_io.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ 04-image-filter/cpp/filter.cpp
+cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ 04-image-filter/cpp/filter_test.cpp
+link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/ppm_io.obj build/release/04-image-filter/cpp/filter.obj build/release/04-image-filter/cpp/filter_test.obj /OUT:build/release/04-image-filter/cpp/filter_tests.exe
+```
+
+```
+build\release\04-image-filter\c\filter_tests.exe
+build\release\04-image-filter\cpp\filter_tests.exe
+```
+
 ### Примеры приёмки
 
 Сборка probe (`cl`/`link`) одинакова для обеих оболочек и обеих конфигураций и приведена один раз. Остальные шаги используют перенаправление и даны для PowerShell и cmd.
 
-**Часть 1. Паттерн первой задачи** (при условии собранных эталонов первой задачи; базовая картинка `radial_3x3.ppm` уже сгенерирована в `build/test_data`).
+**Часть 1. Паттерн первой задачи** (при условии собранных эталонов первой задачи; базовая картинка `radial_3x3.ppm` генерируется первой строкой блока).
 
 Debug — PowerShell:
 ```powershell
+cmd /c "build\01-image-gen\ref\ref_radial.exe > build\test_data\radial_3x3.ppm"
 cmd /c "build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\radial_3x3_grayscale.ppm"
 cmd /c "build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial_3x3.ppm > build\actual_filter.ppm"
 cmd /c fc build\actual_filter.ppm build\test_data\radial_3x3_grayscale.ppm
@@ -952,6 +998,7 @@ $LASTEXITCODE                                        # -> 0
 Debug — cmd:
 ```bat
 chcp 65001 >nul
+build\01-image-gen\ref\ref_radial.exe > build\test_data\radial_3x3.ppm
 build\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\radial_3x3_grayscale.ppm
 build\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial_3x3.ppm > build\actual_filter.ppm
 fc build\actual_filter.ppm build\test_data\radial_3x3_grayscale.ppm
@@ -960,6 +1007,7 @@ echo %errorlevel%                                    & rem expected 0
 
 Release — PowerShell:
 ```powershell
+cmd /c "build\release\01-image-gen\ref\ref_radial.exe > build\test_data\radial_3x3.ppm"
 cmd /c "build\release\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\radial_3x3_grayscale.ppm"
 cmd /c "build\release\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial_3x3.ppm > build\actual_filter.ppm"
 cmd /c fc build\actual_filter.ppm build\test_data\radial_3x3_grayscale.ppm
@@ -969,6 +1017,7 @@ $LASTEXITCODE                                        # -> 0
 Release — cmd:
 ```bat
 chcp 65001 >nul
+build\release\01-image-gen\ref\ref_radial.exe > build\test_data\radial_3x3.ppm
 build\release\04-image-filter\ref\ref_radial_3_3_grayscale.exe > build\test_data\radial_3x3_grayscale.ppm
 build\release\04-image-filter\cpp\filter.exe --grayscale < build\test_data\radial_3x3.ppm > build\actual_filter.ppm
 fc build\actual_filter.ppm build\test_data\radial_3x3_grayscale.ppm
@@ -1060,45 +1109,6 @@ build\release\04-image-filter\cpp\filter.exe --threshold 100 < build\test_data\p
 fc build\actual_filter.ppm build\test_data\probe_3x3_threshold_100.ppm
 echo %errorlevel%                                    & rem expected 0
 ```
-
-### Сборка основного приложения — Debug
-
-Для C:
-```
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/ppm_io.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ common/c/strerror.c
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/filter.c 
-cl /std:c17 /W4 /permissive- /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/c/ 04-image-filter/c/main.c
-link /DEBUG build/04-image-filter/c/ppm_io.obj build/04-image-filter/c/strerror.obj build/04-image-filter/c/filter.obj build/04-image-filter/c/main.obj /OUT:build/04-image-filter/c/filter.exe
-```
-
-Для C++:
-```
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ common/cpp/ppm_io.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /Od /Zi /MDd /fsanitize=address /utf-8 /c /Fo:build/04-image-filter/cpp/ 04-image-filter/cpp/filter_main.cpp
-link /DEBUG build/04-image-filter/cpp/ppm_io.obj build/04-image-filter/cpp/filter.obj build/04-image-filter/cpp/filter_main.obj /OUT:build/04-image-filter/cpp/filter.exe
-```
-
-### Сборка основного приложения — Release
-
-Для C:
-```
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ common/c/ppm_io.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ common/c/strerror.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ 04-image-filter/c/filter.c
-cl /std:c17 /W4 /permissive- /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/c/ 04-image-filter/c/main.c
-link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/c/ppm_io.obj build/release/04-image-filter/c/strerror.obj build/release/04-image-filter/c/filter.obj build/release/04-image-filter/c/main.obj /OUT:build/release/04-image-filter/c/filter.exe
-```
-
-Для C++:
-```
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ common/cpp/ppm_io.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ 04-image-filter/cpp/filter.cpp
-cl /std:c++latest /W4 /permissive- /EHsc /O2 /Zi /DNDEBUG /MD /utf-8 /c /Fo:build/release/04-image-filter/cpp/ 04-image-filter/cpp/filter_main.cpp
-link /DEBUG /OPT:REF /OPT:ICF build/release/04-image-filter/cpp/ppm_io.obj build/release/04-image-filter/cpp/filter.obj build/release/04-image-filter/cpp/filter_main.obj /OUT:build/release/04-image-filter/cpp/filter.exe
-```
-
 
 ## Управление выделением памяти
 
