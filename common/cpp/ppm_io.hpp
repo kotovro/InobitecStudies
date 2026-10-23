@@ -1,6 +1,7 @@
 #ifndef KV_PPM_IO_HPP
 #define KV_PPM_IO_HPP
 
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <iosfwd>

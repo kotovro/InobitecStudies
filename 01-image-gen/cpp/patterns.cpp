@@ -1,5 +1,6 @@
 #include "patterns.hpp"
 
+#include <cmath>
 #include <cstdint>
 #include <random>
 
