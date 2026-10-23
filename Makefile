@@ -80,8 +80,10 @@ SANITIZE_DEFAULT_release := none
 SANITIZE ?= $(SANITIZE_DEFAULT_$(CONFIG))
 # 0 | 1. Отдельная coverage-сборка (сама цель coverage — задел).
 COVERAGE ?= 0
-# Суффикс версии gcc: make GCC_SUFFIX=-14 даст gcc-14 / g++-14.
-GCC_SUFFIX ?= 14
+# 0 | 1. Предупреждения GCC как ошибки (WERROR=1 -> -Werror).
+WERROR ?= 0
+# Суффикс версии gcc: пусто — системные gcc/g++, make GCC_SUFFIX=-15 даст gcc-15 / g++-15.
+GCC_SUFFIX ?=
 # clang-format: путь 
 CLANG_FORMAT ?= clang-format
 CLANG_FORMAT_VERSION ?=
@@ -98,6 +100,7 @@ $(call check_value,RUNTIME,dynamic static full)
 $(call check_value,LINK,obj lib dll)
 $(call check_value,SANITIZE,address none)
 $(call check_value,COVERAGE,0 1)
+$(call check_value,WERROR,0 1)
 
 # Единственный источник правды о недопустимых сочетаниях. Аргументы:
 # 1 тулчейн, 2 config, 3 runtime, 4 link, 5 sanitize, 6 coverage.
@@ -150,6 +153,7 @@ ifeq ($(PLATFORM),windows)
   NONEMPTY = for %%A in ($(call native,$(ERR))) do if %%~zA==0 exit /b 1
   which = $(shell where $1 2>nul)
 else
+  SHELL := /bin/sh
   native = $1
   MKDIR  = mkdir -p $1
   RMFILE = rm -f $1
@@ -216,7 +220,7 @@ else ifeq ($(TOOLCHAIN),gcc)
   STATIC_NAME := libppm_io.a
   COMPILER    := g++$(GCC_SUFFIX)
 
-  WARN    := -Wall -Wextra -Wpedantic
+  WARN    := -Wall -Wextra -Wpedantic$(if $(filter 1,$(WERROR)), -Werror)
   CSTD    := -std=c17
   CXXSTD  := -std=c++23
   CFG_debug   := -O0
@@ -231,11 +235,12 @@ else ifeq ($(TOOLCHAIN),gcc)
   LD_RT_dynamic :=
   LD_RT_static  := -static-libstdc++ -static-libgcc
   LD_RT_full    := -static
+  LDLIBS_c      := -lm
   LDFLAGS := $(LD_RT_$(RUNTIME)) $(SAN_$(SANITIZE))
 
   COMPILE_c   = gcc$(GCC_SUFFIX) $(FLAGS_c) -MMD -MP -c $< -o $@
   COMPILE_cpp = g++$(GCC_SUFFIX) $(FLAGS_cpp) -MMD -MP -c $< -o $@
-  LINK_c   = gcc$(GCC_SUFFIX) $(LDFLAGS) -o $@ $^
+  LINK_c   = gcc$(GCC_SUFFIX) $(LDFLAGS) -o $@ $^ $(LDLIBS_c)
   LINK_cpp = g++$(GCC_SUFFIX) $(LDFLAGS) -o $@ $^
   MAKELIB  = ar rcs $@ $^
 endif
