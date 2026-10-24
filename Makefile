@@ -2,18 +2,19 @@
 #  Makefile — единая точка сборки, тестов и приёмки проекта.
 #
 #  Один вызов make = один вариант сборки. Вариант задают ручки
-#  (CONFIG, RUNTIME, LINK, SANITIZE, COVERAGE, TOOLCHAIN); каталог
+#  (PLATFORM, CONFIG, RUNTIME, LINK, SANITIZE, COVERAGE, TOOLCHAIN); каталог
 #  варианта кодирует их все, поэтому смена ручки не подхватывает чужие
-#  объекты.
+#  объекты. PLATFORM задаётся явно, автоопределения нет.
 #
 #  Примеры:
-#    make                                   debug, /MDd, LINK=lib, ASan
-#    make test                              unit + приёмка текущего варианта
-#    make CONFIG=release RUNTIME=static     release, /MT
-#    make LINK=dll                          потребители через ppm_io.dll
-#    make 01-image-gen                      код задачи 1
-#    make format-check  /  make format      clang-format
-#    make help                              ручки и цели
+#    make PLATFORM=linux                        debug, ASan, LINK=lib
+#    make PLATFORM=linux test                   unit + приёмка
+#    make PLATFORM=windows CONFIG=release       release, /MD
+#    make PLATFORM=windows RUNTIME=static       release, /MT
+#    make PLATFORM=windows LINK=dll             потребители через ppm_io.dll
+#    make PLATFORM=linux 01-image-gen           код задачи 1
+#    make PLATFORM=linux format-check           clang-format
+#    make PLATFORM=linux help                   ручки и цели
 #
 #  Точка входа приложения — main.<ext>; юнит-тест — <имя>_test.<ext>;
 #  остальные исходники каталога задачи — общая часть (линкуется и в exe,
@@ -56,12 +57,11 @@ endif
 #  Ручки варианта (комментарии — отдельной строкой: `X ?= a  # ...` оставил
 #  бы хвостовые пробелы в значении).
 # =============================================================================
-ifndef PLATFORM
-  ifeq ($(OS),Windows_NT)
-    PLATFORM := windows
-  else
-    PLATFORM := $(shell uname -s)
-  endif
+# windows | linux. Обязательная ручка: автоопределение не выполняется.
+PLATFORM ?=
+
+ifeq ($(PLATFORM),)
+  $(error PLATFORM не задан. Укажите её явно: make PLATFORM=windows ... или make PLATFORM=linux ...)
 endif
 
 TOOLCHAIN_windows := msvc
@@ -605,7 +605,7 @@ $(foreach l,$(LANGS),$(foreach p,gradient checker radial,$(eval $(call T3_OK,$l,
 # ---- Задача 3: ошибки ----
 # $1 язык, $2 строка <имя>:<код>:<stdin>
 define T3_ERR
-    $(TEST_DIR)/$1/stats_$(word 1,$(subst :, ,$2)).ok: $(APP_$(T3)_$1) | $(TEST_DIR)/$1/
+    $(TEST_DIR)/$1/stats_$(word 1,$(subst :, ,$2)).ok: $(APP_$(T3)_$1) $(call field,$(word 3,$(subst :, ,$2))) | $(TEST_DIR)/$1/
 	    $$(call expect,$(APP_$(T3)_$1),$(word 2,$(subst :, ,$2)),$(call field,$(word 3,$(subst :, ,$2))))
 	    $$(call stderr_check,$(word 2,$(subst :, ,$2)))
 	    $$(call TOUCH,$$@)
@@ -635,7 +635,7 @@ $(foreach l,$(LANGS),$(foreach c,$(T4_OK_CASES),$(eval $(call T4_OK,$l,$c))))
 # ---- Задача 4: ошибки ----
 # $1 язык, $2 строка <имя>:<код>:<аргументы>:<stdin>
 define T4_ERR
-    $(TEST_DIR)/$1/filter_$(word 1,$(subst :, ,$2)).ok: $(APP_$(T4)_$1) | $(TEST_DIR)/$1/
+    $(TEST_DIR)/$1/filter_$(word 1,$(subst :, ,$2)).ok: $(APP_$(T4)_$1) $(call field,$(word 4,$(subst :, ,$2))) | $(TEST_DIR)/$1/
 	    $$(call expect,$(APP_$(T4)_$1) $(call field,$(word 3,$(subst :, ,$2))),$(word 2,$(subst :, ,$2)),$(call field,$(word 4,$(subst :, ,$2))))
 	    $$(call stderr_check,$(word 2,$(subst :, ,$2)))
 	    $$(call TOUCH,$$@)
