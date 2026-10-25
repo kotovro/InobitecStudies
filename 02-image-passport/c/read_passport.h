@@ -15,6 +15,7 @@ enum PassportError {
 };
 
 enum { PASSPORT_BAD_VALUE_SIZE = 64 };
+enum { PASSPORT_ERROR_TEXT_SIZE = 512 };
 
 struct PassportResult {
     enum PassportError error;

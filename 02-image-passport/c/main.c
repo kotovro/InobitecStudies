@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
 
     struct PassportResult result = read_passport(stdin);
     if (result.error != PE_OK) {
-        char msg[256];
+        char msg[PASSPORT_ERROR_TEXT_SIZE];
         passport_error_message(&result, msg, sizeof msg);
         fprintf(stderr, "%s\n", msg);
         switch (result.error) {

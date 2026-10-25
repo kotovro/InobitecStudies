@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-enum { PPM_DIAG_SIZE = 256 };
+enum { PPM_DIAG_SIZE = 512 };
 
 struct Pixel {
     uint8_t r, g, b;

@@ -122,7 +122,7 @@ static void test_read_io_error(void) {
 }
 
 static void test_error_messages(void) {
-    char buf[256];
+    char buf[PASSPORT_ERROR_TEXT_SIZE];
 
     struct PassportResult no_input = {.error = PE_NO_INPUT};
     passport_error_message(&no_input, buf, sizeof buf);
@@ -148,7 +148,7 @@ static void test_error_messages(void) {
     passport_error_message(&io, buf, sizeof buf);
     char errbuf[256];
     safe_strerror(EIO, errbuf, sizeof errbuf);
-    char expected[256];
+    char expected[PASSPORT_ERROR_TEXT_SIZE];
     snprintf(expected, sizeof expected, "Сбой ввода: %s (errno %d)", errbuf, EIO);
     check(strcmp(buf, expected) == 0, "msg: io error");
 }
