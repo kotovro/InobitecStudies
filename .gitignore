@@ -1,6 +1,11 @@
 # Артефакты сборки
 *.exe
 *.obj
+*.o
+*.a
+*.so
+*.d
+*.debug
 *.pdb
 *.dll
 *.lib
@@ -8,11 +13,14 @@
 *.ilk
 *.orig
 *.coverage
+*.gcda
+*.gcno
 
 # Артефакты, производимые в ходе работы программ
 *.xml
 *.png
 *.ppm
+_*.tmp
 */c/**/*.txt
 */cpp/**/*.txt
 */ref/**/*.txt

@@ -87,9 +87,8 @@ COVERAGE ?= 0
 WERROR ?= 0
 # Суффикс версии gcc: пусто — системные gcc/g++, make GCC_SUFFIX=-15 даст gcc-15 / g++-15.
 GCC_SUFFIX ?=
-# clang-format: путь 
+# clang-format: имя в PATH или полный путь; версия не фиксируется.
 CLANG_FORMAT ?= clang-format
-CLANG_FORMAT_VERSION ?=
 
 # =============================================================================
 #  Модель ошибок сборки: недопустимое значение или сочетание останавливает
@@ -663,7 +662,7 @@ common: $(STATIC_LIB_c) $(STATIC_LIB_cpp) $(DLL_TARGETS)
 
 unit: $(UNIT_MARKERS)
 acceptance: $(ACCEPT_OKS)
-test: unit acceptance
+test: format-check unit acceptance
 
 clean:
 	$(call RMTREE,$(BUILD_DIR))
@@ -677,24 +676,21 @@ coverage:
 #  Форматирование.
 # =============================================================================
 FORMAT_SRCS := $(wildcard common/c/*.c common/c/*.h common/cpp/*.cpp common/cpp/*.hpp \
-                          0*/c/*.c 0*/c/*.h 0*/cpp/*.cpp 0*/cpp/*.hpp 0*/cpp/*.h 0*/ref/*.c 0*/ref/*.h)
-FORMAT_OKS := $(patsubst %,build/format/%.ok,$(FORMAT_SRCS))
+                           0*/c/*.c 0*/c/*.h 0*/cpp/*.cpp 0*/cpp/*.hpp 0*/cpp/*.h 0*/ref/*.c 0*/ref/*.h)
 
-ifneq ($(filter format format-check,$(MAKECMDGOALS)),)
-  ifneq ($(CLANG_FORMAT_VERSION),)
-    ifeq ($(findstring version $(CLANG_FORMAT_VERSION),$(shell $(CLANG_FORMAT) --version)),)
-      $(error Нужен clang-format $(CLANG_FORMAT_VERSION), найден: $(shell $(CLANG_FORMAT) --version))
-    endif
+FORMAT_GOALS := format format-check test all
+NEEDS_FORMAT := $(if $(filter $(FORMAT_GOALS),$(or $(MAKECMDGOALS),all)),1,)
+ifneq ($(and $(NEEDS_FORMAT),$(if $(DRY_RUN),,yes)),)
+  ifeq ($(shell "$(CLANG_FORMAT)" --version 2>$(NUL)),)
+    $(error Не найден clang-format. Добавьте его в PATH или задайте CLANG_FORMAT=<путь>.)
   endif
 endif
 
-format-check: $(FORMAT_OKS)
-build/format/%.ok: % .clang-format | $$(@D)/
-	$(CLANG_FORMAT) --dry-run --Werror $<
-	$(call TOUCH,$@)
+format-check:
+	"$(CLANG_FORMAT)" --dry-run --Werror $(FORMAT_SRCS)
 
 format:
-	$(CLANG_FORMAT) -i $(FORMAT_SRCS)
+	"$(CLANG_FORMAT)" -i $(FORMAT_SRCS)
 
 # =============================================================================
 help:
