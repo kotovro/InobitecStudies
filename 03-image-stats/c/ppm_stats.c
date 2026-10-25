@@ -1,5 +1,6 @@
 #include "ppm_stats.h"
 
+#include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
 
@@ -53,7 +54,7 @@ void ppm_print_stats(const struct Stats* s, FILE* out) {
     int32_t avg_b = (int32_t)((double)s->total_b / s->pixel_count + 0.5);
 
     fprintf(out, "%dx%d\n", s->width, s->height);
-    fprintf(out, "пикселей: %lld\n", s->pixel_count);
+    fprintf(out, "пикселей: %" PRId64 "\n", s->pixel_count);
     fprintf(out, "средний цвет: %3d %3d %3d\n", avg_r, avg_g, avg_b);
     fprintf(out, "мин. яркость: %.1f\n", s->y_min);
     fprintf(out, "макс. яркость: %.1f\n", s->y_max);

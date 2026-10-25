@@ -52,25 +52,25 @@ int main(int argc, char** argv) {
         return EC_OK;
     }
 
-    if (args.error != PE_OK) {
-        switch (args.error) {
-        case PE_NOARG:
-            fprintf(stderr, "N не указано. Использование: gen_image <N> [pattern]\n");
-            return EC_USAGE;
-        case PE_BADNUMBER:
-            fprintf(stderr, "N должно быть целым числом; получено: %s\n", argc >= 2 ? argv[1] : "");
-            return EC_USAGE;
-        case PE_BADPATTERN:
-            fprintf(stderr, "Неизвестный паттерн: %s. Допустимые: gradient, checker, radial\n",
-                    argc >= 3 ? argv[2] : "");
-            return EC_USAGE;
-        case PE_BADSEED:
-            fprintf(stderr,
-                    "seed должно быть целым числом в диапазоне [0; 4294967295]; "
-                    "получено: %s\n",
-                    argc >= 5 ? argv[4] : "");
-            return EC_USAGE;
-        }
+    switch (args.error) {
+    case PE_OK:
+        break;
+    case PE_NOARG:
+        fprintf(stderr, "N не указано. Использование: gen_image <N> [pattern]\n");
+        return EC_USAGE;
+    case PE_BADNUMBER:
+        fprintf(stderr, "N должно быть целым числом; получено: %s\n", argc >= 2 ? argv[1] : "");
+        return EC_USAGE;
+    case PE_BADPATTERN:
+        fprintf(stderr, "Неизвестный паттерн: %s. Допустимые: gradient, checker, radial\n",
+                argc >= 3 ? argv[2] : "");
+        return EC_USAGE;
+    case PE_BADSEED:
+        fprintf(stderr,
+                "seed должно быть целым числом в диапазоне [0; 4294967295]; "
+                "получено: %s\n",
+                argc >= 5 ? argv[4] : "");
+        return EC_USAGE;
     }
 
     if (args.size < 1) {
