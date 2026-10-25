@@ -74,6 +74,9 @@ CONFIG ?= debug
 RUNTIME ?= dynamic
 # Как потребители получают common/ppm_io: obj | lib | dll
 LINK ?= lib
+# У MSVC link.exe читает одноимённую переменную окружения: LINK=dll
+# превратился бы во входной файл dll.obj.
+unexport LINK
 # address | none. По умолчанию ASan в debug, выключен в release.
 SANITIZE_DEFAULT_debug   := address
 SANITIZE_DEFAULT_release := none
@@ -126,7 +129,8 @@ BUILD_DIR := build/$(VARIANT)
 TEST_DIR  := $(BUILD_DIR)/test_data
 REF_DIR   := $(TEST_DIR)/ref
 
-DLL_ENABLED := $(filter dll,$(LINK))
+# 1 | 0: потребители берут common/ppm_io через DLL.
+DLL_ENABLED := $(if $(filter dll,$(LINK)),1,0)
 
 # =============================================================================
 #  Платформенный блок: оболочка, файловые операции, запуск и сравнение.
@@ -244,6 +248,8 @@ else ifeq ($(TOOLCHAIN),gcc)
   LINK_cpp = g++$(GCC_SUFFIX) $(LDFLAGS) -o $@ $^
   MAKELIB  = ar rcs $@ $^
 endif
+
+DLL_TARGETS := $(if $(filter 1,$(DLL_ENABLED)),$(BUILD_DIR)/common/c/dll/ppm_io$(DLLEXT) $(BUILD_DIR)/common/cpp/dll/ppm_io$(DLLEXT))
 
 # Проверка окружения — только если цели нужен компилятор и это не make -n.
 NO_TOOLCHAIN_GOALS := help clean clean-all format format-check coverage
@@ -431,7 +437,7 @@ $(foreach t,$(TASKS),$(foreach l,$(LANGS),$(eval $(call TASK_template,$t,$l))))
 # Копия DLL рядом с потребителем (иначе при запуске — ошибка разрешения).
 ifeq ($(DLL_ENABLED),1)
 define DLLCOPY_template
-    $(APP_$1_$2): $(BUILD_DIR)/$1/$2/ppm_io$(DLLEXT)
+    $(APP_$1_$2): | $(BUILD_DIR)/$1/$2/ppm_io$(DLLEXT)
     $(BUILD_DIR)/$1/$2/ppm_io$(DLLEXT): $(BUILD_DIR)/common/$2/dll/ppm_io$(DLLEXT) | $(BUILD_DIR)/$1/$2/
 	    $$(call CP,$$<,$$@)
 endef
@@ -651,9 +657,9 @@ $(foreach l,$(LANGS),$(foreach c,$(T4_ERRORS),$(eval $(call T4_ERR,$l,$c))))
 .DEFAULT_GOAL := all
 
 all: lib exes test
-lib: $(STATIC_LIB_c) $(STATIC_LIB_cpp) $(if $(DLL_ENABLED),$(BUILD_DIR)/common/c/dll/ppm_io$(DLLEXT) $(BUILD_DIR)/common/cpp/dll/ppm_io$(DLLEXT))
+lib: $(STATIC_LIB_c) $(STATIC_LIB_cpp) $(DLL_TARGETS)
 exes: $(ALL_EXES)
-common: $(STATIC_LIB_c) $(STATIC_LIB_cpp) $(if $(DLL_ENABLED),$(BUILD_DIR)/common/c/dll/ppm_io$(DLLEXT) $(BUILD_DIR)/common/cpp/dll/ppm_io$(DLLEXT))
+common: $(STATIC_LIB_c) $(STATIC_LIB_cpp) $(DLL_TARGETS)
 
 unit: $(UNIT_MARKERS)
 acceptance: $(ACCEPT_OKS)
