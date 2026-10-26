@@ -649,9 +649,35 @@ endef
 $(foreach l,$(LANGS),$(foreach c,$(T4_ERRORS),$(eval $(call T4_ERR,$l,$c))))
 
 # =============================================================================
+#  Cross-parity: успешные кейсы C и C++ на одном входе.
+# =============================================================================
+PARITY_OKS :=
+
+define PARITY_PAIR
+    $(TEST_DIR)/parity/$1.ok: $2 $3 | $(TEST_DIR)/parity/
+	    $$(call CMP,$2,$3)
+	    $$(call TOUCH,$$@)
+    PARITY_OKS += $(TEST_DIR)/parity/$1.ok
+endef
+
+$(foreach p,gradient checker radial,\
+  $(eval $(call PARITY_PAIR,t1_$p,$(TEST_DIR)/c/gen_$p_3.ppm,$(TEST_DIR)/cpp/gen_$p_3.ppm)))
+
+$(foreach c,$(PP_OK),\
+  $(eval $(call PARITY_PAIR,t2_$c,$(TEST_DIR)/c/passport_$c.txt,$(TEST_DIR)/cpp/passport_$c.txt)))
+
+$(foreach p,gradient checker radial,\
+  $(eval $(call PARITY_PAIR,t3_$p,$(TEST_DIR)/c/stats_$p_3x3.txt,$(TEST_DIR)/cpp/stats_$p_3x3.txt)))
+
+$(foreach c,$(T4_OK_CASES),\
+  $(eval $(call PARITY_PAIR,t4_$(word 1,$(subst :, ,$c)),\
+    $(TEST_DIR)/c/filter_$(word 1,$(subst :, ,$c)).ppm,\
+    $(TEST_DIR)/cpp/filter_$(word 1,$(subst :, ,$c)).ppm)))
+
+# =============================================================================
 #  Фазовые цели.
 # =============================================================================
-.PHONY: all lib exes unit acceptance test common clean clean-all help \
+.PHONY: all lib exes unit acceptance parity test common clean clean-all help \
         format format-check coverage
 .DEFAULT_GOAL := all
 
@@ -662,7 +688,8 @@ common: $(STATIC_LIB_c) $(STATIC_LIB_cpp) $(DLL_TARGETS)
 
 unit: $(UNIT_MARKERS)
 acceptance: $(ACCEPT_OKS)
-test: format-check unit acceptance
+parity: $(PARITY_OKS)
+test: format-check unit acceptance parity
 
 clean:
 	$(call RMTREE,$(BUILD_DIR))
@@ -696,7 +723,7 @@ format:
 help:
 	$(info Ручки: PLATFORM=$(PLATFORM) TOOLCHAIN=$(TOOLCHAIN) CONFIG=$(CONFIG) RUNTIME=$(RUNTIME) LINK=$(LINK) SANITIZE=$(SANITIZE) COVERAGE=$(COVERAGE))
 	$(info Каталог варианта: $(BUILD_DIR))
-	$(info Цели: all lib exes unit acceptance test common clean clean-all help)
+	$(info Цели: all lib exes unit acceptance parity test common clean clean-all help)
 	$(info Задачи: $(TASKS))
 	$(info format-check format coverage)
 
