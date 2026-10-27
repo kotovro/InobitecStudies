@@ -70,6 +70,37 @@ static void test_read_negative_count(void) {
     fclose(f);
 }
 
+static void test_read_plus_count(void) {
+    FILE* f = make_input("тест\n+5\n");
+    struct PassportResult r = read_passport(f);
+    check(r.error == PE_BAD_COUNT, "plus count -> PE_BAD_COUNT");
+    check(strcmp(r.bad_value, "+5") == 0, "plus count -> bad_value");
+    fclose(f);
+}
+
+static void test_read_trimmed_plus_count(void) {
+    FILE* f = make_input("тест\n +5 \n");
+    struct PassportResult r = read_passport(f);
+    check(r.error == PE_BAD_COUNT, "trimmed '+5' -> PE_BAD_COUNT");
+    check(strcmp(r.bad_value, "+5") == 0, "trimmed '+5' -> bad_value");
+    fclose(f);
+}
+
+static void test_read_count_int32_overflow(void) {
+    FILE* f = make_input("тест\n2147483648\n");
+    struct PassportResult r = read_passport(f);
+    check(r.error == PE_BAD_COUNT, "count 2147483648 -> PE_BAD_COUNT");
+    check(strcmp(r.bad_value, "2147483648") == 0, "count 2147483648 -> bad_value");
+    fclose(f);
+}
+
+static void test_read_count_int32_min(void) {
+    FILE* f = make_input("тест\n-2147483648\n");
+    struct PassportResult r = read_passport(f);
+    check(r.error == PE_NEGATIVE_COUNT, "count INT32_MIN -> PE_NEGATIVE_COUNT");
+    fclose(f);
+}
+
 static void test_read_valid_crlf(void) {
     FILE* f = make_input("морской закат\r\n1920\r\n");
     struct PassportResult r = read_passport(f);
@@ -190,6 +221,10 @@ int main(void) {
     test_read_empty_name();
     test_read_bad_count();
     test_read_negative_count();
+    test_read_plus_count();
+    test_read_trimmed_plus_count();
+    test_read_count_int32_overflow();
+    test_read_count_int32_min();
     test_read_valid_crlf();
     test_read_bad_count_crlf();
     test_read_empty_name_crlf();

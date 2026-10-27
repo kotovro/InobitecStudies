@@ -220,6 +220,22 @@ void test_parse_threshold_out_of_range_high() {
     check(!r.has_value(), "--threshold 256 -> error");
 }
 
+void test_parse_threshold_plus() {
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold", "+5"}));
+    check(!r.has_value(), "--threshold +5 -> error");
+}
+
+void test_parse_threshold_space() {
+    auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold", " 5"}));
+    check(!r.has_value(), "--threshold ' 5' -> error");
+}
+
+void test_parse_threshold_int32_overflow() {
+    auto r =
+        parse_filter_args(std::to_array<std::string_view>({"prog", "--threshold", "99999999999"}));
+    check(!r.has_value(), "--threshold 99999999999 -> error");
+}
+
 void test_parse_unknown_arg() {
     auto r = parse_filter_args(std::to_array<std::string_view>({"prog", "--blur"}));
     check(!r.has_value(), "--blur -> error");
@@ -281,6 +297,9 @@ int main() {
     test_parse_threshold_not_a_number();
     test_parse_threshold_out_of_range_low();
     test_parse_threshold_out_of_range_high();
+    test_parse_threshold_plus();
+    test_parse_threshold_space();
+    test_parse_threshold_int32_overflow();
     test_parse_unknown_arg();
     test_parse_help();
     test_parse_version();

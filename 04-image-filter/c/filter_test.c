@@ -247,6 +247,24 @@ static void test_parse_threshold_out_of_range(void) {
     check(parse_filter_args(3, argv, &res) != 0, "--threshold 256 -> error");
 }
 
+static void test_parse_threshold_plus(void) {
+    char* argv[] = {"prog", "--threshold", "+5"};
+    struct FilterParseResult res;
+    check(parse_filter_args(3, argv, &res) != 0, "--threshold +5 -> error");
+}
+
+static void test_parse_threshold_space(void) {
+    char* argv[] = {"prog", "--threshold", " 5"};
+    struct FilterParseResult res;
+    check(parse_filter_args(3, argv, &res) != 0, "--threshold ' 5' -> error");
+}
+
+static void test_parse_threshold_int32_overflow(void) {
+    char* argv[] = {"prog", "--threshold", "99999999999"};
+    struct FilterParseResult res;
+    check(parse_filter_args(3, argv, &res) != 0, "--threshold 99999999999 -> error");
+}
+
 static void test_parse_help(void) {
     char* argv[] = {"prog", "--help"};
     struct FilterParseResult res;
@@ -295,6 +313,9 @@ int main(void) {
     test_parse_threshold_no_arg();
     test_parse_threshold_bad_value();
     test_parse_threshold_out_of_range();
+    test_parse_threshold_plus();
+    test_parse_threshold_space();
+    test_parse_threshold_int32_overflow();
     test_parse_unknown();
     test_parse_help();
     test_parse_version();

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "int_token.h"
 #include "luma.h"
 #include "ppm_io_alloc.h"
 
@@ -515,6 +516,44 @@ static void test_writer_finish_error(void) {
 }
 
 // -------------------------------------------------------------------
+// int_token tests
+// -------------------------------------------------------------------
+
+static void test_int_token(void) {
+    int32_t i = 0;
+    uint32_t u = 0;
+
+    check(kv_parse_i32("0", &i) == KV_INT_OK && i == 0, "i32: 0");
+    check(kv_parse_i32("0005", &i) == KV_INT_OK && i == 5, "i32: leading zeros");
+    check(kv_parse_i32("2147483647", &i) == KV_INT_OK && i == INT32_MAX, "i32: max");
+    check(kv_parse_i32("-2147483648", &i) == KV_INT_OK && i == INT32_MIN, "i32: min");
+    check(kv_parse_i32("-0", &i) == KV_INT_OK && i == 0, "i32: -0");
+
+    check(kv_parse_i32("", &i) == KV_INT_INVALID, "i32: empty");
+
+    const char* invalid[] = {"+5", " 5",  "5 ",  "\t5",  "-",   "--5",
+                             "5-", "5.0", "5e3", "0x10", "abc", "-+5"};
+    char name[64];
+    for (size_t k = 0; k < sizeof invalid / sizeof invalid[0]; ++k) {
+        snprintf(name, sizeof name, "i32 invalid: \"%s\"", invalid[k]);
+        check(kv_parse_i32(invalid[k], &i) == KV_INT_INVALID, name);
+    }
+
+    check(kv_parse_i32("2147483648", &i) == KV_INT_RANGE, "i32: max+1");
+    check(kv_parse_i32("-2147483649", &i) == KV_INT_RANGE, "i32: min-1");
+    check(kv_parse_i32("9999999999999999999999", &i) == KV_INT_RANGE, "i32: far too big");
+
+    check(kv_parse_u32("0", &u) == KV_INT_OK && u == 0, "u32: 0");
+    check(kv_parse_u32("4294967295", &u) == KV_INT_OK && u == UINT32_MAX, "u32: max");
+    check(kv_parse_u32("0004294967295", &u) == KV_INT_OK && u == UINT32_MAX, "u32: leading zeros");
+    check(kv_parse_u32("", &u) == KV_INT_INVALID, "u32: empty");
+    check(kv_parse_u32("-1", &u) == KV_INT_INVALID, "u32: -1 invalid");
+    check(kv_parse_u32("+1", &u) == KV_INT_INVALID, "u32: +1 invalid");
+    check(kv_parse_u32("4294967296", &u) == KV_INT_RANGE, "u32: max+1");
+    check(kv_parse_u32("18446744073709551616", &u) == KV_INT_RANGE, "u32: far too big");
+}
+
+// -------------------------------------------------------------------
 // luma tests
 // -------------------------------------------------------------------
 
@@ -574,6 +613,9 @@ int main(void) {
 
     printf("-- luma --\n");
     test_luma();
+
+    printf("-- int_token --\n");
+    test_int_token();
 
     printf("---\n");
     if (failed > 0)

@@ -48,6 +48,30 @@ void test_parse_args_trailing_garbage() {
     check(r.error() == ParseError::kBadNumber, "4abc kBadNumber");
 }
 
+void test_parse_args_plus_number() {
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "+5"}));
+    check(!r.has_value(), "+5 -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadNumber, "+5 kBadNumber");
+}
+
+void test_parse_args_space_number() {
+    auto r = parse_args(std::to_array<std::string_view>({"prog", " 5"}));
+    check(!r.has_value(), "' 5' -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadNumber, "' 5' kBadNumber");
+}
+
+void test_parse_args_tab_number() {
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "\t5"}));
+    check(!r.has_value(), "'\\t5' -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadNumber, "'\\t5' kBadNumber");
+}
+
 void test_parse_args_negative_number() {
     auto r = parse_args(std::to_array<std::string_view>({"prog", "-5"}));
     check(r.has_value(), "-5 - accepted (parse_args only)");
@@ -137,6 +161,22 @@ void test_new_bad_seed() {
     if (r.has_value())
         return;
     check(r.error() == ParseError::kBadSeed, "--seed abc kBadSeed");
+}
+
+void test_new_plus_size() {
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--size", "+3"}));
+    check(!r.has_value(), "--size +3 -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadNumber, "--size +3 kBadNumber");
+}
+
+void test_new_plus_seed() {
+    auto r = parse_args(std::to_array<std::string_view>({"prog", "--size", "5", "--seed", "+1"}));
+    check(!r.has_value(), "--seed +1 -> error");
+    if (r.has_value())
+        return;
+    check(r.error() == ParseError::kBadSeed, "--seed +1 kBadSeed");
 }
 
 void test_new_negative_seed() {
@@ -383,6 +423,9 @@ int main() {
     test_parse_args_no_args();
     test_parse_args_bad_number();
     test_parse_args_trailing_garbage();
+    test_parse_args_plus_number();
+    test_parse_args_space_number();
+    test_parse_args_tab_number();
     test_parse_args_negative_number();
     test_parse_args_bad_pattern();
     test_parse_args_default_pattern();
@@ -399,6 +442,8 @@ int main() {
     test_new_size_overflow();
     test_new_seed_max();
     test_new_seed_overflow();
+    test_new_plus_size();
+    test_new_plus_seed();
 
     std::println("--- help/version tests ---");
     test_help();

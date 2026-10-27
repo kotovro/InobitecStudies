@@ -88,6 +88,45 @@ void test_read_negative_count() {
         check(r.error().kind == PassportErrorKind::kNegativeCount, "negative -> kNegativeCount");
 }
 
+void test_read_plus_count() {
+    auto is = std::istringstream("тест\n+5\n");
+    auto r = read_passport(is);
+    check(!r.has_value(), "plus count -> error");
+    if (!r.has_value()) {
+        check(r.error().kind == PassportErrorKind::kBadCount, "plus count -> kBadCount");
+        check(r.error().bad_value == "+5", "plus count -> bad_value");
+    }
+}
+
+void test_read_trimmed_plus_count() {
+    auto is = std::istringstream("тест\n +5 \n");
+    auto r = read_passport(is);
+    check(!r.has_value(), "trimmed '+5' -> error");
+    if (!r.has_value()) {
+        check(r.error().kind == PassportErrorKind::kBadCount, "trimmed '+5' -> kBadCount");
+        check(r.error().bad_value == "+5", "trimmed '+5' -> bad_value");
+    }
+}
+
+void test_read_count_int32_overflow() {
+    auto is = std::istringstream("тест\n2147483648\n");
+    auto r = read_passport(is);
+    check(!r.has_value(), "count 2147483648 -> error");
+    if (!r.has_value()) {
+        check(r.error().kind == PassportErrorKind::kBadCount, "count 2147483648 -> kBadCount");
+        check(r.error().bad_value == "2147483648", "count 2147483648 -> bad_value");
+    }
+}
+
+void test_read_count_int32_min() {
+    auto is = std::istringstream("тест\n-2147483648\n");
+    auto r = read_passport(is);
+    check(!r.has_value(), "count INT32_MIN -> error");
+    if (!r.has_value())
+        check(r.error().kind == PassportErrorKind::kNegativeCount,
+              "count INT32_MIN -> kNegativeCount");
+}
+
 void test_read_valid_crlf() {
     auto is = std::istringstream("морской закат\r\n1920\r\n");
     auto r = read_passport(is);
@@ -193,6 +232,10 @@ int main() {
     test_read_empty_name();
     test_read_bad_count();
     test_read_negative_count();
+    test_read_plus_count();
+    test_read_trimmed_plus_count();
+    test_read_count_int32_overflow();
+    test_read_count_int32_min();
     test_read_valid_crlf();
     test_read_bad_count_crlf();
     test_read_empty_name_crlf();

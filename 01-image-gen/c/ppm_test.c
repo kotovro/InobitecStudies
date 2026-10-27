@@ -36,6 +36,24 @@ static void test_trailing_garbage(void) {
     check(r.error == PE_BADNUMBER, "4abc -> PE_BADNUMBER");
 }
 
+static void test_plus_number(void) {
+    char* argv[] = {"prog", "+5"};
+    struct ParseResult r = parse_args(2, argv);
+    check(r.error == PE_BADNUMBER, "+5 -> PE_BADNUMBER");
+}
+
+static void test_space_number(void) {
+    char* argv[] = {"prog", " 5"};
+    struct ParseResult r = parse_args(2, argv);
+    check(r.error == PE_BADNUMBER, "' 5' -> PE_BADNUMBER");
+}
+
+static void test_tab_number(void) {
+    char* argv[] = {"prog", "\t5"};
+    struct ParseResult r = parse_args(2, argv);
+    check(r.error == PE_BADNUMBER, "'\\t5' -> PE_BADNUMBER");
+}
+
 static void test_negative_number(void) {
     char* argv[] = {"prog", "-5"};
     struct ParseResult r = parse_args(2, argv);
@@ -151,6 +169,18 @@ static void test_new_seed_overflow(void) {
     char* argv[] = {"prog", "--size", "5", "--seed", "4294967296"};
     struct ParseResult r = parse_args(5, argv);
     check(r.error == PE_BADSEED, "--seed 4294967296 -> PE_BADSEED");
+}
+
+static void test_new_plus_size(void) {
+    char* argv[] = {"prog", "--size", "+3"};
+    struct ParseResult r = parse_args(3, argv);
+    check(r.error == PE_BADNUMBER, "--size +3 -> PE_BADNUMBER");
+}
+
+static void test_new_plus_seed(void) {
+    char* argv[] = {"prog", "--size", "5", "--seed", "+1"};
+    struct ParseResult r = parse_args(5, argv);
+    check(r.error == PE_BADSEED, "--seed +1 -> PE_BADSEED");
 }
 
 // ---- --help / --version tests ----
@@ -315,6 +345,9 @@ int main(void) {
     test_no_args();
     test_bad_number();
     test_trailing_garbage();
+    test_plus_number();
+    test_space_number();
+    test_tab_number();
     test_negative_number();
     test_bad_pattern();
     test_default_pattern();
@@ -331,6 +364,8 @@ int main(void) {
     test_new_size_overflow();
     test_new_seed_max();
     test_new_seed_overflow();
+    test_new_plus_size();
+    test_new_plus_seed();
 
     printf("--- help/version tests ---\n");
     test_help();
