@@ -319,6 +319,14 @@ IMPLIB_cpp := $(BUILD_DIR)/common/cpp/dll/ppm_io$(IMPLIBEXT)
 $(COMMON_C_OBJS) $(COMMON_C_DLL_OBJS): $(COMMON_C_HDRS)
 $(COMMON_CPP_OBJS) $(COMMON_CPP_DLL_OBJS): $(COMMON_CPP_HDRS)
 
+# common/c/int_token.h - общий заголовок, но включают его не все модули: зависимость
+# ведётся по объектам, чтобы правка не пересобирала task3 и саму библиотеку ppm_io.
+INT_TOKEN_HDR := common/c/int_token.h
+$(BUILD_DIR)/01-image-gen/c/parse_args$(OBJ): $(INT_TOKEN_HDR)
+$(BUILD_DIR)/02-image-passport/c/read_passport$(OBJ): $(INT_TOKEN_HDR)
+$(BUILD_DIR)/04-image-filter/c/filter$(OBJ): $(INT_TOKEN_HDR)
+$(BUILD_DIR)/common/c/ppm_io_test$(OBJ): $(INT_TOKEN_HDR)
+
 $(STATIC_LIB_c): $(COMMON_C_OBJS) | $(BUILD_DIR)/common/c/
 	$(call RMFILE,$@)
 	$(MAKELIB)
