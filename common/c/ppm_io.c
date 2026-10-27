@@ -6,6 +6,37 @@
 #include "ppm_io_alloc.h"
 #include "strerror.h"
 
+// Потолок эха токена в диагностике и потолок уже экранированной строки:
+// вместе с префиксом сообщение должно уложиться в PPM_DIAG_SIZE.
+enum { MAGIC_ECHO_MAX = 127 };
+enum { MAGIC_SHOWN_MAX = 384 };
+
+// Разделители полей PPM: blanks, TABs, CRs, LFs; '#' начинает комментарий.
+static int is_field_sep(int c) {
+    return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '#';
+}
+
+// Печатаемые ASCII - как есть, остальные байты - \xNN.
+// Запись прекращается, если очередной символ не помещается в out.
+static void render_token(const char* token, size_t len, char* out, size_t out_sz) {
+    size_t n = 0;
+    for (size_t i = 0; i < len; ++i) {
+        unsigned char ch = (unsigned char)token[i];
+        size_t need = (ch >= 0x20 && ch <= 0x7E) ? 1 : 4;
+        if (n + need >= out_sz)
+            break;
+        if (need == 1) {
+            out[n++] = (char)ch;
+        } else {
+            int w = snprintf(out + n, out_sz - n, "\\x%02x", (unsigned)ch);
+            if (w < 0)
+                break;
+            n += (size_t)w;
+        }
+    }
+    out[n] = '\0';
+}
+
 // -------------------------------------------------------------------
 // Helper: skip whitespace and optional #-comments.
 // allow_hash: 1 = skip #-lines (header phase), 0 = return '#' to caller
@@ -191,35 +222,35 @@ struct PpmResult ppm_read_with(FILE* f, const struct PpmAllocator* allocator) {
         return result;
     }
 
-    if (c != 'P') {
-        result.error = PRE_BAD_MAGIC;
+    char magic[MAGIC_ECHO_MAX];
+    size_t magic_len = 0;
+    size_t magic_stored = 0;
+    while (c != EOF && !is_field_sep(c)) {
+        if (magic_stored < sizeof magic)
+            magic[magic_stored++] = (char)c;
+        ++magic_len;
+        c = fgetc(f);
+    }
+    if (c == EOF && ferror(f)) {
+        int e = errno;
+        char buf[256];
+        safe_strerror(e, buf, sizeof buf);
+        result.error = PRE_IO_ERROR;
         result.error_line = line_num;
-        if (c >= ' ' && c <= '~')
-            snprintf(result.diagnostic, sizeof(result.diagnostic),
-                     "строка %d: ожидалось 'P3', получено: '%c'", line_num, (char)c);
-        else
-            snprintf(result.diagnostic, sizeof(result.diagnostic),
-                     "строка %d: ожидалось 'P3', код 0x%02x", line_num, (unsigned char)c);
+        snprintf(result.diagnostic, sizeof(result.diagnostic), "сбой чтения: %s (errno %d)", buf,
+                 e);
         return result;
     }
+    if (c != EOF)
+        ungetc(c, f);
 
-    c = fgetc(f);
-    if (c == EOF) {
+    if (magic_len != 2 || magic[0] != 'P' || magic[1] != '3') {
+        char shown[MAGIC_SHOWN_MAX];
+        render_token(magic, magic_stored, shown, sizeof shown);
         result.error = PRE_BAD_MAGIC;
         result.error_line = line_num;
         snprintf(result.diagnostic, sizeof(result.diagnostic),
-                 "строка %d: ожидалось 'P3', получено: 'P'", line_num);
-        return result;
-    }
-    if (c != '3') {
-        result.error = PRE_BAD_MAGIC;
-        result.error_line = line_num;
-        if (c >= ' ' && c <= '~')
-            snprintf(result.diagnostic, sizeof(result.diagnostic),
-                     "строка %d: ожидалось 'P3', получено: 'P%c'", line_num, (char)c);
-        else
-            snprintf(result.diagnostic, sizeof(result.diagnostic),
-                     "строка %d: ожидалось 'P3', код 0x%02x после 'P'", line_num, (unsigned char)c);
+                 "строка %d: ожидалось 'P3', получено: '%s'", line_num, shown);
         return result;
     }
 

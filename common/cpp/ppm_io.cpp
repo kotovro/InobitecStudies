@@ -12,6 +12,7 @@
 #include <print>
 #include <span>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <vector>
 
@@ -19,8 +20,32 @@ namespace raster::common {
 
 namespace {
 
+inline constexpr std::size_t kMagicEchoMax = 127;
+inline constexpr std::size_t kMagicShownMax = 384;
+
 std::string system_error_text(int e) {
     return std::format("{} (errno {})", std::error_code(e, std::generic_category()).message(), e);
+}
+
+// Разделители полей PPM: blanks, TABs, CRs, LFs; '#' начинает комментарий.
+bool is_field_sep(int c) { return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '#'; }
+
+// Печатаемые ASCII - как есть, остальные байты - \xNN.
+// Запись прекращается, если очередной символ не помещается в потолок.
+std::string render_token(std::string_view token) {
+    std::string out;
+    out.reserve(kMagicShownMax);
+    for (unsigned char ch : token) {
+        std::size_t need = (ch >= 0x20 && ch <= 0x7E) ? 1 : 4;
+        if (out.size() + need >= kMagicShownMax)
+            break;
+        if (need == 1) {
+            out.push_back(static_cast<char>(ch));
+        } else {
+            out += std::format("\\x{:02x}", static_cast<unsigned>(ch));
+        }
+    }
+    return out;
 }
 
 } // namespace
@@ -104,13 +129,23 @@ PpmResult Image::read(std::istream& is, std::pmr::memory_resource* mr) {
             return err(PpmReadError::kEmptyInput, line_num, "нет входных данных");
 
         std::string magic;
-        is >> magic;
-        if (is.fail())
+        std::size_t magic_len = 0;
+        for (;;) {
+            int c = is.peek();
+            if (c == EOF || is_field_sep(c))
+                break;
+            is.get();
+            ++magic_len;
+            if (magic.size() < kMagicEchoMax)
+                magic.push_back(static_cast<char>(c));
+        }
+        if (is.bad())
             return io_error();
 
-        if (magic != "P3")
+        if (magic_len != 2 || magic != "P3")
             return err(PpmReadError::kBadMagic, line_num,
-                       std::format("строка {}: ожидалось 'P3', получено: '{}'", line_num, magic));
+                       std::format("строка {}: ожидалось 'P3', получено: '{}'", line_num,
+                                   render_token(magic)));
 
         // ---- 2. Width, Height, Maxval ----
         enum class IntToken { kOk, kEof, kIoError, kError };
