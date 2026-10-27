@@ -1,10 +1,9 @@
 #include "parse_args.h"
 
-#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
+#include "../../common/c/int_token.h"
 #include "../../common/c/version.h"
 
 static struct ParseResult parse_args_old(int argc, char** argv) {
@@ -15,14 +14,12 @@ static struct ParseResult parse_args_old(int argc, char** argv) {
         return result;
     }
 
-    char* end;
-    errno = 0;
-    long long n = strtoll(argv[1], &end, 10);
-    if (errno == ERANGE || end == argv[1] || *end != '\0' || n < INT32_MIN || n > INT32_MAX) {
+    int32_t n = 0;
+    if (kv_parse_i32(argv[1], &n) != KV_INT_OK) {
         result.error = PE_BADNUMBER;
         return result;
     }
-    result.size = (int32_t)n;
+    result.size = n;
 
     const char* name = (argc >= 3) ? argv[2] : "gradient";
     if (strcmp(name, "gradient") == 0)
@@ -53,23 +50,20 @@ static struct ParseResult parse_args_new(int argc, char** argv) {
         return result;
     }
 
-    char* end;
-    errno = 0;
-    long long n = strtoll(argv[2], &end, 10);
-    if (errno == ERANGE || end == argv[2] || *end != '\0' || n < INT32_MIN || n > INT32_MAX) {
+    int32_t n = 0;
+    if (kv_parse_i32(argv[2], &n) != KV_INT_OK) {
         result.error = PE_BADNUMBER;
         return result;
     }
-    result.size = (int32_t)n;
+    result.size = n;
 
     if (argc >= 5 && strcmp(argv[3], "--seed") == 0) {
-        errno = 0;
-        long long s = strtoll(argv[4], &end, 10);
-        if (errno == ERANGE || end == argv[4] || *end != '\0' || s < 0 || s > UINT32_MAX) {
+        uint32_t s = 0;
+        if (kv_parse_u32(argv[4], &s) != KV_INT_OK) {
             result.error = PE_BADSEED;
             return result;
         }
-        result.seed = (uint32_t)s;
+        result.seed = s;
         result.seed_provided = 1;
     }
 

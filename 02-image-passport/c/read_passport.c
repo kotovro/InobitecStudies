@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../../common/c/int_token.h"
 #include "../../common/c/strerror.h"
 
 static void trim_whitespace(char* s) {
@@ -52,10 +53,8 @@ struct PassportResult read_passport(FILE* in) {
 
     trim_whitespace(count_str);
 
-    char* end = NULL;
-    errno = 0;
-    long count = strtol(count_str, &end, 10);
-    if (end == count_str || *end != '\0' || errno == ERANGE) {
+    int32_t count = 0;
+    if (kv_parse_i32(count_str, &count) != KV_INT_OK) {
         struct PassportResult result = {.error = PE_BAD_COUNT};
         snprintf(result.bad_value, sizeof result.bad_value, "%s", count_str);
         free(name);
@@ -68,7 +67,7 @@ struct PassportResult read_passport(FILE* in) {
         return result;
     }
 
-    return (struct PassportResult){.error = PE_OK, .name = name, .count = (int32_t)count};
+    return (struct PassportResult){.error = PE_OK, .name = name, .count = count};
 }
 
 void passport_error_message(const struct PassportResult* result, char* buf, size_t bufsz) {

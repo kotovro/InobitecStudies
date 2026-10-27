@@ -1,10 +1,11 @@
 #include "filter.h"
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
+#include "../../common/c/int_token.h"
 #include "../../common/c/luma.h"
 #include "../../common/c/strerror.h"
 #include "../../common/c/version.h"
@@ -69,15 +70,14 @@ int parse_filter_args(int argc, char** argv, struct FilterParseResult* out_resul
             return -1;
         }
 
-        char* end = NULL;
-        long t = strtol(argv[2], &end, 10);
-        if (end == argv[2] || *end != '\0') {
+        int32_t t = 0;
+        if (kv_parse_i32(argv[2], &t) != KV_INT_OK) {
             fprintf(stderr, "T должен быть целым числом; получено: %s\n", argv[2]);
             return -1;
         }
 
         if (t < 0 || t > 255) {
-            fprintf(stderr, "T должен быть в [0; 255]; получено: %ld\n", t);
+            fprintf(stderr, "T должен быть в [0; 255]; получено: %" PRId32 "\n", t);
             return -1;
         }
 
