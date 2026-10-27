@@ -68,16 +68,65 @@ void test_magic_bad() {
     auto ss = std::istringstream("P5\n1 1\n255\n0 0 0\n");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "P5 -> error");
-    if (!r.value.has_value())
+    if (!r.value.has_value()) {
         check(r.value.error() == PpmReadError::kBadMagic, "P5 -> kBadMagic");
+        check_diag(r, "строка 1: ожидалось 'P3', получено: 'P5'", "P5 -> diagnostic");
+    }
 }
 
 void test_magic_truncated() {
     auto ss = std::istringstream("P");
     auto r = Image::read(ss);
     check(!r.value.has_value(), "just P -> error");
-    if (!r.value.has_value())
+    if (!r.value.has_value()) {
         check(r.value.error() == PpmReadError::kBadMagic, "just P -> kBadMagic");
+        check_diag(r, "строка 1: ожидалось 'P3', получено: 'P'", "just P -> diagnostic");
+    }
+}
+
+void test_magic_strict() {
+    struct Case {
+        std::string_view data;
+        std::string_view name;
+        std::string_view expected;
+    };
+    const std::array<Case, 5> bad{{
+        {"P31\n1 1\n255\n0 0 0\n", "P31", "строка 1: ожидалось 'P3', получено: 'P31'"},
+        {"P3x\n1 1\n255\n0 0 0\n", "P3x", "строка 1: ожидалось 'P3', получено: 'P3x'"},
+        {"X3\n1 1\n255\n0 0 0\n", "X3", "строка 1: ожидалось 'P3', получено: 'X3'"},
+        {"P 3\n1 1\n255\n0 0 0\n", "P space 3", "строка 1: ожидалось 'P3', получено: 'P'"},
+        {"P\x01\n1 1\n255\n0 0 0\n", "P 0x01", "строка 1: ожидалось 'P3', получено: 'P\\x01'"},
+    }};
+    for (const auto& c : bad) {
+        auto ss = std::istringstream(std::string{c.data});
+        auto r = Image::read(ss);
+        check(!r.value.has_value(), c.name);
+        if (!r.value.has_value()) {
+            check(r.value.error() == PpmReadError::kBadMagic, c.name);
+            check_diag(r, c.expected, c.name);
+        }
+    }
+
+    const std::array<Case, 5> valid{{
+        {"P3\n1 1\n255\n0 0 0\n", "P3 LF", {}},
+        {"P3\r\n1 1\n255\n0 0 0\n", "P3 CRLF", {}},
+        {"P3\t1 1\n255\n0 0 0\n", "P3 TAB", {}},
+        {"P3 1 1\n255\n0 0 0\n", "P3 space", {}},
+        {"P3#comment\n1 1\n255\n0 0 0\n", "P3 comment", {}},
+    }};
+    for (const auto& c : valid) {
+        auto ss = std::istringstream(std::string{c.data});
+        auto r = Image::read(ss);
+        check(r.value.has_value(), c.name);
+    }
+
+    auto ss = std::istringstream("P3");
+    auto r = Image::read(ss);
+    check(!r.value.has_value(), "P3 then EOF -> error");
+    if (!r.value.has_value()) {
+        check(r.value.error() == PpmReadError::kBadNumber, "P3 then EOF -> kBadNumber");
+        check_diag(r, "строка 1: неожиданный конец файла", "P3 then EOF -> diagnostic");
+    }
 }
 
 void test_valid_1x1() {
@@ -699,6 +748,7 @@ int main() {
     test_empty_input();
     test_magic_bad();
     test_magic_truncated();
+    test_magic_strict();
     test_valid_1x1();
     test_maxval_not_255();
     test_width_zero();

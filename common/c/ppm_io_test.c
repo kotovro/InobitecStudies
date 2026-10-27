@@ -64,6 +64,7 @@ static void test_magic_bad(void) {
     FILE* f = make_ppm("P5\n1 1\n255\n0 0 0\n");
     struct PpmResult r = ppm_read(f);
     check(r.error == PRE_BAD_MAGIC, "P5 -> PRE_BAD_MAGIC");
+    check_text(&r, "строка 1: ожидалось 'P3', получено: 'P5'", "P5 -> diagnostic");
     fclose(f);
 }
 
@@ -71,6 +72,53 @@ static void test_magic_truncated(void) {
     FILE* f = make_ppm("P");
     struct PpmResult r = ppm_read(f);
     check(r.error == PRE_BAD_MAGIC, "just 'P' -> PRE_BAD_MAGIC");
+    check_text(&r, "строка 1: ожидалось 'P3', получено: 'P'", "just 'P' -> diagnostic");
+    fclose(f);
+}
+
+static void test_magic_strict(void) {
+    const struct {
+        const char* data;
+        const char* name;
+        const char* diag;
+    } bad[] = {
+        {"P31\n1 1\n255\n0 0 0\n", "P31", "строка 1: ожидалось 'P3', получено: 'P31'"},
+        {"P3x\n1 1\n255\n0 0 0\n", "P3x", "строка 1: ожидалось 'P3', получено: 'P3x'"},
+        {"X3\n1 1\n255\n0 0 0\n", "X3", "строка 1: ожидалось 'P3', получено: 'X3'"},
+        {"P 3\n1 1\n255\n0 0 0\n", "P space 3", "строка 1: ожидалось 'P3', получено: 'P'"},
+        {"P\x01\n1 1\n255\n0 0 0\n", "P 0x01", "строка 1: ожидалось 'P3', получено: 'P\\x01'"},
+    };
+    for (size_t i = 0; i < sizeof bad / sizeof bad[0]; ++i) {
+        FILE* f = make_ppm(bad[i].data);
+        struct PpmResult r = ppm_read(f);
+        check(r.error == PRE_BAD_MAGIC, bad[i].name);
+        check_text(&r, bad[i].diag, bad[i].name);
+        fclose(f);
+    }
+
+    const struct {
+        const char* data;
+        const char* name;
+    } valid[] = {
+        {"P3\n1 1\n255\n0 0 0\n", "P3 LF"},
+        {"P3\r\n1 1\n255\n0 0 0\n", "P3 CRLF"},
+        {"P3\t1 1\n255\n0 0 0\n", "P3 TAB"},
+        {"P3 1 1\n255\n0 0 0\n", "P3 space"},
+        {"P3#comment\n1 1\n255\n0 0 0\n", "P3 comment"},
+    };
+    for (size_t i = 0; i < sizeof valid / sizeof valid[0]; ++i) {
+        FILE* f = make_ppm(valid[i].data);
+        struct PpmResult r = ppm_read(f);
+        check(r.error == PRE_OK, valid[i].name);
+        if (r.error == PRE_OK)
+            ppm_image_free(&r.image);
+        fclose(f);
+    }
+
+    FILE* f = make_ppm("P3");
+    struct PpmResult r = ppm_read(f);
+    check(r.error == PRE_BAD_NUMBER, "P3 then EOF -> PRE_BAD_NUMBER");
+    check_text(&r, "строка 1: неожиданный конец файла", "P3 then EOF -> diagnostic");
     fclose(f);
 }
 
@@ -492,6 +540,7 @@ int main(void) {
     test_empty_input();
     test_magic_bad();
     test_magic_truncated();
+    test_magic_strict();
     test_valid_1x1();
     test_maxval_not_255();
     test_width_zero();
