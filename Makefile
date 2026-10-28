@@ -683,9 +683,26 @@ $(foreach c,$(T4_OK_CASES),\
     $(TEST_DIR)/cpp/filter_$(word 1,$(subst :, ,$c)).ppm)))
 
 # =============================================================================
+#  Массовые входные данные: случайные PPM для замеров, вне набора тестов.
+#  Генератор - C-версия задачи 1; каталог - TEST_DIR текущего варианта.
+# =============================================================================
+MASS_SIZES := 2 64 1024
+MASS_SEEDS := 42 9999
+
+MASS_FILES := $(foreach s,$(MASS_SIZES),$(foreach k,$(MASS_SEEDS),\
+                $(TEST_DIR)/random_$(s)x$(s)_seed$(k).ppm))
+
+# $1 - сторона квадрата, $2 - seed
+define MASS_ONE
+    $(TEST_DIR)/random_$1x$1_seed$2.ppm: $(APP_$(T1)_c) | $(TEST_DIR)/
+	    $$(call run_to,$(APP_$(T1)_c) --size $1 --seed $2,$$@,)
+endef
+$(foreach s,$(MASS_SIZES),$(foreach k,$(MASS_SEEDS),$(eval $(call MASS_ONE,$s,$k))))
+
+# =============================================================================
 #  Фазовые цели.
 # =============================================================================
-.PHONY: all lib exes unit acceptance parity test common clean clean-all help \
+.PHONY: all lib exes unit acceptance parity massdata test common clean clean-all help \
         format format-check coverage
 .DEFAULT_GOAL := all
 
@@ -697,6 +714,7 @@ common: $(STATIC_LIB_c) $(STATIC_LIB_cpp) $(DLL_TARGETS)
 unit: $(UNIT_MARKERS)
 acceptance: $(ACCEPT_OKS)
 parity: $(PARITY_OKS)
+massdata: $(MASS_FILES)
 test: format-check unit acceptance parity
 
 clean:
@@ -731,7 +749,7 @@ format:
 help:
 	$(info Ручки: PLATFORM=$(PLATFORM) TOOLCHAIN=$(TOOLCHAIN) CONFIG=$(CONFIG) RUNTIME=$(RUNTIME) LINK=$(LINK) SANITIZE=$(SANITIZE) COVERAGE=$(COVERAGE))
 	$(info Каталог варианта: $(BUILD_DIR))
-	$(info Цели: all lib exes unit acceptance parity test common clean clean-all help)
+	$(info Цели: all lib exes unit acceptance parity massdata test common clean clean-all help)
 	$(info Задачи: $(TASKS))
 	$(info format-check format coverage)
 
