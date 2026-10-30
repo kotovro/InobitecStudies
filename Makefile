@@ -137,7 +137,7 @@ DLL_ENABLED := $(if $(filter dll,$(LINK)),1,0)
 ifeq ($(PLATFORM),windows)
   SHELL := cmd.exe
   native = $(subst /,\,$1)
-  MKDIR  = mkdir $(call native,$(patsubst %/,%,$1))
+  MKDIR  = if not exist $(call native,$(patsubst %/,%,$1)) (mkdir $(call native,$(patsubst %/,%,$1)) 2>nul) & if not exist $(call native,$(patsubst %/,%,$1)) exit /b 1
   RMFILE = if exist $(call native,$1) del /F /Q $(call native,$1)
   RMTREE = if exist $(call native,$1) rmdir /S /Q $(call native,$1)
   CP     = copy /Y $(call native,$1) $(call native,$2) > NUL
