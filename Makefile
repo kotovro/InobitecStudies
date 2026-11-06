@@ -70,19 +70,25 @@ TOOLCHAIN_linux   := gcc
 TOOLCHAIN ?= $(TOOLCHAIN_$(PLATFORM))
 # debug | release
 CONFIG ?= debug
+# 0 | 1. Отдельная coverage-сборка: debug, без ASan, LINK=obj.
+COVERAGE ?= 0
 # dynamic (/MD, libstdc++.so) | static (/MT, -static-libstdc++) | full (-static, только gcc)
 RUNTIME ?= dynamic
 # Как потребители получают common/ppm_io: obj | lib | dll
-LINK ?= lib
+LINK ?= $(if $(filter 1,$(COVERAGE)),obj,lib)
 # У MSVC link.exe читает одноимённую переменную окружения: LINK=dll
 # превратился бы во входной файл dll.obj.
 unexport LINK
+# В окружении MSVC уже есть Platform=x64. Экспорт PLATFORM дал бы в
+# Microsoft.CodeCoverage.Console два ключа, различающихся регистром, и его
+# словарь падает с "Item has already been added". Под-make получает значение
+# через MAKEFLAGS, а команде под коллектором оно передаётся явно.
+unexport PLATFORM
 # address | none. По умолчанию ASan в debug, выключен в release.
 SANITIZE_DEFAULT_debug   := address
 SANITIZE_DEFAULT_release := none
-SANITIZE ?= $(SANITIZE_DEFAULT_$(CONFIG))
-# 0 | 1. Отдельная coverage-сборка (сама цель coverage — задел).
-COVERAGE ?= 0
+# В coverage-варианте ASan несовместим с /PROFILE (MSVC) и -static (gcc).
+SANITIZE ?= $(if $(filter 1,$(COVERAGE)),none,$(SANITIZE_DEFAULT_$(CONFIG)))
 # 0 | 1. Предупреждения GCC как ошибки (WERROR=1 -> -Werror).
 WERROR ?= 0
 # Суффикс версии gcc: пусто — системные gcc/g++, make GCC_SUFFIX=-15 даст gcc-15 / g++-15.
@@ -154,6 +160,10 @@ ifeq ($(PLATFORM),windows)
   # Непустой stderr. Под cmd переменную цикла for пишем как %%A: make отдаёт
   # рецепт в cmd, где один % начинает подстановку и превращается в пусто.
   NONEMPTY = for %%A in ($(call native,$(ERR))) do if %%~zA==0 exit /b 1
+  RMMARKERS = for %%M in ($1) do if exist "%%M" del /F /Q "%%M"
+  RMDATA =
+  CHECKFILE = if not exist "$(call native,$1)" exit /b 1
+  CHECKNONEMPTY = if not exist "$(call native,$1)" exit /b 1 & for %%A in ("$(call native,$1)") do if %%~zA==0 exit /b 1
   which = $(shell where $1 2>nul)
 else
   SHELL := /bin/sh
@@ -171,6 +181,10 @@ else
   CHECK65 = ; test $$? -eq 65
   CHECK66 = ; test $$? -eq 66
   NONEMPTY = test -s $(ERR)
+  RMMARKERS = rm -f $1
+  RMDATA = find $(BUILD_DIR) -name '*.gcda' -delete
+  CHECKFILE = test -f $1
+  CHECKNONEMPTY = test -s $1
   which = $(shell command -v $1 2>/dev/null)
 endif
 
@@ -203,7 +217,10 @@ ifeq ($(TOOLCHAIN),msvc)
 
   LDFLAGS_debug   := -INCREMENTAL:NO
   LDFLAGS_release := -OPT:REF -OPT:ICF
-  LDFLAGS := -nologo -DEBUG $(LDFLAGS_$(CONFIG))
+  # /PROFILE — обязательное условие статической инструментации C++.
+  COV_LDFLAGS := $(if $(filter 1,$(COVERAGE)),-PROFILE)
+  LDFLAGS := -nologo -DEBUG $(COV_LDFLAGS) $(LDFLAGS_$(CONFIG))
+  COVERAGE_TOOL := Microsoft.CodeCoverage.Console.exe
 
   COMPILE_c   = cl $(FLAGS_c) -c $< -Fo$@ -Fd$(dir $@)compile.pdb
   COMPILE_cpp = cl $(FLAGS_cpp) -c $< -Fo$@ -Fd$(dir $@)compile.pdb
@@ -230,16 +247,27 @@ else ifeq ($(TOOLCHAIN),gcc)
   CFG_release := -O2 -DNDEBUG
   SAN_address := -fsanitize=address -fno-omit-frame-pointer
   SAN_none    :=
+  # -fprofile-abs-path: абсолютные пути в .gcno, чтобы gcovr не путался.
+  COV_CFLAGS := $(if $(filter 1,$(COVERAGE)),-fprofile-arcs -ftest-coverage -fprofile-abs-path)
   DBG := -g
 
-  FLAGS_c   := $(CSTD) $(WARN) $(CFG_$(CONFIG)) $(SAN_$(SANITIZE)) $(DBG)
-  FLAGS_cpp := $(CXXSTD) $(WARN) $(CFG_$(CONFIG)) $(SAN_$(SANITIZE)) $(DBG)
+  FLAGS_c   := $(CSTD) $(WARN) $(CFG_$(CONFIG)) $(SAN_$(SANITIZE)) $(COV_CFLAGS) $(DBG)
+  FLAGS_cpp := $(CXXSTD) $(WARN) $(CFG_$(CONFIG)) $(SAN_$(SANITIZE)) $(COV_CFLAGS) $(DBG)
 
   LD_RT_dynamic :=
   LD_RT_static  := -static-libstdc++ -static-libgcc
   LD_RT_full    := -static
   LDLIBS_c      := -lm
-  LDFLAGS := $(LD_RT_$(RUNTIME)) $(SAN_$(SANITIZE))
+  LDFLAGS := $(LD_RT_$(RUNTIME)) $(SAN_$(SANITIZE)) $(if $(filter 1,$(COVERAGE)),--coverage)
+
+  # Версия gcov должна совпадать с компилятором: GCC_SUFFIX=-15 -> gcov-15.
+  GCOV  ?= gcov$(GCC_SUFFIX)
+  GCOVR ?= gcovr
+  COV_GCOVR_CMD = $(GCOVR) --root . --object-directory $(BUILD_DIR) --xml --output $(COV_XML) \
+    --gcov-executable $(GCOV) \
+    --filter '$(CURDIR)/common/.*' \
+    --filter '$(CURDIR)/0[1-4]-[^/]*/(c|cpp)/.*' \
+    --exclude '$(CURDIR)/.*_test\.(c|cpp)'
 
   COMPILE_c   = gcc$(GCC_SUFFIX) $(FLAGS_c) -MMD -MP -c $< -o $@
   COMPILE_cpp = g++$(GCC_SUFFIX) $(FLAGS_cpp) -MMD -MP -c $< -o $@
@@ -409,6 +437,7 @@ objs = $(patsubst $1/$2/%.$2,$(BUILD_DIR)/$1/$2/%$(OBJ),$3)
 
 ALL_EXES :=
 ALL_OBJS :=
+UNIT_EXES :=
 UNIT_MARKERS :=
 
 # Правила на задачу/язык: приложение, юнит-тест, зависимости от заголовков,
@@ -420,6 +449,7 @@ define TASK_template
 
     TEST_$1_$2 := $(BUILD_DIR)/$1/$2/$(notdir $(basename $(call test_srcs,$1,$2)))$(EXE)
     ALL_EXES += $$(TEST_$1_$2)
+    UNIT_EXES += $$(TEST_$1_$2)
 
     $(APP_$1_$2): $(call objs,$1,$2,$(call app_srcs,$1,$2)) $(call module_inputs,$2,$(MOD_$1_$2)) | $(BUILD_DIR)/$1/$2/
 	    $$(LINK_$2)
@@ -460,6 +490,7 @@ $(BUILD_DIR)/common/c/ppm_io_test$(OBJ): $(COMMON_C_HDRS)
 $(BUILD_DIR)/common/cpp/ppm_io_test$(OBJ): $(COMMON_CPP_HDRS)
 ALL_EXES += $(BUILD_DIR)/common/c/ppm_io_test$(EXE) $(BUILD_DIR)/common/cpp/ppm_io_test$(EXE)
 ALL_OBJS += $(BUILD_DIR)/common/c/ppm_io_test$(OBJ) $(BUILD_DIR)/common/cpp/ppm_io_test$(OBJ)
+UNIT_EXES += $(BUILD_DIR)/common/c/ppm_io_test$(EXE) $(BUILD_DIR)/common/cpp/ppm_io_test$(EXE)
 
 $(BUILD_DIR)/common/c/ppm_io_test.passed: $(BUILD_DIR)/common/c/ppm_io_test$(EXE)
 	$(call RMFILE,$@)
@@ -703,7 +734,7 @@ $(foreach s,$(MASS_SIZES),$(foreach k,$(MASS_SEEDS),$(eval $(call MASS_ONE,$s,$k
 #  Фазовые цели.
 # =============================================================================
 .PHONY: all lib exes unit acceptance parity massdata test common clean clean-all help \
-        format format-check coverage
+        format format-check coverage cov-inputs cov-reset cov-settings cov-report
 .DEFAULT_GOAL := all
 
 all: lib exes test
@@ -722,8 +753,111 @@ clean:
 clean-all:
 	$(call RMTREE,build)
 
+# =============================================================================
+#  Покрытие: вариант *-cov, только unit-тесты. На выходе — один Cobertura XML
+#  на обеих платформах: $(COV_XML).
+#
+#  Схема: cov-inputs (только тестовые exe) -> cov-reset (маркеры и старые
+#  данные) -> unit под сбором -> cov-report. Сброс маркеров обязателен:
+#  иначе make не перезапустит тесты и покрытие останется пустым.
+# =============================================================================
+COV_DIR      := $(BUILD_DIR)/coverage
+COV_XML      := $(COV_DIR)/coverage.cobertura.xml
+COV_SETTINGS := $(COV_DIR)/coverage.runsettings
+COV_MARKERS  := $(UNIT_MARKERS)
+COV_MARKERS_NATIVE := $(foreach m,$(COV_MARKERS),$(call native,$m))
+
+ifeq ($(PLATFORM),windows)
+  COV_CHECK_MARKERS = for %%M in ($(COV_MARKERS_NATIVE)) do if not exist "%%M" exit /b 1
+else
+  COV_CHECK_MARKERS = for m in $(COV_MARKERS); do test -f "$$m" || exit 1; done
+endif
+
+# Настройки статической инструментации C++: искать бинарники только в
+# каталоге варианта и исключить из отчёта исходники самих тестов.
+define COV_SETTINGS_XML
+<?xml version="1.0" encoding="utf-8"?>
+<Configuration>
+  <CodeCoverage>
+    <ModulePaths>
+      <IncludeDirectories>
+        <Directory Recursive="true">$(call native,$(CURDIR)/$(BUILD_DIR))</Directory>
+      </IncludeDirectories>
+    </ModulePaths>
+    <Sources>
+      <Exclude>
+        <Source>.*_test\.(c|cpp)</Source>
+      </Exclude>
+    </Sources>
+    <EnableStaticNativeInstrumentation>True</EnableStaticNativeInstrumentation>
+    <EnableDynamicNativeInstrumentation>False</EnableDynamicNativeInstrumentation>
+    <CollectFromChildProcesses>True</CollectFromChildProcesses>
+  </CodeCoverage>
+</Configuration>
+endef
+
+# $(MAKE) спрятан в переменной: иначе make считает строку рекурсивной и
+# исполняет её даже при make -n.
+COV_TEST_CMD = $(MAKE) PLATFORM=$(PLATFORM) COVERAGE=1 unit
+
+ifeq ($(TOOLCHAIN),msvc)
+  ifneq ($(and $(filter 1,$(COVERAGE)),$(filter coverage,$(MAKECMDGOALS))),)
+    ifeq ($(call which,Microsoft.CodeCoverage.Console.exe),)
+      $(error Не найден Microsoft.CodeCoverage.Console.exe. Запустите make из Developer-окружения (vcvars64.bat).)
+    endif
+  endif
+else
+  ifneq ($(and $(filter 1,$(COVERAGE)),$(filter coverage,$(MAKECMDGOALS))),)
+    ifeq ($(call which,$(GCOV)),)
+      $(error Не найден $(GCOV). Установите gcov, совпадающий с компилятором.)
+    endif
+    ifeq ($(call which,$(GCOVR)),)
+      $(error Не найден $(GCOVR). Установите gcovr.)
+    endif
+  endif
+endif
+
+cov-inputs: $(UNIT_EXES)
+
+cov-reset:
+	$(call RMTREE,$(COV_DIR))
+	$(call RMMARKERS,$(COV_MARKERS_NATIVE))
+	$(RMDATA)
+
+# $(file ...) срабатывает при раскрытии рецепта, то есть до выполнения
+# команд, поэтому каталог создаётся order-only пререквизитом. В dry-run
+# запись пропускается: make -n не должен оставлять файлов.
+cov-settings: | $(COV_DIR)/
+ifeq ($(DRY_RUN),)
+	$(file >$(COV_SETTINGS),$(COV_SETTINGS_XML))
+endif
+
+ifeq ($(TOOLCHAIN),msvc)
+cov-report:
+	$(COV_CHECK_MARKERS)
+	$(call CHECKNONEMPTY,$(COV_XML))
+else
+cov-report:
+	$(COV_CHECK_MARKERS)
+	$(COV_GCOVR_CMD)
+	$(call CHECKNONEMPTY,$(COV_XML))
+endif
+
+ifeq ($(filter 1,$(COVERAGE)),1)
 coverage:
-	$(error coverage — задел: COVERAGE=1 уже задаёт флаги и ограничения варианта)
+	$(MAKE) COVERAGE=1 cov-inputs
+	$(MAKE) COVERAGE=1 cov-reset
+ifeq ($(TOOLCHAIN),msvc)
+	$(MAKE) COVERAGE=1 cov-settings
+	"$(COVERAGE_TOOL)" collect --nologo --settings "$(call native,$(COV_SETTINGS))" --output "$(call native,$(COV_XML))" --output-format cobertura $(COV_TEST_CMD)
+else
+	$(MAKE) COVERAGE=1 unit
+endif
+	$(MAKE) COVERAGE=1 cov-report
+else
+coverage:
+	$(MAKE) COVERAGE=1 coverage
+endif
 
 # =============================================================================
 #  Форматирование.
