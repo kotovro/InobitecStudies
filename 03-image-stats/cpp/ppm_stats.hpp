@@ -2,11 +2,22 @@
 #define KV_PPM_STATS_HPP
 
 #include <cstdint>
+#include <expected>
 #include <iosfwd>
+#include <string>
 
 #include "../../common/cpp/ppm_io.hpp"
 
 namespace raster::stats {
+
+enum class StatsWriteError {
+    kIOError,
+};
+
+struct StatsWriteResult {
+    std::expected<void, StatsWriteError> value;
+    std::string diagnostic;
+};
 
 struct Stats {
     int32_t width{};
@@ -22,7 +33,8 @@ struct Stats {
 };
 
 Stats compute_stats(const raster::common::Image& img);
-void ppm_print_stats(const Stats& s, std::ostream& os);
+[[nodiscard]] StatsWriteResult ppm_print_stats(const Stats& s, std::ostream& os);
+int run_stats(std::istream& input, std::ostream& output);
 
 } // namespace raster::stats
 

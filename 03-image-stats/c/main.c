@@ -4,7 +4,6 @@
 #include "../../common/c/version.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 void print_usage(void) {
@@ -33,20 +32,5 @@ int main(int argc, char** argv) {
         return EC_OK;
     }
 
-    struct PpmResult result = ppm_read(stdin);
-    if (result.error != PRE_OK) {
-        fprintf(stderr, "%s\n", result.diagnostic);
-        if (result.error == PRE_EMPTY_INPUT)
-            return EC_NOINPUT;
-        if (result.error == PRE_IO_ERROR)
-            return EC_IOERR;
-        return EC_DATA;
-    }
-
-    struct Stats stats;
-    compute_stats(&result.image, &stats);
-    ppm_print_stats(&stats, stdout);
-
-    ppm_image_free(&result.image);
-    return EC_OK;
+    return run_stats(stdin, stdout);
 }

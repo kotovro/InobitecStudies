@@ -3,7 +3,6 @@
 #include "../../common/cpp/exit_codes.hpp"
 #include "../../common/cpp/version.hpp"
 
-#include <cstdlib>
 #include <iostream>
 #include <print>
 #include <string_view>
@@ -42,22 +41,5 @@ int main(int argc, char** argv) {
         return std::to_underlying(ExitCode::kOk);
     }
 
-    auto result = Image::read(std::cin);
-    if (!result.value) {
-        std::println(stderr, "{}", result.diagnostic);
-        switch (result.value.error()) {
-        case PpmReadError::kEmptyInput:
-            return std::to_underlying(ExitCode::kNoInput);
-        case PpmReadError::kIOError:
-            return std::to_underlying(ExitCode::kIOErr);
-        case PpmReadError::kAllocError:
-            return std::to_underlying(ExitCode::kData);
-        default:
-            return std::to_underlying(ExitCode::kData);
-        }
-    }
-
-    Stats stats = compute_stats(*result.value);
-    ppm_print_stats(stats, std::cout);
-    return std::to_underlying(ExitCode::kOk);
+    return run_stats(std::cin, std::cout);
 }

@@ -1,11 +1,17 @@
 #include "ppm_stats.hpp"
 
+#include "../../common/cpp/exit_codes.hpp"
 #include "../../common/cpp/luma.hpp"
 
+#include <cerrno>
 #include <cmath>
 #include <cstdint>
+#include <format>
+#include <iostream>
 #include <ostream>
 #include <print>
+#include <system_error>
+#include <utility>
 
 using namespace raster::common;
 
@@ -51,11 +57,12 @@ Stats compute_stats(const Image& img) {
     return s;
 }
 
-void ppm_print_stats(const Stats& s, std::ostream& os) {
+StatsWriteResult ppm_print_stats(const Stats& s, std::ostream& os) {
     int32_t avg_r = (int32_t)((double)s.total_r / s.pixel_count + 0.5);
     int32_t avg_g = (int32_t)((double)s.total_g / s.pixel_count + 0.5);
     int32_t avg_b = (int32_t)((double)s.total_b / s.pixel_count + 0.5);
 
+    errno = 0;
     std::println(os, "{}x{}", s.width, s.height);
     std::println(os, "пикселей: {}", s.pixel_count);
     std::println(os, "средний цвет: {:3d} {:3d} {:3d}", avg_r, avg_g, avg_b);
@@ -69,6 +76,47 @@ void ppm_print_stats(const Stats& s, std::ostream& os) {
         int32_t hi = (i == 7) ? s.max_val : (int32_t)((i + 1) * bin_width) - 1;
         std::println(os, "  [{:3d},{:3d}]: {}", lo, hi, s.histogram[i]);
     }
+
+    os.flush();
+    if (os.bad() || os.fail()) {
+        int e = errno;
+        std::string diagnostic;
+        if (e != 0) {
+            diagnostic = std::format("сбой записи отчёта: {} (errno {})",
+                                     std::error_code(e, std::generic_category()).message(), e);
+        } else {
+            diagnostic = "сбой записи отчёта: неизвестная ошибка ввода-вывода";
+        }
+        return StatsWriteResult{std::unexpected(StatsWriteError::kIOError), std::move(diagnostic)};
+    }
+
+    return StatsWriteResult{};
+}
+
+int run_stats(std::istream& input, std::ostream& output) {
+    auto result = Image::read(input);
+    if (!result.value) {
+        std::println(stderr, "{}", result.diagnostic);
+        switch (result.value.error()) {
+        case PpmReadError::kEmptyInput:
+            return std::to_underlying(ExitCode::kNoInput);
+        case PpmReadError::kIOError:
+            return std::to_underlying(ExitCode::kIOErr);
+        case PpmReadError::kAllocError:
+            return std::to_underlying(ExitCode::kData);
+        default:
+            return std::to_underlying(ExitCode::kData);
+        }
+    }
+
+    Stats stats = compute_stats(*result.value);
+    auto printed = ppm_print_stats(stats, output);
+    if (!printed.value) {
+        std::println(stderr, "{}", printed.diagnostic);
+        return std::to_underlying(ExitCode::kIOErr);
+    }
+
+    return std::to_underlying(ExitCode::kOk);
 }
 
 } // namespace raster::stats
