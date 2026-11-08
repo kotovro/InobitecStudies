@@ -180,7 +180,7 @@ gen_image --size 1024 --seed 42 > big_random.ppm
 ### Справка и версия
 ```
 gen_image --help       -> usage в stdout, exit 0
-gen_image --version    -> "gen_image 0.1.6", exit 0
+gen_image --version    -> "gen_image 0.1.7", exit 0
 ```
 
 ### Поведение при ошибках
@@ -349,7 +349,7 @@ build\01-image-gen\c\gen_image.exe 0; $LASTEXITCODE      # -> 64
 
 # справка и версия
 build\01-image-gen\c\gen_image.exe --help; $LASTEXITCODE     # -> 0, usage в stdout
-build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.6"
+build\01-image-gen\c\gen_image.exe --version; $LASTEXITCODE  # -> 0, "gen_image 0.1.7"
 ```
 
 **cmd:**
@@ -374,7 +374,7 @@ rem справка и версия
 build\01-image-gen\c\gen_image.exe --help
 echo %errorlevel%                                        & rem expected 0, usage в stdout
 build\01-image-gen\c\gen_image.exe --version
-echo %errorlevel%                                        & rem expected 0, "gen_image 0.1.6"
+echo %errorlevel%                                        & rem expected 0, "gen_image 0.1.7"
 ```
 
 Release-бинарники (`build\release\...`).
@@ -838,7 +838,7 @@ filter --threshold T    -> бинаризация по порогу яркост
 ### Справка и версия
 ```
 filter --help       -> usage в stdout, exit 0 (stdin не читается)
-filter --version    -> "filter 0.1.6", exit 0
+filter --version    -> "filter 0.1.7", exit 0
 ```
 
 ### Классы ошибок
