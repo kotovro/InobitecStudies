@@ -5,7 +5,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.7] - 2026-11-09
+## [0.1.7] - 2026-11-10
 
 ### Fixed
 - Задача 3 (`stats`): сбой записи отчёта теперь возвращает exit `74` и диагностику в `stderr`. `ppm_print_stats` проверяет запись и сброс (`fflush`/`ferror` в C, `flush`/`bad`/`fail` в C++), а `run_stats` маппит сбой записи в `74`. Раньше `main` возвращал `0`, хотя README обещал `74` для IO-сбоя; `filter` уже обрабатывал такой сбой через `PpmWriter`.
